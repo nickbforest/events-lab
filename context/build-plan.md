@@ -1,8 +1,8 @@
-# EventHub — Build Plan
+# events-lab — Build Plan
 
 ## Purpose
 
-This document defines the order in which EventHub should be built.
+This document defines the order in which events-lab should be built.
 
 The goal is to reach a production-quality MVP without prematurely implementing future features.
 
@@ -171,7 +171,7 @@ Implement:
 
 # Phase 8 — Public Event Pages
 
-Build the main public EventHub experience.
+Build the main public events-lab experience.
 
 Implement:
 

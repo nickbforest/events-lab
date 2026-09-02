@@ -1,8 +1,8 @@
-# EventHub — Architecture
+# events-lab — Architecture
 
 ## 1. Purpose
 
-EventHub is a modern SaaS platform for creating, managing, publishing, discovering, and promoting upcoming events.
+events-lab is a modern SaaS platform for creating, managing, publishing, discovering, and promoting upcoming events.
 
 The platform is intended for:
 
@@ -35,7 +35,7 @@ Any significant architectural change must be explicitly approved before implemen
 
 ## 2.1 Architectural style
 
-EventHub will use a:
+events-lab will use a:
 
 > **Modular Monolith**
 
@@ -63,7 +63,7 @@ Administration
 Notifications
 ```
 
-This allows EventHub to scale without introducing distributed-system complexity prematurely.
+This allows events-lab to scale without introducing distributed-system complexity prematurely.
 
 Future services may be extracted only when real scale or operational requirements justify them.
 
@@ -153,7 +153,7 @@ Future services may be extracted only when real scale or operational requirement
 
 # 4. Why Supabase
 
-Supabase is the selected backend platform for EventHub.
+Supabase is the selected backend platform for events-lab.
 
 Supabase provides:
 
@@ -443,7 +443,7 @@ Browser geolocation must never be the only method of choosing a location.
 
 # 15. Geographic Search
 
-EventHub should support:
+events-lab should support:
 
 * city search
 * country search
@@ -525,7 +525,7 @@ Tags should be reusable.
 
 # 19. Discovery
 
-EventHub discovery must support:
+events-lab discovery must support:
 
 * Search
 * Categories
@@ -587,7 +587,7 @@ external_url
 The primary flow is:
 
 ```text
-EventHub
+events-lab
    ↓
 Event page
    ↓
@@ -772,7 +772,7 @@ Do not build a complex notification center unless required.
 
 # 30. Moderation
 
-EventHub uses hybrid moderation.
+events-lab uses hybrid moderation.
 
 Possible flow:
 
@@ -860,7 +860,7 @@ Business logic must not be embedded directly in page components.
 Initial structure:
 
 ```text
-eventhub/
+events-lab/
 ├── app/
 │   ├── (marketing)/
 │   ├── (auth)/

@@ -1,4 +1,4 @@
-# EventHub — Code Standards
+# events-lab — Code Standards
 
 ## 1. General Principles
 

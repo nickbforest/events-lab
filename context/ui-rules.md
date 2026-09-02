@@ -1,8 +1,8 @@
-# EventHub — UI Rules
+# events-lab — UI Rules
 
 ## 1. Product Personality
 
-EventHub should feel:
+events-lab should feel:
 
 * modern
 * clean
@@ -298,7 +298,7 @@ Use an explicit map/list switch when appropriate.
 
 # 18. Images
 
-Images are important to EventHub.
+Images are important to events-lab.
 
 Images should:
 

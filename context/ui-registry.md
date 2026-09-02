@@ -1,4 +1,4 @@
-# EventHub — UI Registry
+# events-lab — UI Registry
 
 This document contains the approved reusable UI components and patterns.
 

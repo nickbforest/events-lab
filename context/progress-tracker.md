@@ -1,4 +1,4 @@
-# EventHub — Progress Tracker
+# events-lab — Progress Tracker
 
 ## Status Legend
 
