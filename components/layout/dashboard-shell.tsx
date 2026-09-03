@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, ExternalLink, LayoutDashboard, User } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/format";
+import { logout } from "@/lib/local-auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", Icon: LayoutDashboard, exact: true },
@@ -20,6 +27,7 @@ export function DashboardShell({
   username: string;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -57,7 +65,7 @@ export function DashboardShell({
             })}
           </nav>
 
-          <div className="border-t border-border pt-6">
+          <div className="space-y-1 border-t border-border pt-6">
             <Link
               href={`/u/${username}`}
               className="flex items-center gap-2 px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
@@ -65,6 +73,17 @@ export function DashboardShell({
               <ExternalLink className="size-3" aria-hidden />
               events-lab/{username}
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                router.push("/auth?mode=login");
+              }}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            >
+              <LogOut className="size-4" aria-hidden />
+              Sign out
+            </button>
           </div>
         </div>
       </aside>
