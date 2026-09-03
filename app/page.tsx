@@ -2,8 +2,6 @@ import Link from "next/link";
 import { BarChart3, Globe, Sparkles, Zap } from "lucide-react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { EventCard } from "@/components/events/event-card";
-import { discoverEvents } from "@/features/discovery/queries";
 
 const FEATURES = [
   {
@@ -35,9 +33,7 @@ const AUDIENCES = [
   "Local Businesses", "DJs", "Comedians", "Festivals",
 ];
 
-export default async function LandingPage() {
-  const upcoming = await discoverEvents({ range: "upcoming" });
-  const featured = upcoming.slice(0, 3);
+export default function LandingPage() {
   const marquee = [...AUDIENCES, ...AUDIENCES];
 
   return (
@@ -138,33 +134,6 @@ export default async function LandingPage() {
                 >
                   {word}
                 </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-border px-6 py-24">
-          <div className="mx-auto max-w-5xl">
-            <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <div className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">
-                  Happening soon
-                </div>
-                <h2 className="font-display text-3xl font-extrabold uppercase tracking-tight md:text-4xl">
-                  Next up on events-lab
-                </h2>
-              </div>
-              <Link
-                href="/discover"
-                className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
-              >
-                See all →
-              </Link>
-            </div>
-
-            <div className="space-y-4">
-              {featured.map((event) => (
-                <EventCard key={event.id} event={event} />
               ))}
             </div>
           </div>

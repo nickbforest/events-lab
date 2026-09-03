@@ -6,6 +6,11 @@ import type { Category, EventRecord, Profile } from "./types";
  * This module is the single seam between the UI and its data. When Supabase
  * arrives, the query functions in `features/*\/queries.ts` switch to real
  * queries and this file is deleted — no component changes.
+ *
+ * The dataset is intentionally empty: only the fixed category list and the
+ * single signed-in publisher exist. Every screen therefore renders the state
+ * a real new account starts in, so empty states are exercised by default
+ * instead of being hidden behind demo content.
  */
 
 export const CATEGORIES: Category[] = [
@@ -19,292 +24,31 @@ export const CATEGORIES: Category[] = [
   { id: "cat-community", slug: "community", label: "Community" },
 ];
 
-export const PROFILES: Profile[] = [
-  {
-    id: "usr-tbilisi-sessions",
-    username: "tbilisi-sessions",
-    display_name: "Tbilisi Sessions",
-    publisher_type: "event_organizer",
-    bio: "Late-night electronic and jazz programming across Tbilisi. Running since 2016.",
-    avatar_url: null,
-    cover_url: null,
-    website_url: "https://example.com",
-    city: "Tbilisi",
-    country_code: "GE",
-    social_links: { instagram: "tbilisisessions" },
-  },
-  {
-    id: "usr-royal-district",
-    username: "royal-district-theatre",
-    display_name: "Royal District Theatre",
-    publisher_type: "theater",
-    bio: "Contemporary staging in the heart of the old town.",
-    avatar_url: null,
-    cover_url: null,
-    website_url: null,
-    city: "Tbilisi",
-    country_code: "GE",
-    social_links: {},
-  },
-  {
-    id: "usr-mono-collective",
-    username: "mono-collective",
-    display_name: "Mono Collective",
-    publisher_type: "community",
-    bio: "A design and engineering community running talks, workshops and the occasional loud party.",
-    avatar_url: null,
-    cover_url: null,
-    website_url: "https://example.com",
-    city: "Berlin",
-    country_code: "DE",
-    social_links: {},
-  },
-];
+/**
+ * The publisher the dashboard is acting as.
+ *
+ * Stands in for the row `requireUser()` will read from the Supabase session.
+ * A fresh account with nothing filled in, which is what the dashboard should
+ * look like before the first event exists.
+ */
+export const CURRENT_USER: Profile = {
+  id: "usr-current",
+  username: "your-page",
+  display_name: "Your Page",
+  publisher_type: "event_organizer",
+  bio: null,
+  avatar_url: null,
+  cover_url: null,
+  website_url: null,
+  city: null,
+  country_code: null,
+  social_links: {},
+};
 
-/** Dates are generated relative to now so the prototype never looks stale. */
-function daysFromNow(days: number, hour: number, minute = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  date.setHours(hour, minute, 0, 0);
-  return date.toISOString();
-}
+/**
+ * Only the signed-in publisher exists, so their public page resolves from the
+ * dashboard preview link while discovery has nothing to list.
+ */
+export const PROFILES: Profile[] = [CURRENT_USER];
 
-export const EVENTS: EventRecord[] = [
-  {
-    id: "evt-001",
-    owner_id: "usr-tbilisi-sessions",
-    slug: "midnight-frequencies-vol-9",
-    title: "Midnight Frequencies Vol. 9",
-    short_description:
-      "Six hours of modular synthesis and deep house across two rooms.",
-    description:
-      "The ninth edition of our late-night series returns to the warehouse on Kakheti Highway.\n\nTwo rooms, six artists, and a sound system we have been threatening to install for two years. Doors at 23:00. Last entry 02:00.\n\nBring ID. No photography on the dance floor.",
-    category_id: "cat-concert",
-    event_type: "in_person",
-    status: "published",
-    start_at: daysFromNow(3, 23),
-    end_at: daysFromNow(4, 6),
-    timezone: "Asia/Tbilisi",
-    venue_name: "Warehouse 41",
-    address: "41 Kakheti Highway",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.7151,
-    longitude: 44.8271,
-    online_url: null,
-    is_free: false,
-    price_info: "40–60 GEL",
-    ticket_url: "https://example.com/tickets",
-    external_url: null,
-    cover_image_url: "/covers/midnight-frequencies.svg",
-    published_at: daysFromNow(-12, 10),
-    tags: ["electronic", "late-night", "modular"],
-  },
-  {
-    id: "evt-002",
-    owner_id: "usr-royal-district",
-    slug: "the-cherry-orchard",
-    title: "The Cherry Orchard",
-    short_description:
-      "Chekhov's final play, staged in the round with a cast of eleven.",
-    description:
-      "A new translation, performed in the round. Running time 2h40m including one interval.\n\nSurtitles in English at every performance.",
-    category_id: "cat-theater",
-    event_type: "in_person",
-    status: "published",
-    start_at: daysFromNow(9, 19, 30),
-    end_at: daysFromNow(9, 22, 10),
-    timezone: "Asia/Tbilisi",
-    venue_name: "Royal District Theatre",
-    address: "10 Abesadze Street",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.6977,
-    longitude: 44.8015,
-    online_url: null,
-    is_free: false,
-    price_info: "25–70 GEL",
-    ticket_url: "https://example.com/tickets",
-    external_url: null,
-    cover_image_url: "/covers/cherry-orchard.svg",
-    published_at: daysFromNow(-30, 9),
-    tags: ["chekhov", "drama"],
-  },
-  {
-    id: "evt-003",
-    owner_id: "usr-mono-collective",
-    slug: "typography-in-motion",
-    title: "Typography in Motion",
-    short_description:
-      "A hands-on workshop on variable fonts and kinetic type on the web.",
-    description:
-      "Bring a laptop. We will build three kinetic type studies from scratch using variable font axes and CSS.\n\nSuitable for designers comfortable with basic CSS. No prior animation experience needed.",
-    category_id: "cat-conference",
-    event_type: "hybrid",
-    status: "published",
-    start_at: daysFromNow(1, 18),
-    end_at: daysFromNow(1, 21),
-    timezone: "Europe/Berlin",
-    venue_name: "Mono Studio",
-    address: "Oranienstraße 6",
-    city: "Berlin",
-    country_code: "DE",
-    latitude: 52.5027,
-    longitude: 13.4235,
-    online_url: "https://example.com/stream",
-    is_free: true,
-    price_info: null,
-    ticket_url: null,
-    external_url: "https://example.com",
-    cover_image_url: "/covers/typography-in-motion.svg",
-    published_at: daysFromNow(-5, 14),
-    tags: ["design", "workshop", "typography"],
-  },
-  {
-    id: "evt-004",
-    owner_id: "usr-tbilisi-sessions",
-    slug: "courtyard-jazz-quartet",
-    title: "Courtyard Jazz: The Nino Katamadze Quartet",
-    short_description:
-      "An open-air set in a restored Sololaki courtyard. Limited to 120 seats.",
-    description:
-      "Doors 19:00, music 20:00. The courtyard is uncovered — the show moves indoors if it rains.",
-    category_id: "cat-concert",
-    event_type: "in_person",
-    status: "published",
-    start_at: daysFromNow(17, 20),
-    end_at: null,
-    timezone: "Asia/Tbilisi",
-    venue_name: "Sololaki Courtyard",
-    address: "7 Lermontov Street",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.6934,
-    longitude: 44.8005,
-    online_url: null,
-    is_free: false,
-    price_info: "55 GEL",
-    ticket_url: "https://example.com/tickets",
-    external_url: null,
-    cover_image_url: "/covers/courtyard-jazz.svg",
-    published_at: daysFromNow(-8, 11),
-    tags: ["jazz", "open-air"],
-  },
-  {
-    id: "evt-005",
-    owner_id: "usr-mono-collective",
-    slug: "systems-that-scale-down",
-    title: "Systems That Scale Down",
-    short_description:
-      "A talk on designing software for the small teams that actually build it.",
-    description:
-      "Most architecture advice is written for companies you do not work at. This talk is about the other case.",
-    category_id: "cat-conference",
-    event_type: "online",
-    status: "published",
-    start_at: daysFromNow(6, 17),
-    end_at: daysFromNow(6, 18, 30),
-    timezone: "Europe/Berlin",
-    venue_name: null,
-    address: null,
-    city: null,
-    country_code: null,
-    latitude: null,
-    longitude: null,
-    online_url: "https://example.com/stream",
-    is_free: true,
-    price_info: null,
-    ticket_url: null,
-    external_url: null,
-    cover_image_url: "/covers/systems-that-scale-down.svg",
-    published_at: daysFromNow(-2, 16),
-    tags: ["engineering", "talk"],
-  },
-  {
-    id: "evt-006",
-    owner_id: "usr-royal-district",
-    slug: "winter-shorts-festival",
-    title: "Winter Shorts Festival",
-    short_description:
-      "Three evenings of short-form theatre from eleven emerging companies.",
-    description:
-      "A festival pass covers all three evenings. Individual evening tickets also available.",
-    category_id: "cat-festival",
-    event_type: "in_person",
-    status: "published",
-    start_at: daysFromNow(28, 18),
-    end_at: daysFromNow(30, 23),
-    timezone: "Asia/Tbilisi",
-    venue_name: "Royal District Theatre",
-    address: "10 Abesadze Street",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.6977,
-    longitude: 44.8015,
-    online_url: null,
-    is_free: false,
-    price_info: "Pass 90 GEL / Evening 35 GEL",
-    ticket_url: "https://example.com/tickets",
-    external_url: null,
-    cover_image_url: "/covers/winter-shorts.svg",
-    published_at: daysFromNow(-20, 12),
-    tags: ["festival", "theatre"],
-  },
-  {
-    id: "evt-007",
-    owner_id: "usr-tbilisi-sessions",
-    slug: "spring-warehouse-opening",
-    title: "Spring Warehouse Opening",
-    short_description: "Season opener. Line-up still being confirmed.",
-    description: "",
-    category_id: "cat-concert",
-    event_type: "in_person",
-    status: "draft",
-    start_at: daysFromNow(45, 22),
-    end_at: null,
-    timezone: "Asia/Tbilisi",
-    venue_name: "Warehouse 41",
-    address: "41 Kakheti Highway",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.7151,
-    longitude: 44.8271,
-    online_url: null,
-    is_free: false,
-    price_info: null,
-    ticket_url: null,
-    external_url: null,
-    cover_image_url: null,
-    published_at: null,
-    tags: [],
-  },
-  {
-    id: "evt-008",
-    owner_id: "usr-tbilisi-sessions",
-    slug: "rooftop-session-cancelled",
-    title: "Rooftop Session with Kordz",
-    short_description: "Cancelled due to venue licensing. Refunds issued.",
-    description:
-      "This event has been cancelled. All ticket holders have been refunded automatically.",
-    category_id: "cat-concert",
-    event_type: "in_person",
-    status: "cancelled",
-    start_at: daysFromNow(11, 21),
-    end_at: null,
-    timezone: "Asia/Tbilisi",
-    venue_name: "Fabrika Rooftop",
-    address: "8 Egnate Ninoshvili Street",
-    city: "Tbilisi",
-    country_code: "GE",
-    latitude: 41.7008,
-    longitude: 44.8014,
-    online_url: null,
-    is_free: false,
-    price_info: "30 GEL",
-    ticket_url: null,
-    external_url: null,
-    cover_image_url: null,
-    published_at: daysFromNow(-15, 10),
-    tags: [],
-  },
-];
+export const EVENTS: EventRecord[] = [];
