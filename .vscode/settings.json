@@ -1,0 +1,19 @@
+{
+  // Live Server cannot run this project. Next.js compiles .tsx on the server,
+  // so the app must be served by `npm run dev` on port 3000 — a static file
+  // server has nothing it can usefully serve here.
+  "liveServer.settings.NoBrowser": true,
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.donotVerifyTags": true,
+
+  // Open the Next.js dev server inside VS Code's Simple Browser.
+  "livePreview.defaultPreviewPath": "/",
+
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "files.exclude": {
+    "**/.next": true
+  }
+}
