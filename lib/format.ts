@@ -54,7 +54,7 @@ export function eventTypeLabel(type: EventType) {
   return EVENT_TYPE_LABELS[type];
 }
 
-export const PUBLISHER_TYPE_LABELS: Record<PublisherType, string> = {
+const PUBLISHER_TYPE_LABELS: Record<PublisherType, string> = {
   artist: "Artist",
   band: "Band",
   theater: "Theater",

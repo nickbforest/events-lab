@@ -5,8 +5,6 @@ import { Field, fieldControlClass } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import { ImageUploader } from "@/components/forms/image-uploader";
 import { getCurrentProfile } from "@/features/profiles/queries";
-import { PUBLISHER_TYPE_LABELS } from "@/lib/format";
-import type { PublisherType } from "@/lib/types";
 
 /**
  * The links a publisher can surface on their public page.
@@ -67,35 +65,6 @@ export default async function DashboardProfilePage() {
                   className={fieldControlClass}
                   defaultValue={profile.display_name}
                 />
-              </Field>
-
-              <Field
-                id="username"
-                label="Username"
-                hint="This is your public URL. Changing it breaks existing links."
-              >
-                <input
-                  id="username"
-                  name="username"
-                  aria-describedby="username-hint"
-                  className={fieldControlClass}
-                  defaultValue={profile.username}
-                />
-              </Field>
-
-              <Field id="publisher_type" label="Publisher type">
-                <select
-                  id="publisher_type"
-                  name="publisher_type"
-                  className={fieldControlClass}
-                  defaultValue={profile.publisher_type}
-                >
-                  {Object.entries(PUBLISHER_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value as PublisherType}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
               </Field>
 
               <Field
