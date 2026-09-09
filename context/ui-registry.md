@@ -48,6 +48,7 @@ Avoid duplicate components.
 
 # Event Components
 
+* NewEventDialog
 * EventCard
 * EventGrid
 * EventList
@@ -381,7 +382,44 @@ styled `div` with a click handler — that keeps it keyboard-reachable and
 announced as a file control. Dashed border is reserved for "something goes
 here" surfaces (this and `EmptyState`); a filled panel always uses a solid
 border. The size and format constraint is always stated up front rather than
-surfaced as an error after the fact.
+surfaced as an error after the fact. `description` states what the image is
+used for below the frame, kept separate from the in-frame format/size `hint`;
+`className` constrains the frame, since a square target should not stretch the
+width of a form.
+
+
+### NewEventDialog
+
+File: components/events/new-event-dialog.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card`; backdrop `backdrop:bg-black/70 backdrop:backdrop-blur-sm` |
+| Border           | `border border-border`; header `border-b`, footer `border-t` |
+| Border radius    | `rounded-lg`                                        |
+| Text — primary   | header `font-display text-sm font-extrabold uppercase tracking-tight` |
+| Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
+| Spacing          | header/footer `px-6 py-4`, body `px-6 pt-6`         |
+| Hover state      | close button `hover:bg-white/5 hover:text-foreground` |
+| Shadow           | none — the backdrop does the separating             |
+| Accent usage     | the submit button only                              |
+
+**Pattern notes:**
+Built on the native `<dialog>` with `showModal()`, never a hand-rolled overlay
+— focus trapping, Escape, `inert` background and top-layer stacking all come
+from the platform, and those are exactly what custom modals get wrong. Sizing
+is `max-h-[90vh] w-[min(46rem,calc(100vw-2rem))]`, and the panel is a flex
+column: fixed header, `overflow-y-auto` body, footer pinned with a solid
+`bg-card` so content scrolls under it rather than through it. Backdrop clicks
+are detected by comparing `event.target` to the dialog element itself.
+
+Multiple triggers share one dialog through `NewEventProvider` — never mount a
+second copy per button, or the field ids duplicate. `NewEventTrigger` takes
+its classes from the caller so a trigger can be a primary button in a header
+and the CTA inside an `EmptyState` (via its `actionSlot`) without either one
+restating the dialog. Form content reuses `FormSection`, `Field` and
+`ImageUploader` exactly as a full-page form would.
 
 
 ---
