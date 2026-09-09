@@ -1,4 +1,9 @@
-import type { Category, EventRecord, Profile } from "./types";
+import type {
+  AnalyticsRecord,
+  Category,
+  EventRecord,
+  Profile,
+} from "./types";
 
 /**
  * Placeholder content for the visual prototype.
@@ -52,3 +57,12 @@ export const CURRENT_USER: Profile = {
 export const PROFILES: Profile[] = [CURRENT_USER];
 
 export const EVENTS: EventRecord[] = [];
+
+/**
+ * Recorded page views and ticket clicks for the dashboard overview.
+ *
+ * Empty for the same reason `EVENTS` is: a new account has no traffic, so the
+ * overview renders the zero state a real publisher sees on day one. Writes
+ * arrive with the tracking endpoint; until then nothing produces rows.
+ */
+export const ANALYTICS: AnalyticsRecord[] = [];

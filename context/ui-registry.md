@@ -85,7 +85,11 @@ Avoid duplicate components.
 
 * DashboardShell
 * DashboardHeader
+* Panel
+* RangeTabs
+* TrendChart
 * StatsCard
+* StatsCardRow
 * DataTable
 * EmptyState
 * LoadingState
@@ -96,6 +100,8 @@ Avoid duplicate components.
 
 # Forms
 
+* Field
+* FormSection
 * EventForm
 * OrganizationForm
 * ProfileForm
@@ -197,6 +203,186 @@ Events, Profile in the main nav, then a `border-t` footer holding the public
 preview link (`font-mono text-xs`, `ExternalLink` at `size-3`) and Sign out.
 Sign out is always last and uses the same idle-nav-item treatment rather than
 a destructive color — it is a navigation action, not a dangerous one.
+
+### DashboardHeader
+
+File: components/layout/dashboard-header.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                                    |
+| ---------------- | -------------------------------------------------------- |
+| Background       | none (sits on the page ground)                            |
+| Border           | none                                                      |
+| Border radius    | n/a                                                       |
+| Text — primary   | `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl` |
+| Text — secondary | kicker `font-mono text-xs uppercase tracking-widest text-primary`; description `font-mono text-sm text-muted-foreground` |
+| Spacing          | `mb-10`, `gap-4`, kicker `mb-2`, description `mt-2`       |
+| Hover state      | none                                                      |
+| Shadow           | none                                                      |
+| Accent usage     | the kicker, and only the kicker                           |
+
+**Pattern notes:**
+Every dashboard screen opens with this and nothing else — a lime mono kicker,
+the uppercase display title, an optional mono context line, then the screen's
+actions pushed right on `items-end`. Do not hand-roll a title block in a page;
+add a prop here instead. Actions are passed as nodes so a screen can carry a
+ghost + solid pair (Events) or a segmented control (Overview).
+
+### Panel
+
+File: components/dashboard/panel.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/30`                                        |
+| Border           | `border border-border`, header split `border-b`     |
+| Border radius    | `rounded-lg`                                        |
+| Text — primary   | `font-display text-sm font-extrabold uppercase tracking-tight` |
+| Text — secondary | `font-mono text-xs text-muted-foreground`           |
+| Spacing          | header `px-6 py-5`, body `p-6`, rows `py-3`         |
+| Hover state      | action link `hover:text-primary`                    |
+| Shadow           | none                                                |
+| Accent usage     | the header action link on hover only                |
+
+**Pattern notes:**
+The card used for every titled block on the dashboard — chart, upcoming
+events, most viewed. Header is always hairline-separated from the body; the
+optional action is a mono uppercase link on the right (`ALL`), never a button.
+Lists inside use `divide-y divide-border` with `first:pt-0 last:pb-0` so the
+row rhythm meets the padding cleanly. Use `PanelEmpty` for the nothing-yet
+line rather than the full `EmptyState` — inside a panel the surrounding header
+already says what is empty.
+
+### StatsCard / StatsCardRow
+
+File: components/dashboard/stats-card.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/30` on the row, tiles are transparent      |
+| Border           | row `border border-border`, tiles `divide-border`   |
+| Border radius    | `rounded-lg` on the row only                        |
+| Text — primary   | `font-display text-4xl font-extrabold tracking-tighter tabular-nums md:text-5xl` |
+| Text — secondary | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | tile `p-6`, label-to-value `mb-4`                   |
+| Hover state      | none — a stat tile is not interactive               |
+| Shadow           | none                                                |
+| Accent usage     | `accent` prop puts one value in `text-primary`      |
+
+**Pattern notes:**
+Tiles never float individually: they go inside `StatsCardRow`, which draws one
+border and separates them with hairlines (`divide-y` stacking to `sm:divide-x`).
+The optional `size-4` lucide icon sits top-right, muted and `aria-hidden` — it
+labels nothing the text does not already say. At most one tile per row carries
+`accent`; two competing lime numbers read as a chart, not a hierarchy. Values
+are always `tabular-nums` so they do not jitter between range switches.
+
+### RangeTabs
+
+File: components/dashboard/range-tabs.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | active `bg-primary`, idle transparent               |
+| Border           | `border border-border`, segments `border-l`         |
+| Border radius    | `rounded-md` on the group, segments square          |
+| Text — primary   | active `text-primary-foreground`                    |
+| Text — secondary | idle `text-muted-foreground`                        |
+| Spacing          | segments `px-4 py-2.5`                              |
+| Hover state      | `hover:bg-white/5 hover:text-foreground` (idle only)|
+| Shadow           | none                                                |
+| Accent usage     | the selected segment's lime fill                    |
+
+**Pattern notes:**
+A segmented control built from `Link`s, not buttons — the selection drives a
+server query, so it belongs in the URL and the page stays a Server Component.
+Selection is marked with `aria-current="page"`, and the group is a `<nav>` with
+an `aria-label`. All segments are `font-mono text-xs uppercase tracking-widest`.
+Reuse this shape for any other server-driven segmented filter.
+
+### TrendChart
+
+File: components/dashboard/trend-chart.tsx
+Last updated: 2026-09-09
+
+| Property         | Class / value                                      |
+| ---------------- | -------------------------------------------------- |
+| Background       | none — it sits inside a `Panel`                     |
+| Border           | grid lines `stroke-border` at 1px                   |
+| Border radius    | tooltip `rounded-md`, table wrapper `rounded-md`    |
+| Text — primary   | tooltip values `font-mono text-xs tabular-nums`     |
+| Text — secondary | axes and legend `font-mono text-[11px]` / `text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | legend `mt-4 gap-x-6`, table view `mt-4`            |
+| Hover state      | crosshair line + `r=4` dots + popover tooltip       |
+| Shadow           | tooltip `shadow-lg`                                 |
+| Accent usage     | series only: visits `#7E9F30`, clicks `#3B82F6`     |
+
+**Pattern notes:**
+Hand-rolled inline SVG on a `720 x 190` viewBox — no chart library, and the
+wide aspect ratio is deliberate so the plot never towers over the numbers it
+explains. Both series share one y-axis; a second scale would invent a
+correlation the data does not have. The two series colours are the only
+hardcoded hex values allowed in the UI: they are the accent stepped down until
+it passes the colour-vision and dark-surface checks, so re-validate before
+changing them rather than reaching for `--primary`. Ticket clicks additionally
+carries a `6 4` dash — with both series flat at zero one line hides the other,
+so identity never rests on colour alone, and the legend swatch mirrors the
+dash. Every chart ships the `View as table` disclosure.
+
+### Field / FormSection
+
+File: components/forms/field.tsx, components/forms/form-section.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | control `bg-card`                                   |
+| Border           | control `border border-border`; section heading `border-b border-border` |
+| Border radius    | `rounded-md`                                        |
+| Text — primary   | control `text-sm`                                   |
+| Text — secondary | label and hint `font-mono text-xs uppercase tracking-widest text-muted-foreground` (hint not uppercased) |
+| Spacing          | control `px-4 py-2.5`, label `mb-2`, hint `mt-1.5`, fields `space-y-5`, section `mb-10` |
+| Hover state      | none — focus is the state that matters              |
+| Shadow           | none                                                |
+| Accent usage     | section heading `text-primary`; focus `focus:border-primary` |
+
+**Pattern notes:**
+`fieldControlClass` is the single source for input, textarea and select
+styling — import it rather than restating the classes, so the three never
+drift apart. Every control has a real `<label htmlFor>`; when a `hint` is
+given the control must also carry `aria-describedby={`${id}-hint`}`, otherwise
+the guidance is sighted-only. Sections are grouped by `FormSection`, whose
+lime mono heading over a hairline rule is the only section marker used in
+dashboard forms. Two-column field grids are `sm:grid-cols-2` with `gap-5`.
+
+### ImageUploader
+
+File: components/forms/image-uploader.tsx
+Last updated: 2026-09-09
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | transparent; `hover:bg-white/[0.02]`                |
+| Border           | `border border-dashed border-border`                |
+| Border radius    | `rounded-md`                                        |
+| Text — primary   | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Text — secondary | constraint line `font-mono text-xs text-muted-foreground` |
+| Spacing          | `px-6 py-12`, `gap-3`                               |
+| Hover state      | `hover:border-primary/50 hover:bg-white/[0.02]`     |
+| Shadow           | none                                                |
+| Accent usage     | `focus-within:border-primary`                       |
+
+**Pattern notes:**
+The dashed frame is a `<label>` wrapping an `sr-only` file input, never a
+styled `div` with a click handler — that keeps it keyboard-reachable and
+announced as a file control. Dashed border is reserved for "something goes
+here" surfaces (this and `EmptyState`); a filled panel always uses a solid
+border. The size and format constraint is always stated up front rather than
+surfaced as an error after the fact.
+
 
 ---
 

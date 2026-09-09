@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarPlus, Pencil, Plus } from "lucide-react";
+import { CalendarPlus, Eye, Pencil, Plus } from "lucide-react";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents } from "@/features/events/queries";
@@ -12,24 +13,31 @@ export default async function DashboardEventsPage() {
 
   return (
     <div className="px-6 py-10 md:px-10">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">
-              Manage
-            </div>
-            <h1 className="font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl">
-              Your events
-            </h1>
-          </div>
-          <Link
-            href="/dashboard/events/new"
-            className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
-          >
-            <Plus className="size-4" aria-hidden />
-            New event
-          </Link>
-        </div>
+      <div className="mx-auto max-w-5xl">
+        <DashboardHeader
+          kicker="Events"
+          title="Events"
+          actions={
+            <>
+              <Link
+                href={`/u/${profile.username}`}
+                className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
+              >
+                <Eye className="size-4" aria-hidden />
+                Preview
+                <span className="sr-only"> your public page</span>
+              </Link>
+              <Link
+                href="/dashboard/events/new"
+                className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
+              >
+                <Plus className="size-4" aria-hidden />
+                New
+                <span className="sr-only"> event</span>
+              </Link>
+            </>
+          }
+        />
 
         {events.length > 0 ? (
           <div className="overflow-hidden rounded-lg border border-border">
