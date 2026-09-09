@@ -151,7 +151,7 @@ export default async function PublisherPage({
                 Publishing your own events?
               </p>
               <Link
-                href="/auth"
+                href="/auth?mode=signup"
                 className="font-display text-lg font-extrabold uppercase tracking-tight text-primary hover:underline"
               >
                 Claim your events-lab page →

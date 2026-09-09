@@ -59,7 +59,7 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
-                  href="/auth"
+                  href="/auth?mode=signup"
                   className="rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
                 >
                   Start publishing free
@@ -149,7 +149,7 @@ export default function LandingPage() {
               event and start sharing the link.
             </p>
             <Link
-              href="/auth"
+              href="/auth?mode=signup"
               className="inline-block rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
             >
               Create your page →
