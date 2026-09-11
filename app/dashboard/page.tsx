@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { MousePointerClick, Users } from "lucide-react";
-import { DashboardHeader } from "@/components/layout/dashboard-header";
+import Link from "next/link";
 import { Panel, PanelEmpty } from "@/components/dashboard/panel";
 import { RangeTabs } from "@/components/dashboard/range-tabs";
 import { StatsCard, StatsCardRow } from "@/components/dashboard/stats-card";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
 import {
   getAnalyticsOverview,
   parseAnalyticsRange,
@@ -52,7 +52,10 @@ export default async function DashboardOverviewPage({
         </div>
 
         <div className="mb-6">
-          <Panel title={analytics.rangeLabel} subtitle="Visits vs ticket clicks">
+          <Panel
+            title={analytics.rangeLabel}
+            subtitle="Visits vs ticket clicks"
+          >
             <TrendChart
               series={analytics.series}
               caption={`Daily site visits and ticket clicks, ${analytics.rangeLabel.toLowerCase()}`}

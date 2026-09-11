@@ -6,5 +6,7 @@ export default async function DashboardLayout({
 }: LayoutProps<"/dashboard">) {
   const profile = await getCurrentProfile();
 
-  return <DashboardShell username={profile.username}>{children}</DashboardShell>;
+  return (
+    <DashboardShell username={profile.username}>{children}</DashboardShell>
+  );
 }

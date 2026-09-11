@@ -1,9 +1,9 @@
 /**
  * Domain types for events-lab.
  *
- * These mirror the PostgreSQL schema agreed in the MVP-1 blueprint. When
- * Supabase is introduced these are replaced by generated database types —
- * field names are snake_case here for exactly that reason.
+ * These mirror the PostgreSQL schema agreed in the MVP-1 blueprint. When each
+ * domain schema is introduced, DAL adapters will map its generated Supabase
+ * row types to these domain types. Field names are snake_case for that reason.
  */
 
 export type PublisherType =

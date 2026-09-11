@@ -49,6 +49,8 @@ export function Panel({
 /** The quiet "nothing here yet" line used inside a panel. */
 export function PanelEmpty({ children }: { children: ReactNode }) {
   return (
-    <p className="py-10 text-center text-sm text-muted-foreground">{children}</p>
+    <p className="py-10 text-center text-sm text-muted-foreground">
+      {children}
+    </p>
   );
 }

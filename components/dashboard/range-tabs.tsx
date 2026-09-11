@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { cn } from "@/lib/format";
 import {
-  ANALYTICS_RANGES,
   ANALYTICS_RANGE_LABELS,
+  ANALYTICS_RANGES,
   type AnalyticsRange,
-} from "@/features/analytics/queries";
+} from "@/features/analytics/contracts";
+import { cn } from "@/lib/format";
 
 /**
  * Time-range selector for the overview.

@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DATE_RANGES } from "@/features/discovery/contracts";
 import { cn } from "@/lib/format";
-import { DATE_RANGES } from "@/features/discovery/queries";
 import type { Category } from "@/lib/types";
 
 const RANGE_LABELS: Record<(typeof DATE_RANGES)[number], string> = {
@@ -45,7 +45,11 @@ function FilterChip({
   );
 }
 
-export function DiscoverFilters({ categories }: { categories: Category[] }) {
+export function DiscoverFilters({
+  categories,
+}: {
+  categories: readonly Category[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -64,39 +68,40 @@ export function DiscoverFilters({ categories }: { categories: Category[] }) {
 
   return (
     <>
-      <form
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const value = new FormData(event.currentTarget).get("q");
-          update({ q: String(value ?? "").trim() || undefined });
-        }}
-        className="flex max-w-2xl items-center gap-2"
-      >
-        <div className="relative flex-1">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            // Uncontrolled and keyed on the URL, so navigation resets the
-            // field without an effect syncing state back into React.
-            key={activeQuery}
-            type="search"
-            name="q"
-            defaultValue={activeQuery}
-            placeholder="Search events, cities, venues…"
-            aria-label="Search events"
-            className="w-full rounded-md border border-border bg-card py-3 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
+      <search>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const value = new FormData(event.currentTarget).get("q");
+            update({ q: String(value ?? "").trim() || undefined });
+          }}
+          className="flex max-w-2xl items-center gap-2"
         >
-          Search
-        </button>
-      </form>
+          <div className="relative flex-1">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              // Uncontrolled and keyed on the URL, so navigation resets the
+              // field without an effect syncing state back into React.
+              key={activeQuery}
+              type="search"
+              name="q"
+              defaultValue={activeQuery}
+              placeholder="Search events, cities, venues…"
+              aria-label="Search events"
+              className="w-full rounded-md border border-border bg-card py-3 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
+          >
+            Search
+          </button>
+        </form>
+      </search>
 
       <div className="mt-8 flex flex-wrap items-center gap-2">
         <span
@@ -105,7 +110,8 @@ export function DiscoverFilters({ categories }: { categories: Category[] }) {
         >
           When
         </span>
-        <div className="flex flex-wrap gap-2" role="group" aria-labelledby="filter-when">
+        <fieldset className="flex flex-wrap gap-2">
+          <legend className="sr-only">Filter by date range</legend>
           {DATE_RANGES.map((range) => (
             <FilterChip
               key={range}
@@ -117,7 +123,7 @@ export function DiscoverFilters({ categories }: { categories: Category[] }) {
               {RANGE_LABELS[range]}
             </FilterChip>
           ))}
-        </div>
+        </fieldset>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -127,11 +133,8 @@ export function DiscoverFilters({ categories }: { categories: Category[] }) {
         >
           Category
         </span>
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-labelledby="filter-category"
-        >
+        <fieldset className="flex flex-wrap gap-2">
+          <legend className="sr-only">Filter by category</legend>
           <FilterChip
             isActive={!activeCategory}
             onClick={() => update({ category: undefined })}
@@ -147,7 +150,7 @@ export function DiscoverFilters({ categories }: { categories: Category[] }) {
               {category.label}
             </FilterChip>
           ))}
-        </div>
+        </fieldset>
       </div>
     </>
   );

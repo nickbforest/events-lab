@@ -148,8 +148,7 @@ Future services may be extracted only when real scale or operational requirement
 ## Code Quality
 
 * TypeScript
-* ESLint
-* Prettier
+* Biome for linting and formatting
 
 ## Source Control
 
@@ -1077,7 +1076,7 @@ Critical flows require tests.
 Minimum:
 
 * TypeScript
-* ESLint
+* Biome check
 * production build
 * unit tests
 * integration tests

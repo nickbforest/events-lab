@@ -1,4 +1,4 @@
-import { EVENT_STATUS_META, cn } from "@/lib/format";
+import { cn, EVENT_STATUS_META } from "@/lib/format";
 import type { EventStatus } from "@/lib/types";
 
 /**

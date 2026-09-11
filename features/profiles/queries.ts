@@ -1,22 +1,24 @@
-import { CURRENT_USER, PROFILES } from "@/lib/mock-data";
+import "server-only";
+
+import { createProfilesService } from "@/features/profiles/bll/profiles-service";
+import { profileUsernameSchema } from "@/features/profiles/contracts";
+import { InMemoryProfilesRepository } from "@/features/profiles/dal/in-memory-profiles-repository";
 import type { Profile } from "@/lib/types";
+
+const profilesService = createProfilesService(new InMemoryProfilesRepository());
 
 export async function getProfileByUsername(
   username: string,
 ): Promise<Profile | null> {
-  return PROFILES.find((p) => p.username === username) ?? null;
+  return profilesService.getProfileByUsername(
+    profileUsernameSchema.parse(username),
+  );
 }
 
 export async function listProfileUsernames(): Promise<string[]> {
-  return PROFILES.map((p) => p.username);
+  return profilesService.listProfileUsernames();
 }
 
-/**
- * The publisher the dashboard is currently acting as.
- *
- * Stands in for `requireUser()` reading the Supabase session. Until auth
- * exists the dashboard is pinned to a single placeholder publisher.
- */
 export async function getCurrentProfile(): Promise<Profile> {
-  return CURRENT_USER;
+  return profilesService.getCurrentProfile();
 }
