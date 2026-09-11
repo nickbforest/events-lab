@@ -14,7 +14,18 @@ Code must be:
 
 Prefer clarity over cleverness.
 
-Do not introduce abstractions without a real reason.
+Apply SOLID principles pragmatically:
+
+* Single responsibility: UI, transport, BLL, and DAL modules each have one job.
+* Open/closed: extend behavior through explicit contracts and composition when
+  variation is real.
+* Liskov substitution: implementations must preserve their declared contracts.
+* Interface segregation: expose small capability-focused interfaces.
+* Dependency inversion: business logic depends on DAL contracts, not Supabase
+  implementation details.
+
+Do not create abstractions without a real boundary or expected variation. SOLID is
+a design constraint, not a reason to add classes or indirection.
 
 ---
 
@@ -24,12 +35,17 @@ TypeScript is mandatory.
 
 Rules:
 
-* Avoid `any`.
-* Prefer explicit domain types.
+* Enable strict mode and keep strictness checks enabled.
+* Do not use `any`; use `unknown` at untrusted boundaries and narrow it with Zod.
+* Prefer inferred domain types over manually duplicated declarations.
+* Infer input/output types with `z.infer`, `z.input`, and `z.output`.
 * Use generated Supabase database types.
 * Validate runtime input with Zod.
 * Do not assume TypeScript provides runtime validation.
 * Keep types close to their domain when appropriate.
+* Add explicit return types at exported boundaries when they improve the contract;
+  allow local implementation details to be inferred.
+* Do not use unsafe type assertions to bypass validation or nullability.
 
 ---
 
@@ -56,32 +72,46 @@ Do not create a separate backend service for ordinary MVP functionality.
 
 ---
 
-# 5. Business Logic
+# 5. BLL and DAL
 
-Business logic must not live inside UI components.
+Every data-backed feature must have a Business Logic Layer (BLL) and a Data Access
+Layer (DAL), even when each begins as a small module.
 
-Bad:
-
-```text
-Page
- ├── JSX
- ├── database query
- ├── permission logic
- ├── validation
- └── business rules
-```
-
-Prefer:
+Required dependency direction:
 
 ```text
-Feature
- ├── components
- ├── actions
- ├── queries
- ├── schemas
- ├── types
- └── utils
+UI / server boundary → BLL → DAL → Supabase
 ```
+
+BLL responsibilities:
+
+* use-case orchestration;
+* authorization and domain rules;
+* state transitions and invariants;
+* transaction and idempotency decisions;
+* domain-facing results and errors.
+
+DAL responsibilities:
+
+* Supabase database, Auth, and Storage calls;
+* typed persistence and queries;
+* database-to-domain mapping;
+* provider error translation;
+* RPC/transaction calls requested by the BLL.
+
+Forbidden dependency paths:
+
+```text
+UI → DAL
+UI → Supabase
+Server Action / Route Handler → DAL
+BLL → Supabase
+DAL → BLL
+```
+
+Server Components, Server Actions, and Route Handlers must call a BLL use case.
+The DAL must not decide business policy, and the BLL must not depend on Supabase
+implementation details.
 
 ---
 
@@ -95,17 +125,29 @@ Validate:
 * server actions
 * API inputs
 * query parameters
+* route parameters
+* headers and cookies when their values affect behavior
+* environment variables at startup
+* webhooks
 * external data
+* file metadata and upload constraints
 
 Client validation improves UX.
 
-Server validation is mandatory.
+Server validation is mandatory and must happen before authorization-sensitive
+business logic or DAL calls. Never trust values merely because TanStack Form,
+TypeScript, or the application's own client produced them.
+
+Use one canonical schema per contract and derive client and server types from it.
+Return field-safe validation errors to users without exposing internals.
 
 ---
 
 # 7. Forms
 
-Use React Hook Form for complex forms.
+Use TanStack Form for all stateful application forms and compose it with shadcn/ui
+field primitives. Use shared Zod schemas for form validation and infer form values
+from defaults/schemas rather than declaring duplicate interfaces.
 
 Forms must have:
 
@@ -117,6 +159,32 @@ Forms must have:
 * success feedback
 * error feedback
 * keyboard accessibility
+
+Client validation must never be the only validation. The receiving Server Action
+or Route Handler must parse the payload again with Zod.
+
+## 7.1 TanStack Query
+
+Use TanStack Query for server state owned by Client Components:
+
+* centralize typed query-key factories by feature;
+* call typed transport functions rather than Axios directly from components;
+* invalidate or update affected queries after successful mutations;
+* render intentional loading, error, empty, and retry states;
+* do not copy server state into unrelated local React state.
+
+Do not force TanStack Query into Server Components. Server Components call BLL
+queries directly and pass serializable results to client boundaries when needed.
+
+## 7.2 Axios
+
+Axios is the standard HTTP client for application Route Handlers and external HTTP
+services. Configure shared instances/interceptors in `lib/http`, validate response
+payloads from untrusted services with Zod, and map Axios errors into typed
+application errors.
+
+Do not use Axios for direct Supabase access. Use the typed Supabase client inside
+the DAL.
 
 ---
 
@@ -132,6 +200,9 @@ Rules:
 * Use generated database types.
 * Preserve RLS.
 * Do not bypass RLS as a shortcut.
+* Keep browser, server, and privileged clients separate.
+* Keep all feature-level Supabase calls inside the DAL.
+* Derive actor identity from the authenticated server context, not submitted IDs.
 
 ---
 
@@ -211,6 +282,14 @@ instead of one enormous event component.
 Reusable UI primitives belong in the shared UI system.
 
 Domain-specific UI belongs in the domain feature.
+
+Use shadcn/ui primitives before creating a new base primitive. Use TanStack Table
+for application data tables and TanStack Charts for charts; wrap both in shared,
+accessible components that follow `context/ui-registry.md`.
+
+TanStack Table and Charts are logic/rendering engines, not replacements for the
+project's visual system. Use semantic markup, keyboard support, labels, readable
+fallbacks, and shadcn/Tailwind styling.
 
 ---
 
@@ -324,6 +403,14 @@ Critical user flows require E2E tests.
 
 Security-sensitive code must have explicit tests.
 
+Test layer boundaries:
+
+* BLL unit tests cover business rules without Supabase.
+* DAL integration tests cover queries, mappings, migrations, and provider errors.
+* RLS tests prove tenant and ownership isolation.
+* contract tests prove Zod accepts valid input and rejects invalid input.
+* UI tests cover TanStack Form, Query, Table, and Charts behavior that users rely on.
+
 A feature is not complete because the UI appears to work.
 
 ---
@@ -354,7 +441,11 @@ A feature is complete when:
 * types pass
 * lint passes
 * validation exists
+* all user-controlled inputs are validated again on the server
 * authorization exists
+* business logic is in the BLL
+* data access is in the DAL
+* strict TypeScript passes without `any` or unsafe boundary assertions
 * relevant tests exist
 * loading states exist
 * error states exist
@@ -385,5 +476,8 @@ Codex must not:
 * create duplicate components
 * bypass security
 * add unnecessary dependencies
+* bypass the BLL/DAL dependency direction
+* replace the mandated Zod, TanStack, Axios, shadcn/ui, or Supabase stack without
+  explicit architectural approval
 
 Architectural changes require explicit approval.

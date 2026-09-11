@@ -2,7 +2,7 @@
 
 name: architect
 description: Think through events-lab features like a senior engineer before writing code. Inspect the events-lab repository and canonical context, clarify only decisions that materially affect implementation, enforce the events-lab architecture, and produce a confirmed implementation blueprint before coding begins.
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
 # events-lab Architect
 
@@ -35,7 +35,7 @@ Start with:
 ```text
 context/Architecture.md
 context/build-plan.md
-context/code-standards.md
+context/code-standard.md
 context/progress-tracker.md
 context/ui-registry.md
 context/ui-rules.md
@@ -148,6 +148,12 @@ TypeScript
 pnpm
 Tailwind CSS
 shadcn/ui
+Zod
+TanStack Form
+TanStack Query
+TanStack Table
+TanStack Charts
+Axios
 Supabase
 PostgreSQL
 Supabase Auth
@@ -250,19 +256,32 @@ When a feature needs server-side behavior, identify the correct existing events-
 
 # 6. Data Access Boundary
 
-Before proposing data access, determine whether the operation belongs in:
+All application data must follow this dependency direction:
+
+```text
+UI / server boundary → BLL → DAL → Supabase
+```
+
+Before proposing an entry point, determine whether it belongs in:
 
 * a Server Component
 * Server Action
 * Route Handler
 * server-side service
-* Supabase client
-* repository/data-access module
-* another established project abstraction
+* BLL use case
+
+The BLL owns business rules, authorization orchestration, invariants, state
+transitions, transaction requirements, and domain errors. It must not call
+Supabase directly.
+
+The DAL is the only feature layer permitted to call Supabase. It owns typed
+queries, persistence, Auth/Storage adapters, row mapping, and provider error
+translation. It must not contain business policy.
 
 Follow the existing architecture.
 
-Do not create unnecessary abstraction layers.
+Do not bypass these layers because a feature appears small; keep the first version
+small and focused instead.
 
 Do not introduce an ORM simply to make database access look more familiar.
 
@@ -645,7 +664,7 @@ If a new reusable UI pattern is genuinely required:
 Read:
 
 ```text
-context/code-standards.md
+context/code-standard.md
 ```
 
 before proposing implementation.
@@ -839,7 +858,7 @@ After approval:
 
 1. update `context/Architecture.md`;
 2. update `context/build-plan.md` if required;
-3. update `context/code-standards.md` if required;
+3. update `context/code-standard.md` if required;
 4. update relevant UI context if necessary;
 5. implement the change;
 6. update `context/progress-tracker.md`.
@@ -1000,7 +1019,7 @@ produce the following plan:
 
 - `context/Architecture.md`: [yes/no + reason]
 - `context/build-plan.md`: [yes/no + reason]
-- `context/code-standards.md`: [yes/no + reason]
+- `context/code-standard.md`: [yes/no + reason]
 - `context/progress-tracker.md`: [yes/no + reason]
 - `context/ui-registry.md`: [yes/no + reason]
 - `context/ui-rules.md`: [yes/no + reason]
@@ -1085,12 +1104,18 @@ Do not approve a blueprint that:
 * introduces Redis/caching infrastructure prematurely;
 * creates a new UI pattern when an existing registered pattern can be reused;
 * creates duplicate data-access paths for the same feature;
+* allows UI, Server Actions, or Route Handlers to call the DAL or Supabase directly;
+* allows the BLL to call Supabase directly;
+* puts business policy in the DAL;
+* accepts user-controlled input without server-side Zod validation;
+* duplicates Zod-inferred or Supabase-generated types without justification;
+* replaces TanStack Form, Query, Table, Charts, Axios, or shadcn/ui without approval;
 * leaves an old implementation path active after replacing it;
 * silently changes an architectural decision;
 * leaves architecture changes undocumented;
 * ignores existing `context/` documentation;
 * contradicts `context/progress-tracker.md`;
-* violates `context/code-standards.md`;
+* violates `context/code-standard.md`;
 * creates authorization rules that exist only in the UI;
 * trusts unvalidated external input;
 * ignores concurrency or transaction requirements where they matter;

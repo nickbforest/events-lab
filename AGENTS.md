@@ -34,6 +34,9 @@ memory.md                    (project root, latest session handoff)
 
 ## Standing directives
 
+- Read `context/Architecture.md` and `context/code-standard.md` before production
+  code. Their validation, strict typing, SOLID, BLL/DAL, Supabase, Axios, TanStack,
+  and shadcn/ui rules are non-negotiable throughout the application.
 - Read `context/ui-registry.md` before writing any UI component, and match the patterns already registered there.
 - Run `/imprint` after UI work so the registry never drifts from the code.
 - Skills are additive to the Next.js rules above, not a replacement — the version notice in the managed block still applies.

@@ -18,7 +18,7 @@
 
 **Overall MVP:** 0%
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-11
 
 ---
 
@@ -26,9 +26,16 @@
 
 * [ ] Next.js initialized
 * [ ] TypeScript configured
+* [ ] Strict TypeScript compiler options enabled
 * [ ] pnpm configured
 * [ ] Tailwind configured
 * [ ] shadcn/ui configured
+* [ ] Zod configured
+* [ ] TanStack Form configured
+* [ ] TanStack Query configured
+* [ ] TanStack Table configured
+* [ ] TanStack Charts configured and version pinned
+* [ ] Axios client configured
 * [ ] ESLint configured
 * [ ] Prettier configured
 * [ ] Git initialized
@@ -37,6 +44,10 @@
 * [x] Supabase selected
 * [ ] Supabase project created
 * [ ] Supabase CLI configured
+* [ ] Supabase browser/server clients configured
+* [ ] Generated Supabase database types configured
+* [ ] BLL/DAL feature boundaries established
+* [ ] BLL/DAL import boundaries enforced
 * [ ] Environment variables configured
 * [ ] Initial CI configured
 
@@ -246,3 +257,10 @@
 | 2026-09-01 | Mapbox                      | Maps and geolocation                                                         |
 | 2026-09-01 | No native ticketing in MVP  | Focus on publishing/discovery                                                |
 | 2026-09-01 | Free publishing initially   | Validate product before monetization complexity                              |
+| 2026-09-11 | Mandatory BLL and DAL        | Keep domain policy separate from Supabase persistence                        |
+| 2026-09-11 | Zod at every trust boundary | User input requires runtime validation on the server                         |
+| 2026-09-11 | Strict inferred TypeScript  | Infer from Zod and generated Supabase types to prevent contract drift         |
+| 2026-09-11 | TanStack application stack  | Standardize forms, client server state, tables, and charts                    |
+| 2026-09-11 | Axios for HTTP               | Centralize HTTP behavior without replacing the Supabase SDK                   |
+| 2026-09-11 | shadcn/ui primitives        | Keep application UI accessible and visually consistent                       |
+| 2026-09-11 | SOLID module boundaries     | Keep feature layers focused, substitutable, and independently testable        |

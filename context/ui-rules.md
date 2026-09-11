@@ -345,3 +345,27 @@ When a genuinely new reusable pattern is required:
 1. Add it to `ui-registry.md`
 2. Document the rule here
 3. Implement it consistently
+
+---
+
+# 21. Forms, Tables, and Charts
+
+Use shadcn/ui primitives as the visual foundation for application interfaces.
+
+Use TanStack Form for stateful forms. Field components must surface Zod validation
+messages accessibly, preserve recoverable input, and expose pending/submission
+state without relying on color alone.
+
+Use TanStack Table as the headless engine for application data tables and render it
+with semantic, accessible shadcn/ui-compatible markup. Tables must support their
+intended keyboard behavior, responsive overflow, loading/error/empty states, and
+server-side pagination/filtering/sorting for non-trivial datasets.
+
+Use TanStack Charts through shared chart components. Every chart must have an
+accessible name and a readable text, summary, or table fallback when the visual is
+required to understand the data. Charts must follow the registered typography,
+spacing, color, tooltip, and reduced-motion patterns.
+
+Do not let TanStack headless defaults create a competing visual system. Register
+new reusable form, table, and chart patterns in `context/ui-registry.md` after they
+are implemented.

@@ -75,7 +75,7 @@ Future services may be extracted only when real scale or operational requirement
 
 * Next.js
 * React
-* TypeScript
+* TypeScript in strict mode
 
 ## Package manager
 
@@ -86,6 +86,8 @@ Future services may be extracted only when real scale or operational requirement
 * Tailwind CSS
 * shadcn/ui
 * Lucide Icons
+* TanStack Table (`@tanstack/react-table`) for data-table state and behavior
+* TanStack Charts (`@tanstack/charts`) for data visualization
 
 ## Backend / Application Layer
 
@@ -93,10 +95,12 @@ Future services may be extracted only when real scale or operational requirement
 * Server Components where appropriate
 * Server Actions where appropriate
 * Route Handlers for explicit API endpoints/integrations
+* Business Logic Layer (BLL) per domain
+* Data Access Layer (DAL) per domain
 
 ## Backend Platform
 
-* Supabase
+* Supabase (`@supabase/supabase-js` and `@supabase/ssr`)
 
 ## Database
 
@@ -118,11 +122,19 @@ Future services may be extracted only when real scale or operational requirement
 
 ## Validation
 
-* Zod
+* Zod (`zod`)
 
 ## Forms
 
-* React Hook Form
+* TanStack Form (`@tanstack/react-form`)
+
+## Client server state
+
+* TanStack Query (`@tanstack/react-query`)
+
+## HTTP client
+
+* Axios (`axios`)
 
 ## Maps / Geolocation
 
@@ -169,6 +181,36 @@ Supabase provides:
 This significantly reduces MVP infrastructure complexity.
 
 The project should use Supabase as an integrated backend platform rather than treating it only as a database provider.
+
+## 4.1 Supabase connection contract
+
+Use `@supabase/supabase-js` with `@supabase/ssr` for the Next.js connection.
+Client factories live in `lib/supabase` and must be separated by runtime:
+
+```text
+lib/supabase/client.ts   browser client
+lib/supabase/server.ts   cookie-aware, request-scoped server client
+lib/supabase/admin.ts    optional privileged server-only client
+```
+
+The public connection contract uses:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
+Any Supabase secret/service-role key is server-only, must never use a `NEXT_PUBLIC_`
+prefix, and may be imported only by an explicitly approved privileged DAL adapter.
+Normal user and organization operations must use the authenticated request-scoped
+client so PostgreSQL RLS remains effective.
+
+Zod must validate required environment variables when the application starts. Do
+not commit `.env.local` or real credentials; document required names in
+`.env.example` when the connection is implemented.
+
+The client factories are infrastructure only. Feature code reaches them through
+the DAL and must not create ad hoc Supabase clients.
 
 ---
 
@@ -851,7 +893,79 @@ as appropriate.
 
 Do not create a separate backend service during MVP.
 
-Business logic must not be embedded directly in page components.
+Every feature that reads or changes application data must follow this dependency
+direction:
+
+```text
+UI / Server Component
+        ↓
+Server Action / Route Handler / server-side query entry point
+        ↓
+Zod validation + authenticated actor context
+        ↓
+Business Logic Layer (BLL)
+        ↓
+Data Access Layer (DAL)
+        ↓
+Supabase client → PostgreSQL / Auth / Storage
+```
+
+## 33.1 Business Logic Layer (BLL)
+
+The BLL owns use cases and domain policy, including:
+
+* authorization and permission decisions;
+* domain invariants and state transitions;
+* orchestration of one or more DAL operations;
+* transaction and idempotency requirements;
+* domain-level errors and result types.
+
+The BLL must not render UI, parse raw HTTP requests, or issue Supabase queries
+directly. Server Components, Server Actions, Route Handlers, forms, query hooks,
+and UI components must not contain business rules.
+
+## 33.2 Data Access Layer (DAL)
+
+The DAL is the only application layer permitted to call Supabase for domain data.
+It owns:
+
+* typed PostgreSQL queries and persistence;
+* Supabase Auth and Storage operations behind explicit adapters;
+* mapping database rows to domain-facing data;
+* translating provider/database failures into defined data-access errors;
+* transaction/RPC calls required by the BLL.
+
+The DAL must use generated Supabase database types and must not contain UI,
+transport, or business-policy decisions. It must never bypass RLS as a shortcut.
+
+## 33.3 Contracts, server state, and HTTP
+
+All user-controlled or external values must be validated with Zod at the first
+trusted server boundary. Client-side validation exists for feedback only and does
+not replace server validation. Types should be inferred from Zod schemas and
+generated Supabase types instead of being duplicated by hand.
+
+TanStack Query is the standard for client-managed server state, including query
+keys, caching, invalidation, background refresh, and mutations. Prefer direct BLL
+calls from Server Components when client-side server-state behavior is unnecessary.
+
+Axios is the standard HTTP client for browser-to-Route-Handler calls and external
+HTTP APIs. Axios must not be inserted between the application and Supabase; the
+typed Supabase SDK is the approved data connection.
+
+## 33.4 UI data systems
+
+TanStack Form is the required form-state library and must integrate with shared
+Zod schemas. shadcn/ui is the required source of application UI primitives.
+
+TanStack Table is the required table engine, rendered through accessible
+shadcn/ui-compatible markup. TanStack Charts is the required chart engine. Because
+TanStack Charts is currently a pre-1.0 dependency, pin its version and keep it
+behind shared chart components so upgrades remain isolated.
+
+All table filtering, sorting, pagination, and chart aggregation over non-trivial
+datasets must happen server-side unless the bounded dataset is explicitly known to
+be small.
 
 ---
 
@@ -884,8 +998,19 @@ events-lab/
 │   ├── moderation/
 │   └── media/
 │
+│   Each feature may contain:
+│   └── [domain]/
+│       ├── components/
+│       ├── schemas/
+│       ├── bll/
+│       ├── dal/
+│       ├── queries/
+│       └── types/
+│
 ├── lib/
 │   ├── supabase/
+│   ├── http/
+│   ├── query/
 │   ├── validation/
 │   ├── permissions/
 │   ├── maps/
@@ -906,7 +1031,7 @@ events-lab/
 ├── context/
 │   ├── Architecture.md
 │   ├── build-plan.md
-│   ├── code-standards.md
+│   ├── code-standard.md
 │   ├── progress-tracker.md
 │   ├── ui-registry.md
 │   └── ui-rules.md
@@ -1037,6 +1162,14 @@ Codex must:
 * use PostgreSQL
 * use migrations for schema changes
 * preserve RLS
+* validate every user-controlled input with Zod at the server boundary
+* keep business rules in the BLL
+* keep Supabase access in the DAL
+* use strict TypeScript and infer types from schemas/generated types
+* follow SOLID principles at feature and module boundaries
+* use TanStack Form, Query, Table, and Charts for their assigned responsibilities
+* use Axios for HTTP and the Supabase SDK for Supabase
+* use shadcn/ui primitives for application UI
 * run relevant checks
 * update progress-tracker.md after meaningful work
 
@@ -1050,6 +1183,10 @@ Codex must NOT:
 * introduce a dedicated search engine without approval
 * disable RLS
 * expose secrets
+* access Supabase domain data directly from UI, actions, or route handlers
+* place business rules in the DAL or UI
+* trust client-side validation
+* duplicate schema-derived or generated types without a documented need
 * rewrite architecture during normal feature work
 * delete major infrastructure without approval
 * add large dependencies without justification
