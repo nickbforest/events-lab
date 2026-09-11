@@ -14,9 +14,16 @@ The goal is to reach a production-quality MVP without prematurely implementing f
 
 * [ ] Initialize Next.js
 * [ ] Configure TypeScript
+* [ ] Enable strict TypeScript compiler options
 * [ ] Configure pnpm
 * [ ] Configure Tailwind
 * [ ] Configure shadcn/ui
+* [ ] Configure Zod (`zod`)
+* [ ] Configure TanStack Form (`@tanstack/react-form`)
+* [ ] Configure TanStack Query (`@tanstack/react-query`) and query-key conventions
+* [ ] Configure TanStack Table (`@tanstack/react-table`)
+* [ ] Configure and pin TanStack Charts (`@tanstack/charts`)
+* [ ] Configure shared Axios (`axios`) clients and typed error mapping
 * [ ] Configure ESLint
 * [ ] Configure Prettier
 * [ ] Initialize Git
@@ -31,8 +38,20 @@ The goal is to reach a production-quality MVP without prematurely implementing f
 * [ ] Configure Supabase CLI
 * [ ] Configure local development
 * [ ] Connect application
+* [ ] Install `@supabase/supabase-js` and `@supabase/ssr`
 * [ ] Configure migrations
 * [ ] Configure generated database types
+* [ ] Create separate browser and server Supabase clients
+* [ ] Define privileged-client policy and keep service-role access server-only
+
+## Application boundaries
+
+* [ ] Create the per-feature BLL/DAL folder convention
+* [ ] Define BLL contracts and typed domain errors
+* [ ] Define DAL contracts and Supabase adapters
+* [ ] Add import-boundary enforcement for UI → BLL → DAL → Supabase
+* [ ] Add shared Zod contract and environment validation conventions
+* [ ] Add BLL unit-test and DAL/RLS integration-test templates
 
 ## Quality
 
@@ -280,6 +299,9 @@ Implement only required notifications:
 * [ ] Storage policies
 * [ ] Secret review
 * [ ] Input validation
+* [ ] Verify every user-controlled input is revalidated with Zod server-side
+* [ ] Verify all feature Supabase access goes through the DAL
+* [ ] Verify all domain policy is enforced by the BLL and RLS where applicable
 
 ## UX
 
