@@ -92,3 +92,23 @@ export interface EventWithRelations extends EventRecord {
   owner: Profile;
   category: Category;
 }
+
+/**
+ * A single recorded interaction with a publisher's public surface.
+ *
+ * One row per hit rather than a pre-aggregated counter: the dashboard needs
+ * to re-window the same data by day (7 / 30 / all), and totals cannot be
+ * re-bucketed after the fact. Aggregation happens in the query layer.
+ */
+export type AnalyticsMetric = "page_view" | "ticket_click";
+
+export interface AnalyticsRecord {
+  id: string;
+  /** The publisher whose surface was hit — the tenant this row is scoped to. */
+  owner_id: string;
+  /** The event that was viewed, or null for the publisher's profile page. */
+  event_id: string | null;
+  metric: AnalyticsMetric;
+  /** ISO 8601 with offset. */
+  occurred_at: string;
+}

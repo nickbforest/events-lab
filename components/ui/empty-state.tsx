@@ -11,11 +11,14 @@ export function EmptyState({
   title,
   description,
   action,
+  actionSlot,
 }: {
   icon?: ReactNode;
   title: string;
   description: string;
+  /** A link out. Use `actionSlot` instead when the action opens a dialog. */
   action?: { href: string; label: string };
+  actionSlot?: ReactNode;
 }) {
   return (
     <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-20 text-center">
@@ -26,6 +29,7 @@ export function EmptyState({
       <p className="mb-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
+      {actionSlot}
       {action && (
         <Link
           href={action.href}

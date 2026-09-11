@@ -1,0 +1,56 @@
+import { Upload } from "lucide-react";
+import { cn } from "@/lib/format";
+
+/**
+ * Cover/avatar upload target.
+ *
+ * The dashed frame is a `<label>` wrapping a real file input rather than a
+ * styled div, so it is keyboard-reachable and announced as a file control.
+ * Storage is Supabase Storage once the write path exists; nothing is uploaded
+ * from here yet.
+ */
+export function ImageUploader({
+  id,
+  label,
+  hint = "PNG, JPG up to 5MB",
+  description,
+  accept = "image/png,image/jpeg",
+  className,
+}: {
+  id: string;
+  label: string;
+  /** Format and size limit, stated inside the frame. */
+  hint?: string;
+  /** What the image is used for, stated below the frame. */
+  description?: string;
+  accept?: string;
+  /** Constrains the frame — a square target should not span the form. */
+  className?: string;
+}) {
+  return (
+    <div>
+      <span className="mb-2 block font-mono text-xs uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      <label
+        htmlFor={id}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border px-6 py-12 text-center transition-colors hover:border-primary/50 hover:bg-white/[0.02] focus-within:border-primary",
+          className,
+        )}
+      >
+        <Upload className="size-5 text-muted-foreground" aria-hidden />
+        <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          Click to upload
+        </span>
+        <span className="font-mono text-xs text-muted-foreground">{hint}</span>
+        <input id={id} type="file" accept={accept} className="sr-only" />
+      </label>
+      {description && (
+        <p className="mt-1.5 font-mono text-xs leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
