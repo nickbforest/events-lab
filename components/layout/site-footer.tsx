@@ -11,7 +11,7 @@ export function SiteFooter() {
           <Link href="/discover" className="transition-colors hover:text-foreground">
             Discover
           </Link>
-          <Link href="/auth" className="transition-colors hover:text-foreground">
+          <Link href="/auth?mode=signup" className="transition-colors hover:text-foreground">
             Start publishing
           </Link>
           <span>Prototype — no live data</span>
