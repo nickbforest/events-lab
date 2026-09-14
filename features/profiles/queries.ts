@@ -1,24 +1,45 @@
 import "server-only";
 
-import { createProfilesService } from "@/features/profiles/bll/profiles-service";
+import { verifySession } from "@/features/auth/queries";
 import { profileUsernameSchema } from "@/features/profiles/contracts";
-import { InMemoryProfilesRepository } from "@/features/profiles/dal/in-memory-profiles-repository";
+import {
+  getProfilesService,
+  getPublicProfilesService,
+} from "@/features/profiles/service";
+import { ApplicationError } from "@/lib/errors";
 import type { Profile } from "@/lib/types";
-
-const profilesService = createProfilesService(new InMemoryProfilesRepository());
 
 export async function getProfileByUsername(
   username: string,
 ): Promise<Profile | null> {
-  return profilesService.getProfileByUsername(
+  return getPublicProfilesService().getProfileByUsername(
     profileUsernameSchema.parse(username),
   );
 }
 
 export async function listProfileUsernames(): Promise<string[]> {
-  return profilesService.listProfileUsernames();
+  return getPublicProfilesService().listProfileUsernames();
+}
+
+export async function isUsernameAvailable(username: string): Promise<boolean> {
+  return getPublicProfilesService().isUsernameAvailable(
+    profileUsernameSchema.parse(username),
+  );
 }
 
 export async function getCurrentProfile(): Promise<Profile> {
-  return profilesService.getCurrentProfile();
+  const user = await verifySession();
+  const service = await getProfilesService();
+  const profile = await service.getProfileById(user.id);
+
+  if (!profile) {
+    // The signup trigger makes this unreachable; if it happens the account is
+    // genuinely broken and should not be papered over with a placeholder.
+    throw new ApplicationError(
+      "NOT_FOUND",
+      "Signed-in account has no profile.",
+    );
+  }
+
+  return profile;
 }

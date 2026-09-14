@@ -85,24 +85,43 @@ phase replaces it with Supabase Auth and a Next.js session-refresh proxy.
 
 # Phase 1 — Authentication
 
+## Completion record — 2026-09-14
+
+Supabase Auth is live and the localStorage prototype is deleted. See
+`context/progress-tracker.md` for the full record, validation results and open
+follow-ups.
+
+Two deviations from the original plan, both agreed before implementation:
+
+1. **The `profiles` table was built here, not in Phase 2.** Authentication
+   without an identity row leaves the dashboard and `/u/:username` broken. The
+   full column set was created in one migration because every optional field is
+   nullable — Phase 2 now owns profile *editing*, not profile *schema*.
+2. **Google OAuth was dropped from this phase** for want of Google Cloud
+   credentials, and its non-functional button was removed rather than left in
+   place.
+
 Implement:
 
-* [ ] Email/password registration
-* [ ] Login
-* [ ] Logout
-* [ ] Email verification
-* [ ] Password reset
-* [ ] Google OAuth
-* [ ] Protected routes
-* [ ] Session handling
+* [x] Email/password registration
+* [x] Login
+* [x] Logout
+* [x] Email verification
+* [x] Password reset
+* [~] Google OAuth — deferred, not cancelled
+* [x] Protected routes
+* [x] Session handling
 
 ---
 
 # Phase 2 — User Profiles
 
+The table, its RLS policies and the Supabase DAL adapter already exist from
+Phase 1. This phase is the editing experience, not the schema.
+
 Implement:
 
-* [ ] User profile
+* [x] User profile — table and public page exist
 * [ ] Avatar
 * [ ] Name
 * [ ] Basic profile information
