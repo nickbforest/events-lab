@@ -80,6 +80,34 @@
       }
     },
     {
+      "includes": ["features/*/actions.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/features/*/dal", "@/features/*/dal/**"],
+                    "message": "Server Actions must call a feature BLL entry point."
+                  },
+                  {
+                    "group": [
+                      "@/lib/supabase",
+                      "@/lib/supabase/**",
+                      "@supabase/*"
+                    ],
+                    "message": "Server Actions must not access Supabase directly."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["features/*/bll/**/*.{ts,tsx}"],
       "linter": {
         "rules": {

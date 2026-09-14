@@ -699,6 +699,40 @@ Future:
 
 Authentication must be enforced server-side.
 
+## 24.1 Implemented contract (Phase 1, 2026-09-14)
+
+**Session transport.** Next.js 16 renamed Middleware to **Proxy**. `proxy.ts`
+at the repository root refreshes the Supabase session and writes rotated auth
+cookies, because Server Components cannot set cookies. It also performs an
+optimistic redirect away from `/dashboard`.
+
+**The proxy is not the authorization boundary.** It runs on prefetches and only
+reads cookie state. The boundary is `verifySession()` in
+`features/auth/queries.ts`, memoised with React `cache()` and called next to the
+data. Do not move this check into a layout: Next.js layouts do not re-render on
+client-side navigation and do not prevent nested segments or Server Actions from
+running.
+
+**Profile creation is a database trigger.** `handle_new_user` creates the
+`profiles` row from signup metadata. This is a deliberate, documented exception
+to "business rules live in the BLL": when email confirmation is enabled, signup
+returns no session, so the application has no authenticated context in which to
+insert the row. The trigger makes an auth user without a profile impossible.
+Username *uniqueness and format* are database constraints for the same reason;
+*reserved names* remain BLL policy. Trigger functions must have `EXECUTE`
+revoked from `anon` and `authenticated`, since `public` is an exposed schema.
+
+**Email verification is environment-split.** Production requires confirmation
+(`mailer_autoconfirm = false`). Local development may disable it for iteration
+speed. Client code must therefore handle both outcomes of sign-up — a session,
+or no session and a "check your email" screen — rather than assuming either.
+
+**Public reads use a cookie-free client.** `lib/supabase/public.ts` provides an
+anonymous client for static generation and public pages, where `cookies()` is
+unavailable. It is strictly less privileged than the request-scoped client and
+sees only rows with a public select policy. It is not a privileged client and
+must never be given the service-role key.
+
 ---
 
 # 25. Authorization

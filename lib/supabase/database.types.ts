@@ -14,7 +14,54 @@ export type Database = {
   };
   public: {
     Tables: {
-      [_ in never]: never;
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          bio: string | null;
+          city: string | null;
+          country_code: string | null;
+          cover_url: string | null;
+          created_at: string;
+          display_name: string;
+          id: string;
+          publisher_type: Database["public"]["Enums"]["publisher_type"];
+          social_links: Json;
+          updated_at: string;
+          username: string;
+          website_url: string | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          city?: string | null;
+          country_code?: string | null;
+          cover_url?: string | null;
+          created_at?: string;
+          display_name: string;
+          id: string;
+          publisher_type?: Database["public"]["Enums"]["publisher_type"];
+          social_links?: Json;
+          updated_at?: string;
+          username: string;
+          website_url?: string | null;
+        };
+        Update: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          city?: string | null;
+          country_code?: string | null;
+          cover_url?: string | null;
+          created_at?: string;
+          display_name?: string;
+          id?: string;
+          publisher_type?: Database["public"]["Enums"]["publisher_type"];
+          social_links?: Json;
+          updated_at?: string;
+          username?: string;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -23,7 +70,21 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      publisher_type:
+        | "artist"
+        | "band"
+        | "theater"
+        | "cinema"
+        | "sports_team"
+        | "event_organizer"
+        | "school"
+        | "university"
+        | "conference_organizer"
+        | "church"
+        | "community"
+        | "venue"
+        | "business"
+        | "other";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -153,6 +214,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      publisher_type: [
+        "artist",
+        "band",
+        "theater",
+        "cinema",
+        "sports_team",
+        "event_organizer",
+        "school",
+        "university",
+        "conference_organizer",
+        "church",
+        "community",
+        "venue",
+        "business",
+        "other",
+      ],
+    },
   },
 } as const;

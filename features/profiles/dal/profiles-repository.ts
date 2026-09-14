@@ -1,6 +1,7 @@
 import type { Profile } from "@/lib/types";
 
 export interface ProfilesRepository {
-  getCurrentProfile(): Promise<Profile>;
-  listProfiles(): Promise<readonly Profile[]>;
+  findById(id: string): Promise<Profile | null>;
+  findByUsername(username: string): Promise<Profile | null>;
+  isUsernameTaken(username: string): Promise<boolean>;
 }

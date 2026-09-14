@@ -8,10 +8,10 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { signOutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/format";
-import { logout } from "@/lib/local-auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", Icon: LayoutDashboard, exact: true },
@@ -32,7 +32,6 @@ export function DashboardShell({
   username: string;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -78,17 +77,17 @@ export function DashboardShell({
               <ExternalLink className="size-3" aria-hidden />
               events-lab/{username}
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                logout();
-                router.push("/auth?mode=login");
-              }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
-            >
-              <LogOut className="size-4" aria-hidden />
-              Sign out
-            </button>
+            {/* A form, not a click handler: signing out clears httpOnly
+                cookies, which only the server can do. */}
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+              >
+                <LogOut className="size-4" aria-hidden />
+                Sign out
+              </button>
+            </form>
           </div>
         </div>
       </aside>

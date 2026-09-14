@@ -10,4 +10,16 @@ Run the suite against the local Supabase stack with:
 pnpm db:test
 ```
 
-Phase 0 has no domain tables, so there are no table-specific RLS assertions yet.
+## Current coverage
+
+| File | Covers |
+| --- | --- |
+| `profiles_rls.test.sql` | Phase 1 `profiles`: trigger-created rows, username uniqueness and format, public read, self-only update. |
+
+## Known gap
+
+`pnpm db:test` needs the local Supabase stack, which needs Docker or Podman.
+Neither is installed on the current workstation, so these assertions are
+committed but have not been executed. Phase 1 migrations were applied to the
+hosted project instead. Run this suite once a container runtime is available,
+before relying on the policies it describes.

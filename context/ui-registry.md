@@ -335,7 +335,7 @@ descriptive label and the `View as table` disclosure with all plotted values.
 ### Field / FormSection
 
 File: components/forms/field.tsx, components/forms/form-section.tsx
-Last updated: 2026-09-09
+Last updated: 2026-09-14
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -344,7 +344,8 @@ Last updated: 2026-09-09
 | Border radius    | `rounded-md`                                        |
 | Text — primary   | control `text-sm`                                   |
 | Text — secondary | label and hint `font-mono text-xs uppercase tracking-widest text-muted-foreground` (hint not uppercased) |
-| Spacing          | control `px-4 py-2.5`, label `mb-2`, hint `mt-1.5`, fields `space-y-5`, section `mb-10` |
+| Text — error     | `mt-1.5 font-mono text-xs leading-relaxed text-destructive` |
+| Spacing          | control `px-4 py-2.5`, label `mb-2`, hint/error `mt-1.5`, fields `space-y-5`, section `mb-10` |
 | Hover state      | none — focus is the state that matters              |
 | Shadow           | none                                                |
 | Accent usage     | section heading `text-primary`; focus `focus:border-primary` |
@@ -352,11 +353,55 @@ Last updated: 2026-09-09
 **Pattern notes:**
 `fieldControlClass` is the single source for input, textarea and select
 styling — import it rather than restating the classes, so the three never
-drift apart. Every control has a real `<label htmlFor>`; when a `hint` is
-given the control must also carry `aria-describedby={`${id}-hint`}`, otherwise
-the guidance is sighted-only. Sections are grouped by `FormSection`, whose
-lime mono heading over a hairline rule is the only section marker used in
-dashboard forms. Two-column field grids are `sm:grid-cols-2` with `gap-5`.
+drift apart. Every control has a real `<label htmlFor>`.
+
+A field carries at most one message: `error` replaces `hint` rather than
+stacking under it, because once a control is invalid the correction is the only
+guidance that matters. Wire the control with `fieldDescribedBy({ id, hasHint,
+hasError })` — it returns `${id}-error` or `${id}-hint` so `aria-describedby`
+always points at the message actually on screen — and set `aria-invalid` when
+an error is present. Never surface an error through colour alone.
+
+Sections are grouped by `FormSection`, whose lime mono heading over a hairline
+rule is the only section marker used in dashboard forms. Two-column field grids
+are `sm:grid-cols-2` with `gap-5`.
+
+### AuthCard
+
+File: components/auth/auth-card.tsx
+Last updated: 2026-09-14
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/40`                                        |
+| Border           | `border border-border`                              |
+| Border radius    | `rounded-lg`                                        |
+| Text — primary   | heading `font-display text-2xl font-extrabold uppercase tracking-tight` |
+| Text — secondary | subheading `text-sm text-muted-foreground`; body `font-mono text-xs leading-relaxed text-muted-foreground` |
+| Spacing          | card `p-8`, wordmark `mb-10`, heading `mb-1`, subheading `mb-8`, fields `space-y-5`, footer `mt-6` |
+| Hover state      | submit `hover:brightness-110`; links `hover:underline` |
+| Shadow           | none                                                |
+| Accent usage     | wordmark hyphen, footer link, and the submit fill   |
+
+**Pattern notes:**
+The shell for every signed-out screen — signup, login, forgot password, update
+password, check email, link expired. Width is fixed at `max-w-sm` and the page
+centres it with `flex flex-1 flex-col items-center justify-center px-6 py-16`.
+Do not hand-roll this frame in a new auth route; pass `heading`, `subheading`
+and an optional `footer` instead.
+
+`authSubmitClass` is the single source for the primary auth button and carries
+`disabled:cursor-not-allowed disabled:opacity-60`, since every auth form
+disables its button while submitting and swaps the label to a present
+participle ("Logging in…"). Secondary actions inside the card use the outlined
+treatment `border border-border … hover:bg-white/5` rather than a second fill —
+one lime button per card.
+
+Form-level failures render through `FormAlert` (`role="alert"`, `text-sm
+text-destructive`) directly above the submit button; field-level failures belong
+to `Field`. Advisory confirmations — username availability, "link resent" — use
+an `aria-live="polite"` paragraph in `font-mono text-xs text-primary`, never an
+alert, because they are not errors.
 
 ### ImageUploader
 

@@ -14,12 +14,13 @@
 
 # Current Project Status
 
-**Current phase:** Phase 1 — Authentication
+**Current phase:** Phase 2 — Profiles
 
-**Overall MVP:** Foundation complete; the UI prototype remains mock-backed until
-the feature phases replace its temporary adapters.
+**Overall MVP:** Authentication is real. Profiles exist as a table and are
+created at signup; events, discovery and analytics remain mock-backed until
+their own phases replace those adapters.
 
-**Last updated:** 2026-09-11
+**Last updated:** 2026-09-14
 
 ---
 
@@ -126,20 +127,66 @@ protected dashboard routes, and the Next.js session-refresh proxy.
 
 # Phase 1 — Authentication
 
-* [ ] Email/password registration
-* [ ] Login
-* [ ] Logout
-* [ ] Email verification
-* [ ] Password reset
-* [ ] Google OAuth
-* [ ] Session management
-* [ ] Protected routes
+* [x] Email/password registration
+* [x] Login
+* [x] Logout
+* [x] Email verification
+* [x] Password reset
+* [~] Google OAuth — removed from Phase 1; no Google Cloud credentials yet
+* [x] Session management
+* [x] Protected routes
+
+## Phase 1 completion record — 2026-09-14
+
+Supabase Auth replaces the localStorage prototype. `lib/local-auth.ts` is
+deleted, not dormant.
+
+| Area | What was built |
+| --- | --- |
+| Schema | `profiles` (migration `20260914120000`) keyed to `auth.users`, with the full column set from `lib/types.ts` so Phase 2 adds no migration. RLS on: public select, self-only update, no user insert path. |
+| Profile creation | `handle_new_user` trigger reads `username`/`display_name` from signup metadata. Chosen over an application insert because signup returns no session when confirmation is required, and the trigger makes "auth user without a profile" unrepresentable. Migration `20260914120500` revokes its `EXECUTE` from `anon`/`authenticated` after the linter flagged it as RPC-reachable. |
+| Username | Chosen at signup, unique, lowercase, format-constrained in the database and mirrored in `usernameSchema`. Reserved names are BLL policy. Live availability via `/api/auth/username-available` (Axios + TanStack Query). |
+| Layers | `features/auth` contracts → DAL contract → Supabase adapter → BLL → composition root, with Server Actions as the only mutation entry point. Provider errors are translated in the DAL; user-facing wording lives in the actions. |
+| Sessions | `proxy.ts` (Next.js 16 renamed Middleware) refreshes cookies and redirects optimistically. `verifySession()` next to the data is the real boundary, because layouts neither re-render on navigation nor stop nested segments rendering. |
+| Public reads | `lib/supabase/public.ts` adds a cookie-free anon client so `generateStaticParams` and public profile pages work without a request context. |
+| UI | TanStack Form + shared Zod schemas throughout, reusing `Field`/`fieldControlClass`; `Field` gained an `error` slot. New `AuthCard` shell covers signup, login, forgot-password, update-password, check-email and link-expired. |
+
+### Validation results
+
+| Check | Result |
+| --- | --- |
+| `tsc --noEmit` | Passed. |
+| `biome check .` | Passed across 106 files. |
+| `vitest run` | Passed 6 files, 45 tests. |
+| `next build` | Passed; 16 pages generated, proxy registered. |
+| Trigger and constraints | Verified against the hosted project: `ProbeUser` → `probeuser`, defaults applied, cascade delete confirmed, probe row removed. |
+| Policy surface | 2 policies, no user INSERT policy, `anon` can select, `anon` cannot execute `handle_new_user`. |
+| Routes | `/dashboard` → 307 to `/auth?mode=login`; availability API returns true/false/400 correctly. |
+| `supabase test db` | Not run — pgTAP needs Docker or Podman, still absent. Assertions are committed in `supabase/tests/database/profiles_rls.test.sql`. |
+
+### Open follow-ups
+
+1. **Local signup friction.** The hosted project has `mailer_autoconfirm: false`,
+   and there is no local Supabase stack (no Docker), so development signups
+   require a real emailed link. The `enable_confirmations = false` setting in
+   `supabase/config.toml` only applies to a local stack that cannot currently
+   run. Either disable email confirmation in the hosted dashboard while in
+   development, or install a container runtime.
+2. **Redirect allow-list.** Confirm `http://localhost:3000` and the eventual
+   production origin are listed in the hosted project's URL configuration, or
+   confirmation links will be rejected.
+3. **Dashboard shows empty states.** Event queries filter by owner id and the
+   mock events belong to the old mock user, so a real account sees nothing
+   until Phase 4/5.
+4. **Hosted password minimum** is still 6; `config.toml` and `passwordSchema`
+   both use 8. Align it in the dashboard.
 
 ---
 
 # Phase 2 — Profiles
 
-* [ ] Profile schema
+* [x] Profile schema — created in Phase 1 with the full column set; no further
+  migration needed for the fields below
 * [ ] Profile page
 * [ ] Profile editing
 * [ ] Avatar
@@ -336,3 +383,10 @@ protected dashboard routes, and the Next.js session-refresh proxy.
 | 2026-09-11 | shadcn/ui primitives        | Keep application UI accessible and visually consistent                       |
 | 2026-09-11 | SOLID module boundaries     | Keep feature layers focused, substitutable, and independently testable        |
 | 2026-09-11 | Biome for code quality      | Use one tool for repository linting and formatting                            |
+| 2026-09-14 | Profiles table in Phase 1   | Auth without an identity row leaves the dashboard and `/u/:username` broken   |
+| 2026-09-14 | Full profile columns now    | Every extra field is nullable, so one migration beats a second one in Phase 2 |
+| 2026-09-14 | Trigger creates the profile | Only mechanism that works whether or not signup returns a session             |
+| 2026-09-14 | Username chosen at signup   | It is the public URL; auto-assigning then renaming would break shared links   |
+| 2026-09-14 | Gate in `verifySession()`   | Next.js 16 layouts do not re-render on navigation and cannot stop segments    |
+| 2026-09-14 | Cookie-free public client   | `cookies()` is unavailable during static generation of public profile pages   |
+| 2026-09-14 | Google OAuth deferred       | No Google Cloud credentials; dead UI removed rather than left non-functional  |

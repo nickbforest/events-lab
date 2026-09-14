@@ -14,11 +14,13 @@ export function Field({
   id,
   label,
   hint,
+  error,
   children,
 }: {
   id: string;
   label: string;
   hint?: string;
+  error?: string;
   children: ReactNode;
 }) {
   return (
@@ -30,14 +32,40 @@ export function Field({
         {label}
       </label>
       {children}
-      {hint && (
+      {/* The error replaces the hint rather than stacking under it: once a
+          control is invalid, the correction is the only guidance that matters. */}
+      {error ? (
         <p
-          id={`${id}-hint`}
-          className="mt-1.5 font-mono text-xs leading-relaxed text-muted-foreground"
+          id={`${id}-error`}
+          className="mt-1.5 font-mono text-xs leading-relaxed text-destructive"
         >
-          {hint}
+          {error}
         </p>
+      ) : (
+        hint && (
+          <p
+            id={`${id}-hint`}
+            className="mt-1.5 font-mono text-xs leading-relaxed text-muted-foreground"
+          >
+            {hint}
+          </p>
+        )
       )}
     </div>
   );
+}
+
+/** Points a control at whichever message is currently rendered beneath it. */
+export function fieldDescribedBy({
+  id,
+  hasHint = false,
+  hasError = false,
+}: {
+  id: string;
+  hasHint?: boolean;
+  hasError?: boolean;
+}): string | undefined {
+  if (hasError) return `${id}-error`;
+  if (hasHint) return `${id}-hint`;
+  return undefined;
 }

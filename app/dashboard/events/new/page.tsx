@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import Link from "next/link";
+import { verifySession } from "@/features/auth/queries";
 import { listEventCategories } from "@/features/events/queries";
 
 /**
@@ -75,6 +76,7 @@ function Field({
 }
 
 export default async function NewEventPage() {
+  await verifySession();
   const categories = await listEventCategories();
   return (
     <div className="px-6 py-10 md:px-10">
