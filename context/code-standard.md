@@ -433,6 +433,15 @@ Avoid huge unrelated commits.
 
 ---
 
+# 20.1 Linting and formatting
+
+Use Biome as the repository's single linting and formatting tool. Keep its
+configuration and scripts at the project root, and run the Biome check in CI.
+Remove the temporary ESLint setup when Biome is introduced so competing lint
+rules do not drift.
+
+---
+
 # 21. Definition of Done
 
 A feature is complete when:

@@ -1,0 +1,135 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!!**/.next",
+      "!!**/node_modules",
+      "!!**/coverage",
+      "!!**/pnpm-lock.yaml"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["app/globals.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/features/*/dal", "@/features/*/dal/**"],
+                    "message": "UI and server boundaries must call a feature BLL entry point."
+                  },
+                  {
+                    "group": [
+                      "@/lib/supabase",
+                      "@/lib/supabase/**",
+                      "@supabase/*"
+                    ],
+                    "message": "UI must not access Supabase infrastructure directly."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["features/*/bll/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/lib/supabase",
+                      "@/lib/supabase/**",
+                      "@supabase/*"
+                    ],
+                    "message": "BLL modules depend on DAL contracts, not Supabase."
+                  },
+                  {
+                    "group": ["@/app/**", "@/components/**"],
+                    "message": "BLL modules must not depend on UI modules."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["features/*/dal/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/components/**",
+                      "@/features/*/bll/**"
+                    ],
+                    "message": "DAL modules must not depend on UI or BLL implementations."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

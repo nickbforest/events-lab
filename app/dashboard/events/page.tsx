@@ -1,24 +1,26 @@
-import Link from "next/link";
 import { CalendarPlus, Eye, Pencil, Plus } from "lucide-react";
-import { DashboardHeader } from "@/components/layout/dashboard-header";
+import Link from "next/link";
+import { EventStatusBadge } from "@/components/events/event-status-badge";
 import {
   NewEventProvider,
   NewEventTrigger,
 } from "@/components/events/new-event-dialog";
-import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getOwnedEvents } from "@/features/events/queries";
+import { getOwnedEvents, listEventCategories } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
-import { CATEGORIES } from "@/lib/mock-data";
 import { formatEventDate, isoDateTime } from "@/lib/format";
 
 export default async function DashboardEventsPage() {
   const profile = await getCurrentProfile();
-  const events = await getOwnedEvents(profile.id);
+  const [events, categories] = await Promise.all([
+    getOwnedEvents(profile.id),
+    listEventCategories(),
+  ]);
 
   return (
     <div className="px-6 py-10 md:px-10">
-      <NewEventProvider categories={CATEGORIES}>
+      <NewEventProvider categories={categories}>
         <div className="mx-auto max-w-5xl">
           <DashboardHeader
             kicker="Events"
@@ -50,9 +52,18 @@ export default async function DashboardEventsPage() {
                 </caption>
                 <thead className="bg-card/50">
                   <tr className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                    <th scope="col" className="px-5 py-3 font-normal">Event</th>
-                    <th scope="col" className="hidden px-5 py-3 font-normal sm:table-cell">Date</th>
-                    <th scope="col" className="px-5 py-3 font-normal">Status</th>
+                    <th scope="col" className="px-5 py-3 font-normal">
+                      Event
+                    </th>
+                    <th
+                      scope="col"
+                      className="hidden px-5 py-3 font-normal sm:table-cell"
+                    >
+                      Date
+                    </th>
+                    <th scope="col" className="px-5 py-3 font-normal">
+                      Status
+                    </th>
                     <th scope="col" className="px-5 py-3 font-normal">
                       <span className="sr-only">Actions</span>
                     </th>
@@ -60,7 +71,10 @@ export default async function DashboardEventsPage() {
                 </thead>
                 <tbody>
                   {events.map((event) => {
-                    const date = formatEventDate(event.start_at, event.timezone);
+                    const date = formatEventDate(
+                      event.start_at,
+                      event.timezone,
+                    );
                     return (
                       <tr
                         key={event.id}

@@ -8,10 +8,16 @@ export function SiteFooter() {
           events<span className="text-primary">-</span>lab
         </div>
         <div className="flex flex-wrap items-center gap-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          <Link href="/discover" className="transition-colors hover:text-foreground">
+          <Link
+            href="/discover"
+            className="transition-colors hover:text-foreground"
+          >
             Discover
           </Link>
-          <Link href="/auth?mode=signup" className="transition-colors hover:text-foreground">
+          <Link
+            href="/auth?mode=signup"
+            className="transition-colors hover:text-foreground"
+          >
             Start publishing
           </Link>
           <span>Prototype — no live data</span>

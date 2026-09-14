@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { DashboardHeader } from "@/components/layout/dashboard-header";
+import Link from "next/link";
 import { Field, fieldControlClass } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import { ImageUploader } from "@/components/forms/image-uploader";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getCurrentProfile } from "@/features/profiles/queries";
 
 /**
@@ -15,13 +15,37 @@ import { getCurrentProfile } from "@/features/profiles/queries";
  */
 const SOCIAL_FIELDS = [
   { key: "website", label: "Website", placeholder: "https://..." },
-  { key: "twitter", label: "Twitter / X", placeholder: "https://twitter.com/..." },
-  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/..." },
-  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/..." },
+  {
+    key: "twitter",
+    label: "Twitter / X",
+    placeholder: "https://twitter.com/...",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    placeholder: "https://instagram.com/...",
+  },
+  {
+    key: "facebook",
+    label: "Facebook",
+    placeholder: "https://facebook.com/...",
+  },
   { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/..." },
-  { key: "soundcloud", label: "SoundCloud", placeholder: "https://soundcloud.com/..." },
-  { key: "spotify", label: "Spotify", placeholder: "https://open.spotify.com/..." },
-  { key: "apple_music", label: "Apple Music", placeholder: "https://music.apple.com/..." },
+  {
+    key: "soundcloud",
+    label: "SoundCloud",
+    placeholder: "https://soundcloud.com/...",
+  },
+  {
+    key: "spotify",
+    label: "Spotify",
+    placeholder: "https://open.spotify.com/...",
+  },
+  {
+    key: "apple_music",
+    label: "Apple Music",
+    placeholder: "https://music.apple.com/...",
+  },
 ] as const;
 
 export default async function DashboardProfilePage() {

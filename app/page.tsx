@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { BarChart3, Globe, Sparkles, Zap } from "lucide-react";
-import { SiteHeader } from "@/components/layout/site-header";
+import Link from "next/link";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 
 const FEATURES = [
   {
@@ -27,15 +27,32 @@ const FEATURES = [
 ];
 
 const AUDIENCES = [
-  "Musicians", "Bands", "Painters", "Artists", "Sport Clubs",
-  "Cinemas", "Theaters", "Bars", "Cafes", "Clubs",
-  "Conference Organizers", "Schools", "Churches", "Communities",
-  "Local Businesses", "DJs", "Comedians", "Festivals",
+  "Musicians",
+  "Bands",
+  "Painters",
+  "Artists",
+  "Sport Clubs",
+  "Cinemas",
+  "Theaters",
+  "Bars",
+  "Cafes",
+  "Clubs",
+  "Conference Organizers",
+  "Schools",
+  "Churches",
+  "Communities",
+  "Local Businesses",
+  "DJs",
+  "Comedians",
+  "Festivals",
 ];
 
-export default function LandingPage() {
-  const marquee = [...AUDIENCES, ...AUDIENCES];
+const MARQUEE_ITEMS = AUDIENCES.flatMap((word) => [
+  { id: `${word}-first`, word },
+  { id: `${word}-second`, word },
+]);
 
+export default function LandingPage() {
   return (
     <>
       <SiteHeader />
@@ -117,9 +134,9 @@ export default function LandingPage() {
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent" />
 
             <div className="flex w-max animate-marquee gap-4">
-              {marquee.map((word, i) => (
+              {MARQUEE_ITEMS.map(({ id, word }) => (
                 <span
-                  key={`a-${i}`}
+                  key={`a-${id}`}
                   className="shrink-0 rounded-full border border-border bg-white/[0.02] px-6 py-3 font-display text-2xl font-extrabold uppercase tracking-tight md:text-3xl"
                 >
                   {word}
@@ -127,9 +144,9 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="flex w-max animate-marquee-reverse gap-4">
-              {marquee.map((word, i) => (
+              {MARQUEE_ITEMS.map(({ id, word }) => (
                 <span
-                  key={`b-${i}`}
+                  key={`b-${id}`}
                   className="shrink-0 rounded-full border border-primary/40 px-6 py-3 font-display text-2xl font-extrabold uppercase tracking-tight text-primary md:text-3xl"
                 >
                   {word}

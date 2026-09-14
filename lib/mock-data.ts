@@ -1,16 +1,11 @@
-import type {
-  AnalyticsRecord,
-  Category,
-  EventRecord,
-  Profile,
-} from "./types";
+import type { AnalyticsRecord, Category, EventRecord, Profile } from "./types";
 
 /**
  * Placeholder content for the visual prototype.
  *
- * This module is the single seam between the UI and its data. When Supabase
- * arrives, the query functions in `features/*\/queries.ts` switch to real
- * queries and this file is deleted — no component changes.
+ * In-memory DAL adapters read this module while the product screens remain a
+ * visual prototype. Each feature can replace its adapter with a Supabase DAL
+ * after its schema ships, without changing UI components or business logic.
  *
  * The dataset is intentionally empty: only the fixed category list and the
  * single signed-in publisher exist. Every screen therefore renders the state

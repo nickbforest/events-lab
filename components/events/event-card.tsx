@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { EventStatusBadge } from "./event-status-badge";
 import {
   eventTypeLabel,
   formatEventDate,
@@ -9,6 +8,7 @@ import {
   priceLabel,
 } from "@/lib/format";
 import type { EventWithRelations } from "@/lib/types";
+import { EventStatusBadge } from "./event-status-badge";
 
 /**
  * ui-rules.md §5 — one clear clickable area, no controls nested inside.

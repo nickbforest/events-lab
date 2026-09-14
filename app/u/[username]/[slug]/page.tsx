@@ -1,12 +1,19 @@
+import {
+  AlertTriangle,
+  Calendar,
+  Clock,
+  MapPin,
+  Ticket,
+  Video,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, Calendar, Clock, MapPin, Ticket, Video } from "lucide-react";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { EventCard } from "@/components/events/event-card";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import {
   getPublishedEventBySlug,
   getRelatedEvents,
@@ -114,13 +121,14 @@ export default async function EventPage({
   const related = await getRelatedEvents(event);
   const date = formatEventDate(event.start_at, event.timezone);
   const isCancelled = event.status === "cancelled";
+  const structuredData = JSON.stringify(eventJsonLd(event)).replace(
+    /</g,
+    "\\u003c",
+  );
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd(event)) }}
-      />
+      <script type="application/ld+json">{structuredData}</script>
       <SiteHeader />
 
       <main className="flex-1">
@@ -143,9 +151,14 @@ export default async function EventPage({
             className="border-b border-destructive/30 bg-destructive/10 px-6 py-4"
           >
             <div className="mx-auto flex max-w-4xl items-center gap-3 text-sm">
-              <AlertTriangle className="size-4 shrink-0 text-destructive" aria-hidden />
+              <AlertTriangle
+                className="size-4 shrink-0 text-destructive"
+                aria-hidden
+              />
               <span>
-                <strong className="font-semibold">This event is cancelled.</strong>{" "}
+                <strong className="font-semibold">
+                  This event is cancelled.
+                </strong>{" "}
                 It is kept online so people holding the link know not to travel.
               </span>
             </div>
@@ -227,19 +240,32 @@ export default async function EventPage({
 
           <aside className="space-y-6">
             <div className="space-y-4 rounded-lg border border-border bg-card/40 p-6">
-              <InfoRow icon={<Calendar className="size-4" aria-hidden />} label="Date">
+              <InfoRow
+                icon={<Calendar className="size-4" aria-hidden />}
+                label="Date"
+              >
                 <time dateTime={isoDateTime(event.start_at)}>{date.full}</time>
               </InfoRow>
 
-              <InfoRow icon={<Clock className="size-4" aria-hidden />} label="Time">
-                {formatEventTimeRange(event.start_at, event.end_at, event.timezone)}
+              <InfoRow
+                icon={<Clock className="size-4" aria-hidden />}
+                label="Time"
+              >
+                {formatEventTimeRange(
+                  event.start_at,
+                  event.end_at,
+                  event.timezone,
+                )}
                 <span className="ml-1 font-mono text-xs text-muted-foreground">
                   {event.timezone}
                 </span>
               </InfoRow>
 
               {event.venue_name ? (
-                <InfoRow icon={<MapPin className="size-4" aria-hidden />} label="Location">
+                <InfoRow
+                  icon={<MapPin className="size-4" aria-hidden />}
+                  label="Location"
+                >
                   {event.venue_name}
                   {event.address && (
                     <span className="block text-xs font-normal text-muted-foreground">
@@ -247,16 +273,24 @@ export default async function EventPage({
                     </span>
                   )}
                   <span className="block text-xs font-normal text-muted-foreground">
-                    {[event.city, event.country_code].filter(Boolean).join(", ")}
+                    {[event.city, event.country_code]
+                      .filter(Boolean)
+                      .join(", ")}
                   </span>
                 </InfoRow>
               ) : (
-                <InfoRow icon={<Video className="size-4" aria-hidden />} label="Location">
+                <InfoRow
+                  icon={<Video className="size-4" aria-hidden />}
+                  label="Location"
+                >
                   {eventTypeLabel(event.event_type)}
                 </InfoRow>
               )}
 
-              <InfoRow icon={<Ticket className="size-4" aria-hidden />} label="Price">
+              <InfoRow
+                icon={<Ticket className="size-4" aria-hidden />}
+                label="Price"
+              >
                 {priceLabel(event.is_free, event.price_info)}
               </InfoRow>
             </div>

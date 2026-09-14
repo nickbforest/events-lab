@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { EventStatus, EventType, PublisherType } from "./types";
 
@@ -20,7 +20,12 @@ function partsInZone(iso: string, timeZone: string) {
     month: fmt({ month: "short" }).toUpperCase(),
     year: fmt({ year: "numeric" }),
     weekday: fmt({ weekday: "long" }),
-    full: fmt({ weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+    full: fmt({
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
     time: fmt({ hour: "numeric", minute: "2-digit", hour12: true }),
   };
 }

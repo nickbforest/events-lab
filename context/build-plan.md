@@ -10,55 +10,76 @@ The goal is to reach a production-quality MVP without prematurely implementing f
 
 # Phase 0 — Foundation
 
+## Completion record — 2026-09-11
+
+Phase 0 is complete. The repository now has one package manager, one formatter
+and linter, validated environment boundaries, the required application
+libraries, feature BLL/DAL seams, Supabase infrastructure, tests, and CI.
+
+The hosted Supabase project is healthy on PostgreSQL 17.6. Its public schema and
+migration history are intentionally empty because domain tables begin in later
+feature phases. Generated types capture that baseline. Supabase DAL adapters
+will be added with each domain schema so they can be typed against real tables
+and verified with RLS integration tests.
+
+The local Supabase configuration is committed and ready. Starting the local
+stack could not be exercised on this workstation because Docker and Podman are
+absent; install either runtime before using `pnpm supabase:start`.
+
+Phase 1 authentication is the next implementation step. The current
+localStorage authentication remains explicit prototype scaffolding until that
+phase replaces it with Supabase Auth and a Next.js session-refresh proxy.
+
 ## Project setup
 
-* [ ] Initialize Next.js
-* [ ] Configure TypeScript
-* [ ] Enable strict TypeScript compiler options
-* [ ] Configure pnpm
-* [ ] Configure Tailwind
-* [ ] Configure shadcn/ui
-* [ ] Configure Zod (`zod`)
-* [ ] Configure TanStack Form (`@tanstack/react-form`)
-* [ ] Configure TanStack Query (`@tanstack/react-query`) and query-key conventions
-* [ ] Configure TanStack Table (`@tanstack/react-table`)
-* [ ] Configure and pin TanStack Charts (`@tanstack/charts`)
-* [ ] Configure shared Axios (`axios`) clients and typed error mapping
-* [ ] Configure ESLint
-* [ ] Configure Prettier
-* [ ] Initialize Git
-* [ ] Connect GitHub
-* [ ] Create context folder
-* [ ] Configure environment variables
-* [ ] Create `.env.example`
+* [x] Initialize Next.js
+* [x] Configure TypeScript
+* [x] Enable strict TypeScript compiler options
+* [x] Configure pnpm
+* [x] Configure Tailwind
+* [x] Configure shadcn/ui
+* [x] Configure Zod (`zod`)
+* [x] Configure TanStack Form (`@tanstack/react-form`)
+* [x] Configure TanStack Query (`@tanstack/react-query`) and query-key conventions
+* [x] Configure TanStack Table (`@tanstack/react-table`)
+* [x] Configure and pin TanStack Charts (`@tanstack/charts`)
+* [x] Configure shared Axios (`axios`) clients and typed error mapping
+* [x] Configure Biome for linting and formatting
+* [x] Initialize Git
+* [x] Connect GitHub
+* [x] Create context folder
+* [x] Configure environment variables
+* [x] Create `.env.example`
 
 ## Supabase
 
-* [ ] Create Supabase project
-* [ ] Configure Supabase CLI
-* [ ] Configure local development
-* [ ] Connect application
-* [ ] Install `@supabase/supabase-js` and `@supabase/ssr`
-* [ ] Configure migrations
-* [ ] Configure generated database types
-* [ ] Create separate browser and server Supabase clients
-* [ ] Define privileged-client policy and keep service-role access server-only
+* [x] Create and verify Supabase project
+* [x] Configure Supabase CLI
+* [x] Configure local development
+* [x] Connect application
+* [x] Install `@supabase/supabase-js` and `@supabase/ssr`
+* [x] Configure migrations
+* [x] Configure generated database types
+* [x] Create separate browser and server Supabase clients
+* [x] Define and enforce the privileged-client boundary
 
 ## Application boundaries
 
-* [ ] Create the per-feature BLL/DAL folder convention
-* [ ] Define BLL contracts and typed domain errors
-* [ ] Define DAL contracts and Supabase adapters
-* [ ] Add import-boundary enforcement for UI → BLL → DAL → Supabase
-* [ ] Add shared Zod contract and environment validation conventions
-* [ ] Add BLL unit-test and DAL/RLS integration-test templates
+* [x] Create the per-feature BLL/DAL folder convention
+* [x] Define BLL contracts and typed application/data-access errors
+* [x] Define DAL contracts and in-memory adapters for the prototype
+* [x] Add import-boundary enforcement for UI → BLL → DAL → Supabase
+* [x] Add shared Zod contract and environment validation conventions
+* [x] Add meaningful BLL tests and the DAL/RLS integration-test structure
+* [~] Add typed Supabase domain adapters with their feature schemas
 
 ## Quality
 
-* [ ] Typecheck
-* [ ] Lint
-* [ ] Production build
-* [ ] Initial CI
+* [x] Typecheck
+* [x] Biome check
+* [x] BLL and contract tests
+* [x] Production build
+* [x] Initial CI
 
 ---
 

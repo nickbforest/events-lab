@@ -1,10 +1,10 @@
+import { CalendarPlus, Globe, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarPlus, Globe, MapPin } from "lucide-react";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { EventCard } from "@/components/events/event-card";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   getPastEventsByUsername,
@@ -32,7 +32,8 @@ export async function generateMetadata({
   return {
     title: profile.display_name,
     description:
-      profile.bio ?? `Upcoming events from ${profile.display_name} on events-lab.`,
+      profile.bio ??
+      `Upcoming events from ${profile.display_name} on events-lab.`,
     openGraph: {
       title: profile.display_name,
       description: profile.bio ?? undefined,

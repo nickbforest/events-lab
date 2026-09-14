@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Info } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { login, register } from "@/lib/local-auth";
 
 type AuthMode = "login" | "signup";
@@ -11,7 +11,10 @@ type AuthMode = "login" | "signup";
 const inputClass =
   "w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none";
 
-const COPY: Record<AuthMode, { heading: string; subheading: string; submitLabel: string }> = {
+const COPY: Record<
+  AuthMode,
+  { heading: string; subheading: string; submitLabel: string }
+> = {
   signup: {
     heading: "Create your page",
     subheading: "Free to publish. Your events get a shareable public URL.",
@@ -31,14 +34,18 @@ export function AuthForm() {
   // ?mode=signup. Deriving it (rather than seeding state once) means the
   // client-side navigation between those two links actually switches the form.
   const searchParams = useSearchParams();
-  const mode: AuthMode = searchParams.get("mode") === "login" ? "login" : "signup";
+  const mode: AuthMode =
+    searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   // The error is tagged with the mode that produced it, so a failed login
   // message is not still on screen after switching to the signup form.
-  const [errorFor, setErrorFor] = useState<{ mode: AuthMode; message: string } | null>(null);
+  const [errorFor, setErrorFor] = useState<{
+    mode: AuthMode;
+    message: string;
+  } | null>(null);
   const error = errorFor?.mode === mode ? errorFor.message : null;
   const { heading, subheading, submitLabel } = COPY[mode];
 
@@ -149,7 +156,9 @@ export function AuthForm() {
 
         <div className="my-6 flex items-center gap-4">
           <span className="h-px flex-1 bg-border" />
-          <span className="font-mono text-xs uppercase text-muted-foreground">or</span>
+          <span className="font-mono text-xs uppercase text-muted-foreground">
+            or
+          </span>
           <span className="h-px flex-1 bg-border" />
         </div>
 
@@ -164,14 +173,22 @@ export function AuthForm() {
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
-              <Link href="/auth?mode=login" replace className="text-primary hover:underline">
+              <Link
+                href="/auth?mode=login"
+                replace
+                className="text-primary hover:underline"
+              >
                 Log in
               </Link>
             </>
           ) : (
             <>
               Don&rsquo;t have an account?{" "}
-              <Link href="/auth?mode=signup" replace className="text-primary hover:underline">
+              <Link
+                href="/auth?mode=signup"
+                replace
+                className="text-primary hover:underline"
+              >
                 Create account
               </Link>
             </>
@@ -185,9 +202,9 @@ export function AuthForm() {
       >
         <Info className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
         <span>
-          Temporary local authentication — accounts are stored in this
-          browser only, not on a server. Google sign-in is a layout preview
-          and is not connected.
+          Temporary local authentication — accounts are stored in this browser
+          only, not on a server. Google sign-in is a layout preview and is not
+          connected.
         </span>
       </div>
     </div>

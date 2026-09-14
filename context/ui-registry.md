@@ -307,31 +307,30 @@ Reuse this shape for any other server-driven segmented filter.
 ### TrendChart
 
 File: components/dashboard/trend-chart.tsx
-Last updated: 2026-09-09
+Last updated: 2026-09-11
 
 | Property         | Class / value                                      |
 | ---------------- | -------------------------------------------------- |
 | Background       | none — it sits inside a `Panel`                     |
-| Border           | grid lines `stroke-border` at 1px                   |
-| Border radius    | tooltip `rounded-md`, table wrapper `rounded-md`    |
-| Text — primary   | tooltip values `font-mono text-xs tabular-nums`     |
+| Border           | chart grid uses `var(--border)`; table wrapper `border border-border` |
+| Border radius    | table wrapper `rounded-md`                          |
+| Text — primary   | table values `font-mono text-xs tabular-nums`       |
 | Text — secondary | axes and legend `font-mono text-[11px]` / `text-xs uppercase tracking-widest text-muted-foreground` |
 | Spacing          | legend `mt-4 gap-x-6`, table view `mt-4`            |
-| Hover state      | crosshair line + `r=4` dots + popover tooltip       |
-| Shadow           | tooltip `shadow-lg`                                 |
+| Hover state      | TanStack Charts grouped x-focus, crosshair, focus markers, and tooltip |
+| Shadow           | none in application-owned markup                    |
 | Accent usage     | series only: visits `#7E9F30`, clicks `#3B82F6`     |
 
 **Pattern notes:**
-Hand-rolled inline SVG on a `720 x 190` viewBox — no chart library, and the
-wide aspect ratio is deliberate so the plot never towers over the numbers it
-explains. Both series share one y-axis; a second scale would invent a
-correlation the data does not have. The two series colours are the only
-hardcoded hex values allowed in the UI: they are the accent stepped down until
-it passes the colour-vision and dark-surface checks, so re-validate before
-changing them rather than reaching for `--primary`. Ticket clicks additionally
-carries a `6 4` dash — with both series flat at zero one line hides the other,
-so identity never rests on colour alone, and the legend swatch mirrors the
-dash. Every chart ships the `View as table` disclosure.
+TanStack Charts owns the responsive SVG, axes, animation, keyboard focus, and
+tooltip at a fixed `190px` height with a `720px` initial server-render width.
+Both series share one y-axis; a second scale would invent a correlation the
+data does not have. The two series colours are the only hardcoded hex values
+allowed in the UI: they are the accent stepped down until they pass the
+colour-vision and dark-surface checks, so re-validate before changing them.
+Ticket clicks additionally carries a `6 4` dash, and the legend swatch mirrors
+the dash so identity never rests on colour alone. Every chart includes a
+descriptive label and the `View as table` disclosure with all plotted values.
 
 ### Field / FormSection
 
@@ -420,6 +419,30 @@ its classes from the caller so a trigger can be a primary button in a header
 and the CTA inside an `EmptyState` (via its `actionSlot`) without either one
 restating the dialog. Form content reuses `FormSection`, `Field` and
 `ImageUploader` exactly as a full-page form would.
+
+### DiscoverFilters
+
+File: components/events/discover-filters.tsx
+Last updated: 2026-09-11
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | search control `bg-card`; active chips transparent |
+| Border           | search `border border-border`; chips `border`, active `border-primary` |
+| Border radius    | search and button `rounded-md`; chips `rounded`     |
+| Text — primary   | search `text-sm`; submit `text-sm font-medium`       |
+| Text — secondary | labels and chips `font-mono text-xs uppercase text-muted-foreground` |
+| Spacing          | search `gap-2`; filter rows `mt-8` / `mt-3`; chips `px-3 py-1` |
+| Hover state      | idle chip `hover:text-foreground`; submit `hover:brightness-110` |
+| Shadow           | none                                                |
+| Accent usage     | active chip border/text/checkmark and submit fill   |
+
+**Pattern notes:**
+The search form sits in a semantic `<search>` region. Date and category chips
+are grouped in labelled `<fieldset>` elements. Each chip is a button with
+`aria-pressed`, and the selected state adds a visible checkmark so colour is
+never the only signal. Filter state belongs in the URL and navigation uses
+`router.replace` without scrolling.
 
 
 ---

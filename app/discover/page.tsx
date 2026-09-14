@@ -1,13 +1,16 @@
+import { CalendarSearch } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CalendarSearch } from "lucide-react";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { EventCard } from "@/components/events/event-card";
 import { DiscoverFilters } from "@/components/events/discover-filters";
+import { EventCard } from "@/components/events/event-card";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { EmptyState } from "@/components/ui/empty-state";
-import { discoverEvents, parseDiscoverFilters } from "@/features/discovery/queries";
-import { CATEGORIES } from "@/lib/mock-data";
+import {
+  discoverEvents,
+  listDiscoveryCategories,
+  parseDiscoverFilters,
+} from "@/features/discovery/queries";
 
 export const metadata: Metadata = {
   title: "Discover upcoming events",
@@ -20,7 +23,10 @@ export default async function DiscoverPage({
 }: PageProps<"/discover">) {
   const params = await searchParams;
   const filters = parseDiscoverFilters(params);
-  const events = await discoverEvents(filters);
+  const [events, categories] = await Promise.all([
+    discoverEvents(filters),
+    listDiscoveryCategories(),
+  ]);
 
   return (
     <>
@@ -37,7 +43,7 @@ export default async function DiscoverPage({
             </h1>
 
             <Suspense fallback={<div className="h-32" />}>
-              <DiscoverFilters categories={CATEGORIES} />
+              <DiscoverFilters categories={categories} />
             </Suspense>
           </div>
         </section>

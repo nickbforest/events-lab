@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { Info } from "lucide-react";
-import { CATEGORIES } from "@/lib/mock-data";
+import Link from "next/link";
+import { listEventCategories } from "@/features/events/queries";
 
 /**
  * Visual scaffold of the event creation form.
  *
  * Sections follow ui-rules.md §7. Nothing submits yet — the Server Action,
- * Zod schema and React Hook Form wiring arrive with the Supabase phase.
+ * Zod schema and TanStack Form wiring arrive with the event creation phase.
  */
 
 const inputClass =
@@ -74,7 +74,8 @@ function Field({
   );
 }
 
-export default function NewEventPage() {
+export default async function NewEventPage() {
+  const categories = await listEventCategories();
   return (
     <div className="px-6 py-10 md:px-10">
       <div className="mx-auto max-w-2xl">
@@ -137,11 +138,16 @@ export default function NewEventPage() {
             </Field>
 
             <Field label="Category" htmlFor="category" required>
-              <select id="category" name="category" className={inputClass} defaultValue="">
+              <select
+                id="category"
+                name="category"
+                className={inputClass}
+                defaultValue=""
+              >
                 <option value="" disabled>
                   Choose a category
                 </option>
-                {CATEGORIES.map((category) => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.slug}>
                     {category.label}
                   </option>
@@ -175,7 +181,12 @@ export default function NewEventPage() {
             </div>
 
             <Field label="Timezone" htmlFor="timezone" required>
-              <select id="timezone" name="timezone" className={inputClass} defaultValue="Asia/Tbilisi">
+              <select
+                id="timezone"
+                name="timezone"
+                className={inputClass}
+                defaultValue="Asia/Tbilisi"
+              >
                 <option value="Asia/Tbilisi">Asia/Tbilisi</option>
                 <option value="Europe/Berlin">Europe/Berlin</option>
                 <option value="Europe/London">Europe/London</option>
@@ -186,7 +197,12 @@ export default function NewEventPage() {
 
           <Section step={3} title="Location">
             <Field label="Event type" htmlFor="event_type" required>
-              <select id="event_type" name="event_type" className={inputClass} defaultValue="in_person">
+              <select
+                id="event_type"
+                name="event_type"
+                className={inputClass}
+                defaultValue="in_person"
+              >
                 <option value="in_person">In person</option>
                 <option value="online">Online</option>
                 <option value="hybrid">Hybrid</option>
@@ -194,19 +210,39 @@ export default function NewEventPage() {
             </Field>
 
             <Field label="Venue name" htmlFor="venue_name">
-              <input id="venue_name" name="venue_name" className={inputClass} placeholder="Warehouse 41" />
+              <input
+                id="venue_name"
+                name="venue_name"
+                className={inputClass}
+                placeholder="Warehouse 41"
+              />
             </Field>
 
             <Field label="Address" htmlFor="address">
-              <input id="address" name="address" className={inputClass} placeholder="41 Kakheti Highway" />
+              <input
+                id="address"
+                name="address"
+                className={inputClass}
+                placeholder="41 Kakheti Highway"
+              />
             </Field>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="City" htmlFor="city">
-                <input id="city" name="city" className={inputClass} placeholder="Tbilisi" />
+                <input
+                  id="city"
+                  name="city"
+                  className={inputClass}
+                  placeholder="Tbilisi"
+                />
               </Field>
               <Field label="Country" htmlFor="country">
-                <input id="country" name="country" className={inputClass} placeholder="Georgia" />
+                <input
+                  id="country"
+                  name="country"
+                  className={inputClass}
+                  placeholder="Georgia"
+                />
               </Field>
             </div>
           </Section>
@@ -231,7 +267,12 @@ export default function NewEventPage() {
               </legend>
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="radio" name="is_free" value="true" defaultChecked />
+                  <input
+                    type="radio"
+                    name="is_free"
+                    value="true"
+                    defaultChecked
+                  />
                   Free
                 </label>
                 <label className="flex items-center gap-2 text-sm">

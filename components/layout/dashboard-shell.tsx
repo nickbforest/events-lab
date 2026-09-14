@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
 import {
   CalendarDays,
   ExternalLink,
@@ -10,12 +7,20 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
 import { logout } from "@/lib/local-auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", Icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/events", label: "Events", Icon: CalendarDays, exact: false },
+  {
+    href: "/dashboard/events",
+    label: "Events",
+    Icon: CalendarDays,
+    exact: false,
+  },
   { href: "/dashboard/profile", label: "Profile", Icon: User, exact: false },
 ];
 

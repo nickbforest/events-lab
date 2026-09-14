@@ -1,15 +1,15 @@
 "use client";
 
+import { X } from "lucide-react";
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
-import { X } from "lucide-react";
 import { Field, fieldControlClass } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import { ImageUploader } from "@/components/forms/image-uploader";
@@ -43,7 +43,7 @@ export function NewEventProvider({
   categories,
   children,
 }: {
-  categories: Category[];
+  categories: readonly Category[];
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -72,6 +72,9 @@ export function NewEventProvider({
         // Clicking the backdrop lands on the dialog itself, never on its content.
         onClick={(event) => {
           if (event.target === dialogRef.current) setIsOpen(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setIsOpen(false);
         }}
         className="m-auto max-h-[90vh] w-[min(46rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border bg-card p-0 text-foreground backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       >
@@ -107,7 +110,7 @@ function NewEventForm({
   categories,
   onClose,
 }: {
-  categories: Category[];
+  categories: readonly Category[];
   onClose: () => void;
 }) {
   const [ticketsEnabled, setTicketsEnabled] = useState(false);
@@ -139,7 +142,6 @@ function NewEventForm({
                 id="title"
                 name="title"
                 required
-                autoFocus
                 className={fieldControlClass}
                 placeholder="Summer Solstice Festival"
               />
@@ -241,7 +243,11 @@ function NewEventForm({
             </Field>
 
             <Field id="address" label="Address">
-              <input id="address" name="address" className={fieldControlClass} />
+              <input
+                id="address"
+                name="address"
+                className={fieldControlClass}
+              />
             </Field>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -249,7 +255,11 @@ function NewEventForm({
                 <input id="city" name="city" className={fieldControlClass} />
               </Field>
               <Field id="country" label="Country">
-                <input id="country" name="country" className={fieldControlClass} />
+                <input
+                  id="country"
+                  name="country"
+                  className={fieldControlClass}
+                />
               </Field>
             </div>
 
