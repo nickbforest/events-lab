@@ -76,18 +76,5 @@ export function createSupabaseProfilesRepository(
 
       return (count ?? 0) > 0;
     },
-
-    async listProfiles() {
-      const { data, error } = await client
-        .from("profiles")
-        .select("*")
-        .order("username");
-
-      if (error) {
-        throw new DataAccessError("Failed to list profiles.", error);
-      }
-
-      return data.map(toProfile);
-    },
   };
 }

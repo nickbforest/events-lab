@@ -11,7 +11,6 @@ function createRepository(
     findById: vi.fn(async () => null),
     findByUsername: vi.fn(async () => null),
     isUsernameTaken: vi.fn(async () => false),
-    listProfiles: vi.fn(async () => []),
     ...overrides,
   };
 }

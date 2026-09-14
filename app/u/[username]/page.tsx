@@ -10,16 +10,14 @@ import {
   getPastEventsByUsername,
   getUpcomingEventsByUsername,
 } from "@/features/events/queries";
-import {
-  getProfileByUsername,
-  listProfileUsernames,
-} from "@/features/profiles/queries";
+import { getProfileByUsername } from "@/features/profiles/queries";
 import { publisherTypeLabel } from "@/lib/format";
 
-export async function generateStaticParams() {
-  const usernames = await listProfileUsernames();
-  return usernames.map((username) => ({ username }));
-}
+// No generateStaticParams: profiles are created continuously by signup, so
+// eagerly enumerating every username at build time would mean a new account
+// has no public page until the next deploy, and every build (CI included)
+// would require live database connectivity just to compile. Pages render
+// dynamically per request instead.
 
 export async function generateMetadata({
   params,

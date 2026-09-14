@@ -41,7 +41,6 @@ const RESERVED_USERNAMES = new Set([
 export interface ProfilesService {
   getProfileById(id: string): Promise<Profile | null>;
   getProfileByUsername(username: string): Promise<Profile | null>;
-  listProfileUsernames(): Promise<string[]>;
   isUsernameAvailable(username: string): Promise<boolean>;
 }
 
@@ -52,11 +51,6 @@ export function createProfilesService(
     getProfileById: (id) => repository.findById(id),
 
     getProfileByUsername: (username) => repository.findByUsername(username),
-
-    async listProfileUsernames() {
-      const profiles = await repository.listProfiles();
-      return profiles.map((profile) => profile.username);
-    },
 
     async isUsernameAvailable(username) {
       if (RESERVED_USERNAMES.has(username)) return false;

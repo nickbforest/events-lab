@@ -17,10 +17,6 @@ export async function getProfileByUsername(
   );
 }
 
-export async function listProfileUsernames(): Promise<string[]> {
-  return getPublicProfilesService().listProfileUsernames();
-}
-
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   return getPublicProfilesService().isUsernameAvailable(
     profileUsernameSchema.parse(username),
