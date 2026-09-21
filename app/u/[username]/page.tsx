@@ -1,10 +1,12 @@
 import { CalendarPlus, Globe, MapPin } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCard } from "@/components/events/event-card";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   getPastEventsByUsername,
@@ -36,6 +38,7 @@ export async function generateMetadata({
       title: profile.display_name,
       description: profile.bio ?? undefined,
       type: "profile",
+      images: profile.cover_url ?? profile.avatar_url ?? undefined,
     },
   };
 }
@@ -62,14 +65,27 @@ export default async function PublisherPage({
       <SiteHeader />
 
       <main className="flex-1">
+        {profile.cover_url && (
+          <div className="relative aspect-[3/1] max-h-80 w-full border-b border-border bg-secondary">
+            <Image
+              src={profile.cover_url}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+          </div>
+        )}
+
         <section className="border-b border-border px-6 py-16">
           <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-start">
-            <div
-              aria-hidden
-              className="grid size-20 shrink-0 place-items-center rounded-lg bg-secondary font-display text-3xl font-extrabold"
-            >
-              {profile.display_name[0]?.toUpperCase()}
-            </div>
+            <Avatar
+              src={profile.avatar_url}
+              name={profile.display_name}
+              sizes="80px"
+              className="size-20 text-3xl font-extrabold"
+            />
 
             <div className="min-w-0 flex-1">
               <div className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">

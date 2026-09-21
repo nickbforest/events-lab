@@ -14,6 +14,7 @@ import { EventCard } from "@/components/events/event-card";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { Avatar } from "@/components/ui/avatar";
 import {
   getPublishedEventBySlug,
   getRelatedEvents,
@@ -220,12 +221,12 @@ export default async function EventPage({
                 href={`/u/${event.owner.username}`}
                 className="group flex items-center gap-3"
               >
-                <span
-                  aria-hidden
-                  className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary font-display font-bold"
-                >
-                  {event.owner.display_name[0]?.toUpperCase()}
-                </span>
+                <Avatar
+                  src={event.owner.avatar_url}
+                  name={event.owner.display_name}
+                  sizes="40px"
+                  className="size-10 font-bold"
+                />
                 <span>
                   <span className="block font-medium transition-colors group-hover:text-primary">
                     {event.owner.display_name}
