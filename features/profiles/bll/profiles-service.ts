@@ -1,4 +1,7 @@
-import type { ProfileUpdateInput } from "@/features/profiles/contracts";
+import type {
+  ProfileMediaInput,
+  ProfileUpdateInput,
+} from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
 import type { Profile } from "@/lib/types";
 
@@ -48,6 +51,10 @@ export interface ProfilesService {
    * from the submitted payload — it is the whole authorization decision.
    */
   updateProfile(ownerId: string, input: ProfileUpdateInput): Promise<Profile>;
+  updateProfileMedia(
+    ownerId: string,
+    input: ProfileMediaInput,
+  ): Promise<Profile>;
 }
 
 export function createProfilesService(
@@ -80,6 +87,26 @@ export function createProfilesService(
         website_url: input.websiteUrl,
         social_links: socialLinks,
       });
+    },
+
+    async updateProfileMedia(ownerId, { kind, file }) {
+      // Upload, then repoint the profile, then clean up. In this order a
+      // failure at any step leaves the page showing a working image: at worst
+      // an unreferenced file is left behind, never a broken one referenced.
+      const stored = await repository.uploadMedia(ownerId, kind, file);
+      const profile = await repository.setMediaUrl(
+        ownerId,
+        kind,
+        stored.publicUrl,
+      );
+
+      try {
+        await repository.removeMediaExcept(ownerId, kind, stored.path);
+      } catch (error) {
+        console.error("Replaced profile media could not be removed.", error);
+      }
+
+      return profile;
     },
   };
 }

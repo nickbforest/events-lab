@@ -10,7 +10,6 @@ import {
   fieldDescribedBy,
 } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
-import { ImageUploader } from "@/components/forms/image-uploader";
 import {
   type ProfileField,
   updateProfileAction,
@@ -24,6 +23,8 @@ import {
 import { publisherTypeLabel } from "@/lib/format";
 import { firstErrorMessage } from "@/lib/forms";
 import type { Profile, PublisherType } from "@/lib/types";
+
+import { ProfileMediaField } from "./profile-media-field";
 
 const SOCIAL_LABELS: Record<
   SocialLinkKey,
@@ -305,11 +306,22 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </FormSection>
 
       <FormSection title="Media">
-        <ImageUploader
-          id="cover_url"
-          label="Cover image"
-          description="Image uploads arrive with Supabase Storage — this control is not wired up yet."
-        />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[10rem_1fr]">
+          <ProfileMediaField
+            kind="avatar"
+            label="Avatar"
+            description="Square. Saved as soon as you choose it."
+            currentUrl={profile.avatar_url}
+            className="aspect-square px-3 py-6"
+          />
+          <ProfileMediaField
+            kind="cover"
+            label="Cover image"
+            description="Wide banner across the top of your public page. Saved as soon as you choose it."
+            currentUrl={profile.cover_url}
+            className="aspect-[3/1] min-h-40"
+          />
+        </div>
       </FormSection>
 
       <FormSection title="Social links">

@@ -116,3 +116,27 @@ export const profileUpdateSchema = z.object({
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type ProfileUpdateValues = z.input<typeof profileUpdateSchema>;
+
+/** Mirrors the `profile-media` bucket's own limits, which are the authority. */
+export const PROFILE_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+export const PROFILE_MEDIA_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
+
+export const profileMediaKindSchema = z.enum(["avatar", "cover"]);
+
+export const profileMediaSchema = z.object({
+  kind: profileMediaKindSchema,
+  file: z
+    .file({ error: "Choose an image to upload." })
+    .min(1, { error: "That file is empty." })
+    .max(PROFILE_MEDIA_MAX_BYTES, { error: "Images must be 5MB or smaller." })
+    .mime([...PROFILE_MEDIA_MIME_TYPES], {
+      error: "Use a PNG, JPG or WebP image.",
+    }),
+});
+
+export type ProfileMediaKind = z.infer<typeof profileMediaKindSchema>;
+export type ProfileMediaInput = z.infer<typeof profileMediaSchema>;

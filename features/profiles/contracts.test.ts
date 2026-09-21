@@ -1,6 +1,58 @@
 import { describe, expect, it } from "vitest";
 
-import { profileUpdateSchema, usernameSchema } from "./contracts";
+import {
+  PROFILE_MEDIA_MAX_BYTES,
+  profileMediaSchema,
+  profileUpdateSchema,
+  usernameSchema,
+} from "./contracts";
+
+function imageOfSize(bytes: number, type = "image/png") {
+  return new File([new Uint8Array(bytes)], "image", { type });
+}
+
+describe("profileMediaSchema", () => {
+  it("accepts an image exactly at the 5MB limit", () => {
+    expect(
+      profileMediaSchema.safeParse({
+        kind: "avatar",
+        file: imageOfSize(PROFILE_MEDIA_MAX_BYTES),
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects one byte over the limit", () => {
+    expect(
+      profileMediaSchema.safeParse({
+        kind: "avatar",
+        file: imageOfSize(PROFILE_MEDIA_MAX_BYTES + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each(["image/gif", "image/svg+xml", "application/pdf"])(
+    "rejects %s, which the bucket would refuse",
+    (type) => {
+      expect(
+        profileMediaSchema.safeParse({
+          kind: "cover",
+          file: imageOfSize(100, type),
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  it("rejects an empty file and an unknown kind", () => {
+    expect(
+      profileMediaSchema.safeParse({ kind: "avatar", file: imageOfSize(0) })
+        .success,
+    ).toBe(false);
+    expect(
+      profileMediaSchema.safeParse({ kind: "banner", file: imageOfSize(100) })
+        .success,
+    ).toBe(false);
+  });
+});
 
 const validUpdate = {
   displayName: "Nick B",

@@ -28,6 +28,12 @@ function createRepository(
     findByUsername: vi.fn(async () => null),
     isUsernameTaken: vi.fn(async () => false),
     update: vi.fn(async () => storedProfile),
+    uploadMedia: vi.fn(async () => ({
+      path: "owner-1/avatar-new.png",
+      publicUrl: "https://cdn.example/owner-1/avatar-new.png",
+    })),
+    setMediaUrl: vi.fn(async () => storedProfile),
+    removeMediaExcept: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -108,5 +114,82 @@ describe("updateProfile", () => {
 
     const [, patch] = vi.mocked(repository.update).mock.calls[0];
     expect(patch).not.toHaveProperty("username");
+  });
+});
+
+describe("updateProfileMedia", () => {
+  const file = new File(["png"], "me.png", { type: "image/png" });
+
+  it("uploads, then repoints the profile, then removes the replaced image", async () => {
+    const calls: string[] = [];
+    const repository = createRepository({
+      uploadMedia: vi.fn(async () => {
+        calls.push("upload");
+        return {
+          path: "owner-1/avatar-new.png",
+          publicUrl: "https://cdn.example/owner-1/avatar-new.png",
+        };
+      }),
+      setMediaUrl: vi.fn(async () => {
+        calls.push("setUrl");
+        return storedProfile;
+      }),
+      removeMediaExcept: vi.fn(async () => {
+        calls.push("cleanup");
+      }),
+    });
+
+    await createProfilesService(repository).updateProfileMedia("owner-1", {
+      kind: "avatar",
+      file,
+    });
+
+    expect(calls).toEqual(["upload", "setUrl", "cleanup"]);
+    expect(repository.setMediaUrl).toHaveBeenCalledWith(
+      "owner-1",
+      "avatar",
+      "https://cdn.example/owner-1/avatar-new.png",
+    );
+    expect(repository.removeMediaExcept).toHaveBeenCalledWith(
+      "owner-1",
+      "avatar",
+      "owner-1/avatar-new.png",
+    );
+  });
+
+  it("does not repoint the profile when the upload fails", async () => {
+    const repository = createRepository({
+      uploadMedia: vi.fn(async () => {
+        throw new Error("storage down");
+      }),
+    });
+
+    await expect(
+      createProfilesService(repository).updateProfileMedia("owner-1", {
+        kind: "cover",
+        file,
+      }),
+    ).rejects.toThrow("storage down");
+    expect(repository.setMediaUrl).not.toHaveBeenCalled();
+  });
+
+  it("still succeeds when removing the old image fails", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const repository = createRepository({
+      removeMediaExcept: vi.fn(async () => {
+        throw new Error("remove failed");
+      }),
+    });
+
+    await expect(
+      createProfilesService(repository).updateProfileMedia("owner-1", {
+        kind: "avatar",
+        file,
+      }),
+    ).resolves.toEqual(storedProfile);
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });
