@@ -8,6 +8,7 @@ import {
   Field,
   fieldControlClass,
   fieldDescribedBy,
+  formSubmitClass,
 } from "@/components/forms/field";
 import { changeEmailAction } from "@/features/auth/actions";
 import { changeEmailSchema } from "@/features/auth/contracts";
@@ -129,7 +130,7 @@ export function EmailForm({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className={formSubmitClass}
             >
               {isSubmitting ? "Sending…" : "Change email"}
             </button>

@@ -3,6 +3,10 @@ import type { ReactNode } from "react";
 export const fieldControlClass =
   "w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none";
 
+/** The one lime submit button a dashboard form carries. */
+export const formSubmitClass =
+  "rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+
 /**
  * Label + control + optional hint, wired together by id.
  *
