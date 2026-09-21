@@ -14,13 +14,15 @@
 
 # Current Project Status
 
-**Current phase:** Phase 2 — Profiles
+**Current phase:** Phase 2 complete. Next phase to be confirmed; see Phase 2
+follow-up 1 on the organizations scope.
 
-**Overall MVP:** Authentication is real. Profiles exist as a table and are
-created at signup; events, discovery and analytics remain mock-backed until
-their own phases replace those adapters.
+**Overall MVP:** Authentication and profiles are real, including profile
+editing, avatar and cover uploads to Supabase Storage, and account settings.
+Events, discovery and analytics remain mock-backed until their own phases
+replace those adapters.
 
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-21
 
 ---
 
@@ -187,10 +189,67 @@ deleted, not dormant.
 
 * [x] Profile schema — created in Phase 1 with the full column set; no further
   migration needed for the fields below
-* [ ] Profile page
-* [ ] Profile editing
-* [ ] Avatar
-* [ ] Account settings
+* [x] Profile page — `/u/:username` renders avatar and cover
+* [x] Profile editing
+* [x] Avatar (and cover image)
+* [x] Account settings — password change and email change
+
+## Phase 2 completion record — 2026-09-21
+
+Branch `feat/phase-2-profiles`. Built as five confirmed steps from an
+`/architect` blueprint; each step was tested in the browser by the developer
+before it was committed.
+
+| Area | What was built |
+| --- | --- |
+| Profile editing | The disabled preview form now saves display name, publisher type, city, country, bio, website and social links through contracts → Server Action → BLL → DAL. The owner id comes from `verifySession()`, never the payload. Cleared fields are stored as NULL, and cleared links are dropped from `social_links`. |
+| Username | Locked and shown read-only. It is the public URL and MVP-1 keeps no redirect history. |
+| Schemas | `usernameSchema` and `displayNameSchema` moved from auth to profiles contracts because they mirror `profiles` columns. `publisherTypeSchema` derives from the generated enum. `FormResult` and `firstFieldErrors` moved to `lib/forms`. |
+| Storage | Migration `20260921120000` creates the public `profile-media` bucket (5MB; PNG, JPEG, WebP only) with owner-folder insert/select/delete policies. Listing is limited to the owner's folder so the bucket cannot be enumerated. |
+| Uploads | Avatar and cover upload on selection through Server Action → BLL → DAL. Each upload gets a fresh object name so cached URLs never go stale. The order is upload, repoint the row, then remove the replaced file, so a failure leaves an orphan, never a broken image. Server Action bodies are raised to `6mb` and the Storage host is allowed for next/image. |
+| Public page | Shared `Avatar` replaces both hand-rolled letter blocks and keeps the letter as its fallback. The cover renders as a banner and is used as the Open Graph image. |
+| Settings | `/dashboard/settings`. Password change re-checks the current password, requires a matching confirmation, then signs out every session and returns to login with a notice. Email change completes only when the emailed link is used, and the page shows the pending address until then. |
+| Auth links fix | Password reset never worked against the hosted project. Its default templates send a PKCE `code`, but `/auth/confirm` only accepted `token_hash`. The route now accepts both and uses the link's `redirectType` to send reset links to the set-password page. |
+
+### Validation results
+
+| Check | Result |
+| --- | --- |
+| `biome check .` | Passed across 113 files. |
+| `tsc --noEmit` | Passed. |
+| `vitest run` | Passed 7 files, 77 tests (45 at the end of Phase 1). |
+| `next build` | Passed; 17 pages. |
+| Storage policies | `supabase/tests/database/profile_media_storage.test.sql` added. pgTAP still needs Docker, so it was not run as a suite. Its nine assertions were each run against the hosted project inside a rolled-back transaction and all held. No probe rows remained. |
+| Security advisors | Only the pre-existing "leaked password protection disabled" warning. |
+| In browser | Developer verified profile save, uploads (including size and type rejection), the public page, the password reset, and the password change with sign-out. |
+
+### Open follow-ups
+
+1. **Organizations scope is undocumented.** On 2026-09-03, MVP-1 moved to a
+   personal publisher model (events owned by profiles, `/u/:username`). The
+   `profiles` migration says so, but `Architecture.md`, `build-plan.md` and
+   this tracker still list Phase 3 as Organizations. Decide whether Phase 3 is
+   deferred, and record it in the documents before planning the next phase.
+2. **Custom SMTP is needed before launch.** Supabase's built-in email sends
+   only a few emails an hour, and on this plan email templates cannot be
+   edited without custom SMTP. This belongs with Phase 9's email-provider
+   selection, but it blocks a real launch.
+3. **Emailed links only work in the requesting browser.** This follows from
+   the default templates' PKCE `code`. Once templates are editable, switching
+   them to `token_hash` links removes it; `/auth/confirm` already accepts both.
+4. **Email change is untested end to end.** It was deferred because of the
+   email rate limit. With secure email change, the second of the two links may
+   show "Link expired" even though Supabase has completed the change (see
+   follow-up 3).
+5. **Sidebar Sign out ends every session.** That is Supabase's default and
+   dates from Phase 1. Most apps end only the current device on an ordinary
+   sign-out; decide whether to change it to `local`.
+6. **Phase 1 follow-ups still open:** hosted password minimum is 6 against
+   the app's 8, leaked-password protection is off, and there is still no
+   container runtime for local Supabase.
+7. **Remaining duplicates:** `features/events/contracts.ts` keeps its own
+   loose `usernameSchema`, and the events screens restate the submit-button
+   classes. Both belong to the Phase 4 events rebuild.
 
 ---
 
@@ -251,8 +310,8 @@ deleted, not dormant.
 * [ ] Gallery
 * [ ] Image ordering
 * [ ] Organization logo
-* [ ] User avatar
-* [ ] Storage policies
+* [x] User avatar — built in Phase 2
+* [ ] Storage policies — `profile-media` done in Phase 2; event media pending
 
 ---
 
@@ -390,3 +449,9 @@ deleted, not dormant.
 | 2026-09-14 | Gate in `verifySession()`   | Next.js 16 layouts do not re-render on navigation and cannot stop segments    |
 | 2026-09-14 | Cookie-free public client   | `cookies()` is unavailable during static generation of public profile pages   |
 | 2026-09-14 | Google OAuth deferred       | No Google Cloud credentials; dead UI removed rather than left non-functional  |
+| 2026-09-21 | Username locked after signup | It is the public URL and MVP-1 keeps no redirect history                     |
+| 2026-09-21 | Uploads via Server Action   | Keeps UI → BLL → DAL → Storage; costs a raised 6mb action body limit          |
+| 2026-09-21 | Public `profile-media` bucket | Images render on public pages; signed URLs would break caching and previews |
+| 2026-09-21 | Fresh object name per upload | CDN and browser caching would otherwise keep serving a replaced image        |
+| 2026-09-21 | Password change ends all sessions | Passwords are often changed because someone else may know them          |
+| 2026-09-21 | Accept PKCE `code` auth links | Default templates cannot be edited without custom SMTP on this plan         |

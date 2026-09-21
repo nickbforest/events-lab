@@ -119,14 +119,33 @@ Implement:
 The table, its RLS policies and the Supabase DAL adapter already exist from
 Phase 1. This phase is the editing experience, not the schema.
 
+## Completion record — 2026-09-21
+
+Complete on `feat/phase-2-profiles`. See `context/progress-tracker.md` for the
+full record, validation results and open follow-ups.
+
+Deviations from the original plan, each agreed before implementation:
+
+1. **Supabase Storage arrived here, not in Phase 7.** Avatars are a Phase 2
+   deliverable, so the `profile-media` bucket and its policies were built now.
+   Phase 7 extends the same pattern to event media; it does not create it.
+2. **The username stays locked.** It is the public URL, and renaming would
+   need a redirect history MVP-1 does not have.
+3. **Account deletion is out of scope.** It needs a service-role key, which
+   the architecture keeps out of the application; it requires an Edge
+   Function and its own approval.
+4. **Password reset was fixed here.** It had never worked against the hosted
+   project because its email links carry a `code` the Phase 1 route did not
+   accept.
+
 Implement:
 
 * [x] User profile — table and public page exist
-* [ ] Avatar
-* [ ] Name
-* [ ] Basic profile information
-* [ ] Profile editing
-* [ ] Account settings
+* [x] Avatar (and cover image)
+* [x] Name
+* [x] Basic profile information — publisher type, location, bio, links
+* [x] Profile editing
+* [x] Account settings — password and email change
 
 ---
 
@@ -222,9 +241,9 @@ Implement:
 * [ ] Image deletion
 * [ ] Gallery ordering
 * [ ] Organization logo
-* [ ] User avatar
-* [ ] File validation
-* [ ] Storage policies
+* [x] User avatar — built in Phase 2, with the `profile-media` bucket
+* [ ] File validation — done for profile media; event media still to follow
+* [ ] Storage policies — done for `profile-media`; event media still to follow
 
 ---
 
