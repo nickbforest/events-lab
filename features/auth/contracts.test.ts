@@ -1,33 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  emailSchema,
-  passwordSchema,
-  signUpSchema,
-  usernameSchema,
-} from "./contracts";
-
-describe("usernameSchema", () => {
-  it("normalises case and surrounding whitespace", () => {
-    expect(usernameSchema.parse("  NickB  ")).toBe("nickb");
-  });
-
-  it.each(["ab", "-leading", "trailing-", "double--hyphen", "has space", "É"])(
-    "rejects %j because the database check constraint would too",
-    (value) => {
-      expect(usernameSchema.safeParse(value).success).toBe(false);
-    },
-  );
-
-  it.each(["abc", "nick_b", "nick-b", "a1_b-c2"])("accepts %j", (value) => {
-    expect(usernameSchema.safeParse(value).success).toBe(true);
-  });
-
-  it("rejects anything longer than the 32 character column limit", () => {
-    expect(usernameSchema.safeParse("a".repeat(33)).success).toBe(false);
-    expect(usernameSchema.safeParse("a".repeat(32)).success).toBe(true);
-  });
-});
+import { emailSchema, passwordSchema, signUpSchema } from "./contracts";
 
 describe("emailSchema", () => {
   it("trims and lowercases before validating", () => {

@@ -1,3 +1,4 @@
+import type { ProfileUpdateInput } from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
 import type { Profile } from "@/lib/types";
 
@@ -42,6 +43,11 @@ export interface ProfilesService {
   getProfileById(id: string): Promise<Profile | null>;
   getProfileByUsername(username: string): Promise<Profile | null>;
   isUsernameAvailable(username: string): Promise<boolean>;
+  /**
+   * `ownerId` comes from the verified session at the composition root, never
+   * from the submitted payload — it is the whole authorization decision.
+   */
+  updateProfile(ownerId: string, input: ProfileUpdateInput): Promise<Profile>;
 }
 
 export function createProfilesService(
@@ -55,6 +61,25 @@ export function createProfilesService(
     async isUsernameAvailable(username) {
       if (RESERVED_USERNAMES.has(username)) return false;
       return !(await repository.isUsernameTaken(username));
+    },
+
+    updateProfile(ownerId, input) {
+      // Links the publisher cleared are dropped from the map rather than
+      // stored as null, so `social_links` only ever holds live links.
+      const socialLinks: Record<string, string> = {};
+      for (const [key, value] of Object.entries(input.socialLinks)) {
+        if (value) socialLinks[key] = value;
+      }
+
+      return repository.update(ownerId, {
+        display_name: input.displayName,
+        publisher_type: input.publisherType,
+        bio: input.bio,
+        city: input.city,
+        country_code: input.countryCode,
+        website_url: input.websiteUrl,
+        social_links: socialLinks,
+      });
     },
   };
 }

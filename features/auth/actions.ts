@@ -2,36 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import {
-  type FormResult,
   passwordResetRequestSchema,
   signInSchema,
   signUpSchema,
   updatePasswordSchema,
 } from "@/features/auth/contracts";
 import { getAuthService } from "@/features/auth/service";
+import { type FormResult, firstFieldErrors } from "@/lib/forms";
 
 type SignUpField = "displayName" | "username" | "email" | "password";
 type SignInField = "email" | "password";
 
 const RATE_LIMITED_MESSAGE =
   "Too many attempts. Please wait a few minutes and try again.";
-
-function firstFieldErrors<TField extends string>(
-  error: z.ZodError,
-): Partial<Record<TField, string>> {
-  const { fieldErrors } = z.flattenError(error);
-  const result: Partial<Record<TField, string>> = {};
-
-  for (const [field, messages] of Object.entries(fieldErrors)) {
-    const message = (messages as string[] | undefined)?.[0];
-    if (message) result[field as TField] = message;
-  }
-
-  return result;
-}
 
 export async function signUpAction(
   input: unknown,

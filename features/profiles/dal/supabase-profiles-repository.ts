@@ -76,5 +76,28 @@ export function createSupabaseProfilesRepository(
 
       return (count ?? 0) > 0;
     },
+
+    async update(id, patch) {
+      // The `Users update their own profile` policy is the real boundary here:
+      // a mismatched id matches no row rather than writing someone else's.
+      const { data, error } = await client
+        .from("profiles")
+        .update(patch)
+        .eq("id", id)
+        .select("*")
+        .maybeSingle();
+
+      if (error) {
+        throw new DataAccessError("Failed to update profile.", error);
+      }
+
+      if (!data) {
+        throw new DataAccessError(
+          "Profile update matched no row; the session may no longer own it.",
+        );
+      }
+
+      return toProfile(data);
+    },
   };
 }
