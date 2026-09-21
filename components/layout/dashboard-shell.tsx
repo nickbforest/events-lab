@@ -5,6 +5,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   LogOut,
+  Settings,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,6 +23,12 @@ const NAV_ITEMS = [
     exact: false,
   },
   { href: "/dashboard/profile", label: "Profile", Icon: User, exact: false },
+  {
+    href: "/dashboard/settings",
+    label: "Settings",
+    Icon: Settings,
+    exact: false,
+  },
 ];
 
 export function DashboardShell({

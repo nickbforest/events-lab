@@ -37,8 +37,35 @@ export const updatePasswordSchema = z.object({
   password: passwordSchema,
 });
 
+export const changeEmailSchema = z.object({
+  email: emailSchema,
+});
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, { error: "Enter your current password." }),
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.newPassword !== value.currentPassword, {
+    path: ["newPassword"],
+    error: "Choose a password different from your current one.",
+  })
+  // The new password is never shown, so a single typo would lock the owner out.
+  .refine((value) => value.confirmPassword === value.newPassword, {
+    path: ["confirmPassword"],
+    error: "The passwords do not match.",
+  });
+
 export const usernameAvailabilitySchema = z.object({
   username: usernameSchema,
+});
+
+/** The `code` Supabase's default email templates append to the redirect. */
+export const authCodeSchema = z.object({
+  code: z.string().min(1),
 });
 
 /** Query parameters Supabase appends to confirmation and recovery links. */
@@ -53,3 +80,5 @@ export type PasswordResetRequestInput = z.infer<
   typeof passwordResetRequestSchema
 >;
 export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

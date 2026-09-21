@@ -4,11 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  changeEmailSchema,
+  changePasswordSchema,
   passwordResetRequestSchema,
   signInSchema,
   signUpSchema,
   updatePasswordSchema,
 } from "@/features/auth/contracts";
+import { verifySession } from "@/features/auth/queries";
 import { getAuthService } from "@/features/auth/service";
 import { type FormResult, firstFieldErrors } from "@/lib/forms";
 
@@ -168,4 +171,89 @@ export async function updatePasswordAction(
 
   revalidatePath("/", "layout");
   redirect("/dashboard");
+}
+
+export async function changeEmailAction(
+  input: unknown,
+): Promise<FormResult<"email">> {
+  const parsed = changeEmailSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      fieldErrors: firstFieldErrors<"email">(parsed.error),
+    };
+  }
+
+  const actor = await verifySession();
+  const service = await getAuthService();
+  const outcome = await service.changeEmail(actor, parsed.data);
+
+  if (!outcome.ok) {
+    switch (outcome.reason) {
+      case "SAME_EMAIL":
+        return {
+          status: "error",
+          fieldErrors: { email: "That is already your email address." },
+        };
+      case "EMAIL_TAKEN":
+        return {
+          status: "error",
+          fieldErrors: {
+            email: "Another account already uses this email address.",
+          },
+        };
+      case "RATE_LIMITED":
+        return { status: "error", message: RATE_LIMITED_MESSAGE };
+    }
+  }
+
+  revalidatePath("/dashboard/settings");
+  return { status: "success" };
+}
+
+export async function changePasswordAction(
+  input: unknown,
+): Promise<FormResult<"currentPassword" | "newPassword" | "confirmPassword">> {
+  const parsed = changePasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      fieldErrors: firstFieldErrors<
+        "currentPassword" | "newPassword" | "confirmPassword"
+      >(parsed.error),
+    };
+  }
+
+  const actor = await verifySession();
+  const service = await getAuthService();
+  const outcome = await service.changePassword(actor, parsed.data);
+
+  if (!outcome.ok) {
+    switch (outcome.reason) {
+      case "WRONG_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: { currentPassword: "That password is not correct." },
+        };
+      case "WEAK_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: { newPassword: "Please choose a stronger password." },
+        };
+      case "SAME_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: {
+            newPassword: "Choose a password different from your current one.",
+          },
+        };
+      case "RATE_LIMITED":
+        return { status: "error", message: RATE_LIMITED_MESSAGE };
+    }
+  }
+
+  // The service has ended every session, so the owner proves the new
+  // password straight away rather than discovering a typo later.
+  revalidatePath("/", "layout");
+  redirect("/auth?mode=login&notice=password-changed");
 }

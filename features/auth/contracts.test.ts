@@ -1,6 +1,45 @@
 import { describe, expect, it } from "vitest";
 
-import { emailSchema, passwordSchema, signUpSchema } from "./contracts";
+import {
+  changePasswordSchema,
+  emailSchema,
+  passwordSchema,
+  signUpSchema,
+} from "./contracts";
+
+describe("changePasswordSchema", () => {
+  it("rejects reusing the current password, against the new-password field", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "samesecret",
+      newPassword: "samesecret",
+      confirmPassword: "samesecret",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["newPassword"]);
+  });
+
+  it("requires the current password", () => {
+    expect(
+      changePasswordSchema.safeParse({
+        currentPassword: "",
+        newPassword: "newsecret1",
+        confirmPassword: "newsecret1",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a confirmation that does not match, so a typo cannot lock the owner out", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "oldsecret",
+      newPassword: "newsecret1",
+      confirmPassword: "newsecret2",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["confirmPassword"]);
+  });
+});
 
 describe("emailSchema", () => {
   it("trims and lowercases before validating", () => {

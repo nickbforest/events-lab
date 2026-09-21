@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -21,6 +22,8 @@ import { firstErrorMessage } from "@/lib/forms";
 type SignInField = "email" | "password";
 
 export function LoginForm() {
+  const passwordChanged =
+    useSearchParams().get("notice") === "password-changed";
   const [formError, setFormError] = useState<string | null>(null);
   const [serverFieldErrors, setServerFieldErrors] = useState<
     Partial<Record<SignInField, string>>
@@ -65,6 +68,17 @@ export function LoginForm() {
         </>
       }
     >
+      {/* A confirmation, not an error, so it is announced politely. */}
+      {passwordChanged && (
+        <p
+          role="status"
+          className="mb-5 font-mono text-xs leading-relaxed text-primary"
+        >
+          Password changed. You have been signed out everywhere — log in with
+          your new password.
+        </p>
+      )}
+
       <form
         className="space-y-5"
         noValidate
