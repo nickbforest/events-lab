@@ -1,6 +1,5 @@
 import { CalendarPlus, Eye, Plus } from "lucide-react";
 import Link from "next/link";
-import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents, listEventCategories } from "@/features/events/queries";
@@ -66,11 +65,11 @@ export default async function DashboardEventsPage() {
                     >
                       Date
                     </th>
-                    <th scope="col" className="px-5 py-3 font-normal">
+                    <th
+                      scope="col"
+                      className="px-5 py-3 text-right font-normal"
+                    >
                       Status
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-normal">
-                      <span className="sr-only">Actions</span>
                     </th>
                   </tr>
                 </thead>
@@ -101,9 +100,6 @@ export default async function DashboardEventsPage() {
                           >
                             {date.month} {date.day} / {date.year}
                           </time>
-                        </td>
-                        <td className="px-5 py-4">
-                          <EventStatusBadge status={event.status} />
                         </td>
                         <td className="px-5 py-4 text-right">
                           <EventRowActions event={event} />
