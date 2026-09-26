@@ -1,4 +1,5 @@
 import type { EventDraftValues } from "@/features/events/contracts";
+import { countryName } from "@/lib/countries";
 import {
   defaultTimeZone,
   instantToWallClock,
@@ -78,7 +79,9 @@ export function toFormValues(
     venueName: event?.venue_name ?? "",
     address: event?.address ?? "",
     city: event?.city ?? "",
-    countryCode: event?.country_code ?? "",
+    // The field is typed by hand, so it shows the name; the contract
+    // resolves it back to the code the column stores.
+    countryCode: countryName(event?.country_code) ?? "",
     onlineUrl: event?.online_url ?? "",
     isFree: event?.is_free ?? true,
     priceInfo: event?.price_info ?? "",

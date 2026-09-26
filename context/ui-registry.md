@@ -602,6 +602,7 @@ Last updated: 2026-09-26
 | Text — primary   | section heading `font-mono text-xs uppercase tracking-widest text-primary` |
 | Text — secondary | section description `text-sm text-muted-foreground` |
 | Spacing          | sections `mb-10`; fields `space-y-5`; paired fields `gap-5 sm:grid-cols-2` |
+| Image target     | poster `aspect-[4/3] max-h-[28rem]` — a poster is looked at, not filed |
 | Hover state      | submit `hover:brightness-110`; secondary `hover:bg-white/5` |
 | Shadow           | none                                                |
 | Accent usage     | section headings and the one primary submit         |
@@ -635,8 +636,15 @@ never a `<TextField />` element. A component declared inside another component
 is a new type on every render, so React remounts the input and the field loses
 focus after every keystroke.
 
-Country is a `<select>` of full names from `lib/countries.ts` that stores the
-ISO alpha-2 code the column constrains. Nobody should have to type "GE".
+Country is a free-text input with a `<datalist>` of names from
+`lib/countries.ts`. It is typed by hand; `countryCodeFromInput` resolves the
+name to the ISO code the column stores, and an unrecognised value is a field
+error rather than a silently bad row. The field shows the name, never the
+code.
+
+The time zone control appears only in the page layout. The dialog reads its
+times in the browser's own zone, which is right for a publisher creating an
+event in front of them — the value is still submitted, just not asked for.
 
 Dates are held as `datetime-local` readings plus a separate zone and resolved
 at submit through `lib/datetime`. Never compare a wall-clock string as if it

@@ -35,6 +35,22 @@ import {
   toPayload,
 } from "./event-form-values";
 
+/**
+ * Suggestions for the country field. The field stays free text — this only
+ * saves typing, it does not constrain what can be entered.
+ */
+const COUNTRY_LIST_ID = "event-country-options";
+
+function CountryOptions() {
+  return (
+    <datalist id={COUNTRY_LIST_ID}>
+      {COUNTRIES.map((country) => (
+        <option key={country.code} value={country.name} />
+      ))}
+    </datalist>
+  );
+}
+
 export interface EventFormProps {
   categories: readonly Category[];
   event?: EventWithRelations | null;
@@ -149,6 +165,7 @@ export function EventForm({
     placeholder,
     type = "text",
     maxLength,
+    list,
   }: {
     name: keyof EventFormValues & string;
     label: string;
@@ -156,6 +173,8 @@ export function EventForm({
     placeholder?: string;
     type?: string;
     maxLength?: number;
+    /** Attaches a `<datalist>`; the field stays free text. */
+    list?: string;
   }) {
     const serverError = serverFieldErrors[name as EventField];
 
@@ -168,6 +187,7 @@ export function EventForm({
               name={field.name}
               type={type}
               maxLength={maxLength}
+              list={list}
               className={fieldControlClass}
               placeholder={placeholder}
               value={field.state.value}
@@ -334,7 +354,16 @@ export function EventForm({
           )}
         </form.Field>
       </div>
+    </div>
+  );
 
+  /**
+   * Only on the edit page. The dialog reads the times in the browser's own
+   * zone, which is right for the publisher creating the event in front of
+   * them; a zone they did not choose is a control they do not need yet.
+   */
+  const timezoneField = (
+    <div className="space-y-5">
       <form.Field name="timezone">
         {(field) => (
           <Field
@@ -431,34 +460,12 @@ export function EventForm({
                     placeholder: "Tbilisi",
                   })}
 
-                  <form.Field name="countryCode">
-                    {(field) => (
-                      <Field
-                        id={field.name}
-                        label="Country"
-                        error={serverFieldErrors.countryCode}
-                      >
-                        <select
-                          id={field.name}
-                          name={field.name}
-                          className={fieldControlClass}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(changeEvent) => {
-                            clearServerError("countryCode");
-                            field.handleChange(changeEvent.target.value);
-                          }}
-                        >
-                          <option value="">Choose a country</option>
-                          {COUNTRIES.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.name}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-                    )}
-                  </form.Field>
+                  {textField({
+                    name: "countryCode",
+                    label: "Country",
+                    placeholder: "Georgia",
+                    list: COUNTRY_LIST_ID,
+                  })}
                 </div>
               </>
             )}
@@ -473,10 +480,13 @@ export function EventForm({
       {(field) => (
         <ImageUploader
           id="cover-image"
-          label="Event poster"
-          hint="PNG, JPG or WebP up to 5MB"
-          description="Shown on cards, on the event page and when the link is shared."
+          label="Event image"
+          hint="PNG, JPG up to 5MB"
+          description="Square or wide image. Shown in lists and as the hero."
           accept="image/png,image/jpeg,image/webp"
+          // A poster is the thing people look at first, so the target is a
+          // large one rather than a thin band that reads as a minor field.
+          className="aspect-[4/3] max-h-[28rem] py-0"
           previewUrl={field.state.value || null}
           busy={coverBusy}
           error={coverError}
@@ -704,8 +714,9 @@ export function EventForm({
           <FormSection title="Basic information">{basics}</FormSection>
           <FormSection title="Date & time">{dateAndTime}</FormSection>
           <FormSection title="Location">{location}</FormSection>
-          <FormSection title="Poster">{poster}</FormSection>
+          <FormSection title="Media">{poster}</FormSection>
           <FormSection title="Tickets">{tickets}</FormSection>
+          <CountryOptions />
         </div>
 
         {/* Pinned, with a solid background so content scrolls under it. */}
@@ -755,13 +766,16 @@ export function EventForm({
         title="Date & time"
         description="Stored with a timezone, so the time reads correctly wherever it is viewed."
       >
-        {dateAndTime}
+        <div className="space-y-5">
+          {dateAndTime}
+          {timezoneField}
+        </div>
       </FormSection>
 
       <FormSection title="Location">{location}</FormSection>
 
       <FormSection
-        title="Poster"
+        title="Media"
         description="A cover image is the single biggest factor in whether people click."
       >
         {poster}
@@ -772,6 +786,8 @@ export function EventForm({
       <FormSection title="Tickets">{tickets}</FormSection>
 
       <FormSection title="Links">{externalLink}</FormSection>
+
+      <CountryOptions />
 
       <FormSection title="Tags">{tags}</FormSection>
 

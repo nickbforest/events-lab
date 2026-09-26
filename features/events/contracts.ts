@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { usernameSchema } from "@/features/profiles/contracts";
+import { countryCodeFromInput } from "@/lib/countries";
 import { Constants } from "@/lib/supabase/database.types";
 
 export const eventRouteParamsSchema = z.object({
@@ -71,19 +72,33 @@ const optionalUrl = z
   )
   .transform((value) => (value === "" ? null : value));
 
+/**
+ * A country, typed by hand.
+ *
+ * The column stores an ISO alpha-2 code, because "Georgia", "georgia" and
+ * "GE" must not become three different countries the day discovery filters
+ * by one. So the field is free text and this resolves it — the person writes
+ * a country, the row keeps a code.
+ */
 const countryCode = z
   .string()
   .trim()
-  .toUpperCase()
-  .pipe(
-    z.union([
-      z.literal(""),
-      z.string().regex(/^[A-Z]{2}$/, {
-        error: "Use a two-letter country code, for example GE.",
-      }),
-    ]),
-  )
-  .transform((value) => (value === "" ? null : value));
+  .transform((value, ctx) => {
+    if (value === "") {
+      return null;
+    }
+
+    const code = countryCodeFromInput(value);
+    if (!code) {
+      ctx.addIssue({
+        code: "custom",
+        error: `We do not recognise “${value}” as a country.`,
+      });
+      return null;
+    }
+
+    return code;
+  });
 
 const optionalCoordinate = (max: number, error: string) =>
   z

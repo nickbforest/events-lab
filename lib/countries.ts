@@ -300,3 +300,30 @@ export function countryName(code: string | null | undefined): string | null {
   }
   return NAME_BY_CODE.get(code.toUpperCase()) ?? code;
 }
+
+const CODE_BY_NAME = new Map(
+  COUNTRIES.map((c) => [c.name.toLowerCase(), c.code]),
+);
+
+const KNOWN_CODES = new Set(COUNTRIES.map((c) => c.code));
+
+/**
+ * Resolves what someone typed into an ISO code, or null if it is not a
+ * country we know.
+ *
+ * Accepts the full name in any casing ("georgia", "Georgia") and the code
+ * itself, because someone who knows "GE" should not be made to spell it out.
+ */
+export function countryCodeFromInput(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const upper = trimmed.toUpperCase();
+  if (upper.length === 2 && KNOWN_CODES.has(upper)) {
+    return upper;
+  }
+
+  return CODE_BY_NAME.get(trimmed.toLowerCase()) ?? null;
+}
