@@ -160,7 +160,9 @@ export function createSupabaseEventsRepository(
     },
 
     async resolveTags(tags) {
-      if (tags.length === 0) return [];
+      if (tags.length === 0) {
+        return [];
+      }
 
       // Upsert by slug so "Live Music" and "live-music" converge on one row.
       // `ignoreDuplicates` keeps the label a tag was first created with.
@@ -192,7 +194,9 @@ export function createSupabaseEventsRepository(
           throw new DataAccessError("Failed to load tags.", lookupError);
         }
 
-        for (const row of existing) resolved.set(row.slug, row.id);
+        for (const row of existing) {
+          resolved.set(row.slug, row.id);
+        }
       }
 
       return [...resolved.values()];
@@ -200,7 +204,9 @@ export function createSupabaseEventsRepository(
 
     async findVisibleBySlug(username, slug) {
       const ownerId = await findOwnerId(username);
-      if (!ownerId) return null;
+      if (!ownerId) {
+        return null;
+      }
 
       const { data, error } = await client
         .from("events")
@@ -223,7 +229,9 @@ export function createSupabaseEventsRepository(
       options: EventVisibleListOptions,
     ) {
       const ownerId = await findOwnerId(username);
-      if (!ownerId) return [];
+      if (!ownerId) {
+        return [];
+      }
 
       let query = client
         .from("events")
@@ -232,11 +240,17 @@ export function createSupabaseEventsRepository(
         .in("status", PUBLIC_STATUSES)
         .not("published_at", "is", null);
 
-      if (options.from) query = query.gte("start_at", options.from);
-      if (options.until) query = query.lt("start_at", options.until);
+      if (options.from) {
+        query = query.gte("start_at", options.from);
+      }
+      if (options.until) {
+        query = query.lt("start_at", options.until);
+      }
 
       query = query.order("start_at", { ascending: options.order === "asc" });
-      if (options.limit) query = query.limit(options.limit);
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
 
       const { data, error } = await query.returns<EventRow[]>();
 
@@ -317,7 +331,9 @@ export function createSupabaseEventsRepository(
         archived: 0,
       };
 
-      for (const row of data) counts[row.status] += 1;
+      for (const row of data) {
+        counts[row.status] += 1;
+      }
       return counts;
     },
 
@@ -328,7 +344,9 @@ export function createSupabaseEventsRepository(
         .eq("owner_id", ownerId)
         .eq("slug", slug);
 
-      if (exceptEventId) query = query.neq("id", exceptEventId);
+      if (exceptEventId) {
+        query = query.neq("id", exceptEventId);
+      }
 
       const { count, error } = await query;
 
@@ -415,7 +433,9 @@ export function createSupabaseEventsRepository(
         throw new DataAccessError("Failed to clear event tags.", clearError);
       }
 
-      if (tagIds.length === 0) return;
+      if (tagIds.length === 0) {
+        return;
+      }
 
       const { error } = await client
         .from("event_tags")
@@ -451,7 +471,9 @@ export function createSupabaseEventsRepository(
 
     async removeCoverImage(url) {
       const path = toStoragePath(url);
-      if (!path) return;
+      if (!path) {
+        return;
+      }
 
       const { error } = await client.storage.from(MEDIA_BUCKET).remove([path]);
 

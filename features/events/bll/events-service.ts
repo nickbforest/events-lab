@@ -184,7 +184,9 @@ export function createEventsService(
   function requirePublishable(input: EventDraftInput): void {
     const blockers = publishBlockers(input);
     const first = Object.values(blockers)[0];
-    if (first) throw new ApplicationError("VALIDATION_FAILED", first);
+    if (first) {
+      throw new ApplicationError("VALIDATION_FAILED", first);
+    }
   }
 
   async function loadOwned(
@@ -248,7 +250,9 @@ export function createEventsService(
       }),
 
     async createEvent(ownerId, input, publish) {
-      if (publish) requirePublishable(input);
+      if (publish) {
+        requirePublishable(input);
+      }
 
       const slug = await resolveSlug(ownerId, input.slug, input.title);
       const now = clock().toISOString();
@@ -284,7 +288,9 @@ export function createEventsService(
         ? existing.slug
         : await resolveSlug(ownerId, input.slug, input.title, id);
 
-      if (PUBLIC_STATUSES.includes(existing.status)) requirePublishable(input);
+      if (PUBLIC_STATUSES.includes(existing.status)) {
+        requirePublishable(input);
+      }
 
       const tagIds = await repository.resolveTags(input.tags);
       const event = await repository.updateEvent(

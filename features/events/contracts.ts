@@ -122,7 +122,9 @@ export const eventTagsSchema = z
     const seen = new Map<string, string>();
     for (const value of values) {
       const slug = toTagSlug(value);
-      if (slug.length >= 2 && !seen.has(slug)) seen.set(slug, value.trim());
+      if (slug.length >= 2 && !seen.has(slug)) {
+        seen.set(slug, value.trim());
+      }
     }
     return [...seen].map(([slug, label]) => ({ slug, label }));
   });
@@ -232,3 +234,13 @@ export const eventMediaSchema = z.object({
 });
 
 export type EventMediaInput = z.infer<typeof eventMediaSchema>;
+
+/**
+ * Compiled parsers for the schemas a request hits on every save. See the note
+ * in `features/profiles/contracts.ts` — compiled once at module scope, never
+ * inside a handler.
+ */
+export const compiledEventDraftSchema = z.compile(eventDraftSchema);
+export const compiledEventMediaSchema = z.compile(eventMediaSchema);
+export const compiledEventIdSchema = z.compile(eventIdSchema);
+export const compiledEventTransitionSchema = z.compile(eventTransitionSchema);

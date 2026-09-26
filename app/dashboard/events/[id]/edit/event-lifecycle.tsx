@@ -9,6 +9,7 @@ import {
   transitionEventAction,
 } from "@/features/events/actions";
 import type { EventTransition } from "@/features/events/contracts";
+import { routes } from "@/lib/routes";
 import type { EventStatus } from "@/lib/types";
 
 const buttonClass =
@@ -43,13 +44,12 @@ const AVAILABLE: Record<
   archived: [{ to: "published", label: "Publish again", tone: "primary" }],
 };
 
-export function EventLifecycle({
-  eventId,
-  status,
-}: {
+export interface EventLifecycleProps {
   eventId: string;
   status: EventStatus;
-}) {
+}
+
+export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export function EventLifecycle({
         </p>
       </div>
 
-      {error && <FormAlert message={error} />}
+      {error ? <FormAlert message={error} /> : null}
 
       <div className="flex flex-wrap gap-3">
         {AVAILABLE[status].map((option) => (
@@ -106,7 +106,7 @@ export function EventLifecycle({
               onClick={() =>
                 startTransition(async () => {
                   await deleteEventAction(eventId);
-                  router.push("/dashboard/events");
+                  router.push(routes.dashboard.events());
                 })
               }
             >
@@ -133,12 +133,12 @@ export function EventLifecycle({
         )}
       </div>
 
-      {confirmingDelete && (
+      {confirmingDelete ? (
         <p className="text-sm text-muted-foreground">
           Deleting removes the event and its cover image for good. Unpublishing
           keeps both and only hides the page.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

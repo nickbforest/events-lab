@@ -5,15 +5,13 @@ import { notFound } from "next/navigation";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { getOwnedEvent, listEventCategories } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
-
+import { routes } from "@/lib/routes";
 import { EventForm } from "../../event-form";
 import { EventLifecycle } from "./event-lifecycle";
 
 export default async function EditEventPage({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: PageProps<"/dashboard/events/[id]/edit">) {
   const { id } = await params;
   const profile = await getCurrentProfile();
   const [event, categories] = await Promise.all([
@@ -23,7 +21,9 @@ export default async function EditEventPage({
 
   // An event owned by someone else is indistinguishable from one that does not
   // exist: the query is already scoped to the session's own rows.
-  if (!event) notFound();
+  if (!event) {
+    notFound();
+  }
 
   const isPublic = event.status !== "draft" && event.status !== "archived";
 
@@ -40,15 +40,15 @@ export default async function EditEventPage({
           <h1 className="font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl">
             {event.title}
           </h1>
-          {isPublic && (
+          {isPublic ? (
             <Link
-              href={`/u/${profile.username}/${event.slug}`}
+              href={routes.event(profile.username, event.slug)}
               className="mt-3 inline-flex items-center gap-2 font-mono text-xs uppercase text-muted-foreground transition-colors hover:text-primary"
             >
               <Eye className="size-3.5" aria-hidden />
               View public page
             </Link>
-          )}
+          ) : null}
         </div>
 
         <div className="mb-10">

@@ -31,6 +31,7 @@ import {
   instantToWallClock,
   wallClockToIso,
 } from "@/lib/datetime";
+import { routes } from "@/lib/routes";
 import type { Category, EventType, EventWithRelations } from "@/lib/types";
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
@@ -125,13 +126,12 @@ function toPayload(values: EventFormValues): EventDraftValues {
   };
 }
 
-export function EventForm({
-  categories,
-  event = null,
-}: {
+export interface EventFormProps {
   categories: readonly Category[];
   event?: EventWithRelations | null;
-}) {
+}
+
+export function EventForm({ categories, event = null }: EventFormProps) {
   const router = useRouter();
   const isEdit = Boolean(event);
   // A public event's slug is a live URL and MVP-1 keeps no redirect history.
@@ -177,7 +177,7 @@ export function EventForm({
 
     setSaved(true);
     if (!event && result.eventId) {
-      router.push(`/dashboard/events/${result.eventId}/edit`);
+      router.push(routes.dashboard.editEvent(result.eventId));
       return;
     }
     router.refresh();
@@ -787,7 +787,9 @@ export function EventForm({
 
             const addTag = () => {
               const value = tagDraft.trim();
-              if (!value || tags.length >= EVENT_TAG_LIMIT) return;
+              if (!value || tags.length >= EVENT_TAG_LIMIT) {
+                return;
+              }
               if (
                 !tags.some((tag) => tag.toLowerCase() === value.toLowerCase())
               ) {
@@ -875,12 +877,12 @@ export function EventForm({
         description="Drafts stay private to you. Publishing makes the page public and shareable."
       >
         <div className="space-y-4">
-          {formError && <FormAlert message={formError} />}
-          {saved && (
+          {formError ? <FormAlert message={formError} /> : null}
+          {saved ? (
             <p role="status" className="text-sm text-primary">
               Saved.
             </p>
-          )}
+          ) : null}
 
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
@@ -918,7 +920,7 @@ export function EventForm({
                 </button>
 
                 <Link
-                  href="/dashboard/events"
+                  href={routes.dashboard.events()}
                   className="rounded-md px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Cancel

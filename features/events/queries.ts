@@ -26,7 +26,9 @@ export async function getPublishedEventBySlug(
   // A malformed route parameter is a 404, not a crash: this runs on public
   // route segments, so anything the constraints would reject has no event.
   const parsed = eventRouteParamsSchema.safeParse({ username, slug });
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    return null;
+  }
 
   return getPublicEventsService().getPublishedEventBySlug(
     parsed.data.username,
@@ -38,7 +40,9 @@ export async function getUpcomingEventsByUsername(
   username: string,
 ): Promise<EventWithRelations[]> {
   const parsed = usernameSchema.safeParse(username);
-  if (!parsed.success) return [];
+  if (!parsed.success) {
+    return [];
+  }
 
   return getPublicEventsService().getUpcomingEventsByUsername(parsed.data);
 }
@@ -47,7 +51,9 @@ export async function getPastEventsByUsername(
   username: string,
 ): Promise<EventWithRelations[]> {
   const parsed = usernameSchema.safeParse(username);
-  if (!parsed.success) return [];
+  if (!parsed.success) {
+    return [];
+  }
 
   return getPublicEventsService().getPastEventsByUsername(parsed.data);
 }
@@ -64,7 +70,9 @@ export async function getOwnedEvent(
   ownerId: string,
 ): Promise<EventWithRelations | null> {
   const parsed = eventIdSchema.safeParse(id);
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    return null;
+  }
 
   const service = await getEventsService();
   return service.getOwnedEvent(parsed.data, ownerIdSchema.parse(ownerId));

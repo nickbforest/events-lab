@@ -12,7 +12,9 @@ const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
 function formatter(timeZone: string): Intl.DateTimeFormat {
   const existing = FORMATTERS.get(timeZone);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
 
   const created = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -67,7 +69,9 @@ export function wallClockToInstant(
   timeZone: string,
 ): Date | null {
   const match = WALL_CLOCK.exec(wallClock.trim());
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
 
   const [year, month, day, hour, minute] = match.slice(1).map(Number);
   const naive = Date.UTC(year, month - 1, day, hour, minute);
@@ -80,7 +84,9 @@ export function wallClockToInstant(
 
 /** The same, returning the ISO instant a contract expects, or "". */
 export function wallClockToIso(wallClock: string, timeZone: string): string {
-  if (!wallClock.trim()) return "";
+  if (!wallClock.trim()) {
+    return "";
+  }
   return wallClockToInstant(wallClock, timeZone)?.toISOString() ?? "";
 }
 
@@ -89,10 +95,14 @@ export function instantToWallClock(
   iso: string | null,
   timeZone: string,
 ): string {
-  if (!iso) return "";
+  if (!iso) {
+    return "";
+  }
 
   const instant = new Date(iso);
-  if (Number.isNaN(instant.getTime())) return "";
+  if (Number.isNaN(instant.getTime())) {
+    return "";
+  }
 
   const parts = formatter(timeZone).formatToParts(instant);
   const read = (type: Intl.DateTimeFormatPartTypes) =>
