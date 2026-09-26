@@ -1,68 +1,70 @@
-# Memory — Phase 4 Events, and the PR #6 review pass
+# Memory — Upload feedback, removable profile images, public-page cleanup
 
 Last updated: 2026-09-26
 
 ## What was built
 
-Two strands, on two branches.
+All on `feat/phase-4-events`, which stacks on the Phase 2 profiles work.
 
-**Phase 4 — Events**, committed on `feat/phase-4-events` (branched from
-`feat/phase-2-profiles`, so it stacks on PR #6). Real events end to end:
-migrations for `categories`, `tags`, `events`, `event_tags` and the
-`event-media` bucket, all applied to the hosted Supabase project; contracts,
-BLL, Supabase DAL, a shared create/edit form, a lifecycle panel, and
-`lib/datetime.ts`. Full record in `context/progress-tracker.md` Phase 4.
-
-**PR #6 review pass**, on `feat/phase-2-profiles`. Nine inline comments from
-`geo318` plus a standing instruction to fix each pattern repo-wide. New
-`lib/routes.ts`, `lib/logging.ts`, a rewritten `lib/errors.ts`, hardened
-Biome rules, and every invariant written into `context/code-standard.md`.
+- **Upload animation.** `components/forms/image-uploader.tsx` shows a spinning
+  `LoaderCircle`, a `busyLabel` ("Uploading…" / "Removing…") and a lime
+  indeterminate bar (`animate-upload-progress` in `app/globals.css`) along
+  the frame's bottom edge. The event poster
+  (`app/dashboard/events/event-form.tsx`) now shows a dimmed local preview
+  while uploading and catches thrown failures.
+- **Removable profile images.** `removeProfileMediaAction` →
+  `ProfilesService.removeProfileMedia` clears the column, then deletes the
+  files. `setMediaUrl` and `removeMediaExcept` accept `null`. The uploader
+  takes `onRemove`, which `ProfileMediaField` wires up. 3 new BLL tests.
+- **`SelectControl`** in `components/forms/field.tsx`: a native select without
+  its native look, 42px tall like the inputs, with a chevron. All four
+  dashboard selects use it.
+- **Public page:** the "Claim your events-lab page" box is removed from
+  `app/publishers/[username]/page.tsx`.
+- **Footer:** `SiteFooter` is the wordmark only.
+- **Docs:** the progress tracker, build plan, Architecture, UI registry and
+  UI rules now cover the previous session's events refinements and this one.
+  The progress tracker has a new "Phase 4 post-completion refinements"
+  section.
 
 ## Decisions made
 
-- `/u/:username` is now `/publishers/:username`. Chosen in review; the old
-  URL is gone, and no route may be a string literal outside `lib/routes.ts`.
-- No `completed` event status. Completion derives from `end_at`.
-- Organizations stay deferred; MVP-1 publishes through profiles.
-- Publish-readiness is a BLL rule, not a CHECK and not a stricter schema.
-- `z.compile` for per-request schemas, compiled at module scope only.
-- Errors: codes and user-facing wording live in `lib/errors.ts`; all logging
-  goes through `lib/logging.ts`; `console.*` is banned by lint.
-- Component props are named exported `<Name>Props` interfaces.
-- JSX conditionals use `cond ? <X/> : null`, not `&&`.
+- Upload progress is indeterminate, never a percentage. Server Actions report
+  no byte progress. A real percentage would need signed-URL direct-to-Storage
+  uploads with XHR.
+- Removing an image clears the column before deleting files, the same order
+  as a replace.
+- The footer and public page carry no signup or marketing links. Don't add
+  them back without asking.
 
 ## Problems solved
 
-- Biome's `--unsafe` autofix silently deleted two `console.error` calls and
-  left empty `catch {}` blocks. Both restored through the logger. Check for
-  this after any `--unsafe` run.
-- Zod's stricter publish schema re-parsed already-parsed output, so `""`→null
-  transforms rejected their own results. Publish rules moved to the BLL.
-- `publishIntent` as React state was read stale inside the submit closure, so
-  the first Publish click saved a draft. It is a ref now.
-- Biome writes diagnostics to stderr and truncates them; scripts need
-  `--colors=off --max-diagnostics=200` and must read stderr.
-- pgTAP still needs Docker. Assertions are verified against the hosted
-  project inside transactions that roll back.
+- "Hide the cover when none is set" was already how the page worked. The real
+  gap was that an uploaded cover could never be removed.
+- Native selects were shorter than inputs because browsers ignore padding on
+  them. `appearance-none` plus a fixed height fixes it.
 
 ## Current state
 
-- Phase 4: committed, all automated checks green.
-  **Never opened in a browser.** Create, publish, edit, cover upload, cancel,
-  delete and the public page are unverified by a human.
-- PR #6 review pass: all nine comments addressed, 68 files changed,
-  uncommitted at the time of writing.
+- biome clean, tsc clean, vitest 10 files / 123 tests, `next build` passes.
+- **Nothing from this session has been checked in the browser.**
+- The events refinements from the previous session were used in the browser,
+  but there is no recorded end-to-end checklist pass.
 
 ## Next session starts with
 
-1. Browser-test Phase 4 end to end. This is the oldest unpaid debt.
-2. Rebase `feat/phase-4-events` onto the merged `main` and bring it up to the
-   new standards — it predates all of them: hardcoded routes, inline prop
-   types, `&&` in JSX, uncompiled schemas, no logger.
+1. Check this session's changes in the browser: upload animation (profile and
+   poster), Remove on the cover then preview, select heights, the public page
+   without the claim box, and the footer.
+2. Run a full Phase 4 end-to-end pass: create → publish → edit → cancel →
+   delete.
+3. Then Phase 5, the map layer (Mapbox, geocoding, near me).
 
 ## Open questions
 
-- Phase 4 needs a real standards pass, not just a rebase (~1,800 lines).
-- Recurrence still deferred.
-- Discovery and analytics remain mock-backed and now contradict real events.
-- Custom SMTP still needed before launch; email change still untested.
+- Does the upload wait ever get long enough to justify real percentages?
+- Should the event poster get a Remove action too? Today it can only be
+  replaced.
+- Discovery and analytics are still mock-backed.
+- Custom SMTP is needed before launch. Email change is untested.
+- Recurrence is deferred.

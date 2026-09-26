@@ -12,6 +12,7 @@ import {
   fieldControlClass,
   fieldDescribedBy,
   formSubmitClass,
+  SelectControl,
 } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import { ImageUploader } from "@/components/forms/image-uploader";
@@ -88,6 +89,7 @@ export function EventForm({
   const [tagDraft, setTagDraft] = useState("");
   const [coverError, setCoverError] = useState<string | undefined>();
   const [coverBusy, setCoverBusy] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   // A ref, not state: the button's click handler runs in the same tick as the
   // submit that reads it, so a state update would not have landed yet and the
@@ -145,20 +147,28 @@ export function EventForm({
 
   async function uploadCover(file: File) {
     setCoverError(undefined);
+    // The chosen image shows, dimmed, under the progress bar while it uploads.
+    const preview = URL.createObjectURL(file);
+    setCoverPreview(preview);
     setCoverBusy(true);
 
     const body = new FormData();
     body.set("file", file);
-    const result = await uploadEventCoverAction(body);
 
-    setCoverBusy(false);
-
-    if (result.status === "error") {
-      setCoverError(result.fieldErrors?.file ?? result.message);
-      return;
+    try {
+      const result = await uploadEventCoverAction(body);
+      if (result.status === "error") {
+        setCoverError(result.fieldErrors?.file ?? result.message);
+        return;
+      }
+      form.setFieldValue("coverImageUrl", result.url);
+    } catch {
+      setCoverError("The image could not be uploaded. Please try again.");
+    } finally {
+      setCoverBusy(false);
+      setCoverPreview(null);
+      URL.revokeObjectURL(preview);
     }
-
-    form.setFieldValue("coverImageUrl", result.url);
   }
 
   /**
@@ -297,10 +307,9 @@ export function EventForm({
             label="Category"
             error={serverFieldErrors.categoryId}
           >
-            <select
+            <SelectControl
               id={field.name}
               name={field.name}
-              className={fieldControlClass}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(changeEvent) => {
@@ -313,7 +322,7 @@ export function EventForm({
                   {category.label}
                 </option>
               ))}
-            </select>
+            </SelectControl>
           </Field>
         )}
       </form.Field>
@@ -383,10 +392,9 @@ export function EventForm({
             hint="The times above are read in this zone."
             error={serverFieldErrors.timezone}
           >
-            <select
+            <SelectControl
               id={field.name}
               name={field.name}
-              className={fieldControlClass}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(changeEvent) => {
@@ -405,7 +413,7 @@ export function EventForm({
                   {zone}
                 </option>
               ))}
-            </select>
+            </SelectControl>
           </Field>
         )}
       </form.Field>
@@ -417,10 +425,9 @@ export function EventForm({
       <form.Field name="eventType">
         {(field) => (
           <Field id={field.name} label="Event type">
-            <select
+            <SelectControl
               id={field.name}
               name={field.name}
-              className={fieldControlClass}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(changeEvent) =>
@@ -432,7 +439,7 @@ export function EventForm({
                   {label}
                 </option>
               ))}
-            </select>
+            </SelectControl>
           </Field>
         )}
       </form.Field>
@@ -498,7 +505,7 @@ export function EventForm({
           // A poster is the thing people look at first, so the target is a
           // large one rather than a thin band that reads as a minor field.
           className="aspect-[4/3] max-h-[28rem] py-0"
-          previewUrl={field.state.value || null}
+          previewUrl={coverPreview ?? (field.state.value || null)}
           busy={coverBusy}
           error={coverError}
           onSelect={(file) => void uploadCover(file)}

@@ -9,6 +9,7 @@ import {
   fieldControlClass,
   fieldDescribedBy,
   formSubmitClass,
+  SelectControl,
 } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import {
@@ -170,10 +171,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 label="Publisher type"
                 hint="Shown above your name on your public page."
               >
-                <select
+                <SelectControl
                   id={field.name}
                   name={field.name}
-                  className={fieldControlClass}
                   value={field.state.value}
                   aria-describedby={fieldDescribedBy({
                     id: field.name,
@@ -190,7 +190,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                       {publisherTypeLabel(type)}
                     </option>
                   ))}
-                </select>
+                </SelectControl>
               </Field>
             )}
           </form.Field>

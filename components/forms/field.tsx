@@ -1,7 +1,45 @@
-import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+
+import { cn } from "@/lib/format";
 
 export const fieldControlClass =
   "w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none";
+
+export type SelectControlProps = ComponentProps<"select">;
+
+/**
+ * A native `<select>` the same height as a text input.
+ *
+ * Browsers draw a select with their own box, which ignores padding and comes
+ * out shorter than the inputs beside it (Safari most of all). Dropping the
+ * native appearance lets `fieldControlClass` size it like every other field,
+ * pinned to the input's 42px, with a chevron drawn in its place.
+ */
+export function SelectControl({
+  className,
+  children,
+  ...props
+}: SelectControlProps) {
+  return (
+    <div className="relative">
+      <select
+        {...props}
+        className={cn(
+          fieldControlClass,
+          "h-[2.625rem] cursor-pointer appearance-none pr-10",
+          className,
+        )}
+      >
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+    </div>
+  );
+}
 
 /** The one lime submit button a dashboard form carries. */
 export const formSubmitClass =

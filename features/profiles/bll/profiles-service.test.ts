@@ -178,3 +178,65 @@ describe("updateProfileMedia", () => {
     consoleError.mockRestore();
   });
 });
+
+describe("removeProfileMedia", () => {
+  it("clears the profile's link before deleting the stored files", async () => {
+    const calls: string[] = [];
+    const repository = createRepository({
+      setMediaUrl: vi.fn(async () => {
+        calls.push("clearUrl");
+        return storedProfile;
+      }),
+      removeMediaExcept: vi.fn(async () => {
+        calls.push("cleanup");
+      }),
+    });
+
+    await createProfilesService(repository).removeProfileMedia(
+      OWNER_ID,
+      "cover",
+    );
+
+    expect(calls).toEqual(["clearUrl", "cleanup"]);
+    expect(repository.setMediaUrl).toHaveBeenCalledWith(
+      OWNER_ID,
+      "cover",
+      null,
+    );
+    expect(repository.removeMediaExcept).toHaveBeenCalledWith(
+      OWNER_ID,
+      "cover",
+      null,
+    );
+  });
+
+  it("deletes nothing when the profile could not be updated", async () => {
+    const repository = createRepository({
+      setMediaUrl: vi.fn(async () => {
+        throw new Error("no row");
+      }),
+    });
+
+    await expect(
+      createProfilesService(repository).removeProfileMedia(OWNER_ID, "cover"),
+    ).rejects.toThrow("no row");
+    expect(repository.removeMediaExcept).not.toHaveBeenCalled();
+  });
+
+  it("still succeeds when deleting the files fails", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const repository = createRepository({
+      removeMediaExcept: vi.fn(async () => {
+        throw new Error("remove failed");
+      }),
+    });
+
+    await expect(
+      createProfilesService(repository).removeProfileMedia(OWNER_ID, "cover"),
+    ).resolves.toEqual(storedProfile);
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});

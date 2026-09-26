@@ -154,6 +154,12 @@ Prefer skeletons for content-heavy screens.
 
 Avoid blank screens.
 
+An upload shows it is in flight: a spinner, a busy label and an
+indeterminate progress bar, over a dimmed preview of the chosen image
+(`ImageUploader` in `ui-registry.md`). Never show a percentage the app cannot
+measure — Server Actions report no byte progress, so the bar is
+indeterminate. Added 2026-09-26.
+
 ---
 
 # 10. Empty States

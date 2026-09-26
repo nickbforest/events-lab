@@ -157,6 +157,24 @@
   animation: marquee 50s linear infinite reverse;
 }
 
+/*
+ * An upload in flight. Server Actions report no byte progress, so this is an
+ * indeterminate bar — it says "still working", never a percentage it cannot
+ * back up.
+ */
+@keyframes upload-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.animate-upload-progress {
+  animation: upload-progress 1.2s var(--ease-studio) infinite;
+}
+
 /* The reference has no reduced-motion handling. ui-rules.md §13 requires it. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -172,5 +190,12 @@
   .animate-marquee-reverse {
     animation: none !important;
     transform: none !important;
+  }
+
+  /* A still, full bar: the "Uploading…" label carries the state instead. */
+  .animate-upload-progress {
+    animation: none !important;
+    transform: none !important;
+    width: 100% !important;
   }
 }

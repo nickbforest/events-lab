@@ -214,9 +214,12 @@ Deviations from the original plan, each agreed before implementation:
    reusable as-is.
 3. **Recurrence is deferred.** Architecture §13 wants it eventually; single
    events land first and the columns stay reserved.
-4. **`NewEventDialog` was deleted, not wired up.** It was a second,
-   non-functional copy of the create form; making it real would have meant
-   maintaining the form twice. Its triggers now link to `/dashboard/events/new`.
+4. **Events are created in a dialog.** The original non-functional
+   `NewEventDialog` was deleted at completion; in the post-completion pass the
+   dialog came back on top of the real `EventForm`, and the
+   `/dashboard/events/new` page was removed so there is one create path.
+5. **Ticket button label.** `events.ticket_cta_label` was added so the public
+   button reads what the publisher chose, not a fixed "Get tickets".
 
 Implement:
 
@@ -237,7 +240,8 @@ Implement:
 * [x] Delete/archive
 * [x] Publish
 * [x] Cover image
-* [ ] Preview — the public page serves as one; no separate preview mode
+* [x] Preview — opens the public page in a new tab with `?preview=1`, which
+  hides the site header
 * [ ] Recurrence — deferred. Architecture §13 wants daily, weekly, selected
   weekdays, monthly and an end date, and warns against an engine more complex
   than that. It had its own phase in an earlier numbering; it is now an open
@@ -265,7 +269,11 @@ this phase adds the map layer on top of those columns.
 
 * [x] User avatar — Phase 2, `profile-media` bucket
 * [x] Event cover image — Phase 4, `event-media` bucket
-* [x] Image upload and deletion — both buckets
+* [x] Image upload and deletion — both buckets; avatar and cover also have a
+  Remove action (2026-09-26)
+* [x] Upload feedback — spinner and indeterminate progress bar (2026-09-26).
+  A real percentage needs direct-to-Storage uploads; see the Phase 4
+  follow-ups in `progress-tracker.md`
 * [x] File validation — both buckets
 * [x] Storage policies — both buckets
 * [ ] Gallery

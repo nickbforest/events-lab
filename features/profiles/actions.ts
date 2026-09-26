@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { verifySession } from "@/features/auth/queries";
 import {
+  compiledProfileMediaKindSchema,
   compiledProfileMediaSchema,
   compiledProfileUpdateSchema,
 } from "@/features/profiles/contracts";
@@ -99,5 +100,27 @@ export async function updateProfileMediaAction(
     return { status: "success" };
   } catch (error) {
     return toFailure<"file">("updateProfileMedia", error);
+  }
+}
+
+export async function removeProfileMediaAction(
+  kind: unknown,
+): Promise<FormResult<"file">> {
+  const parsed = compiledProfileMediaKindSchema.safeParse(kind);
+  if (!parsed.success) {
+    log.warn("Profile media removal sent an unknown kind.", { kind });
+    return { status: "error", message: "Unknown image type." };
+  }
+
+  const user = await verifySession();
+  const service = await getProfilesService();
+
+  try {
+    const { username } = await service.removeProfileMedia(user.id, parsed.data);
+    revalidatePath(routes.dashboard.profile());
+    revalidatePath(routes.publisher(username));
+    return { status: "success" };
+  } catch (error) {
+    return toFailure<"file">("removeProfileMedia", error);
   }
 }

@@ -1,5 +1,6 @@
 import type {
   ProfileMediaInput,
+  ProfileMediaKind,
   ProfileUpdateInput,
 } from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
@@ -60,6 +61,7 @@ export interface ProfilesService {
     ownerId: string,
     input: ProfileMediaInput,
   ): Promise<Profile>;
+  removeProfileMedia(ownerId: string, kind: ProfileMediaKind): Promise<Profile>;
 }
 
 export function createProfilesService(
@@ -116,6 +118,25 @@ export function createProfilesService(
         // upload over a leftover file would be worse than leaking one. The
         // log is what makes that leak findable.
         log.error("Replaced profile media could not be removed.", error, {
+          ownerId,
+          kind,
+        });
+      }
+
+      return profile;
+    },
+
+    async removeProfileMedia(ownerId, kind) {
+      // Unlink first, then delete the files: the same ordering as a replace,
+      // so a failure never leaves the profile pointing at a missing image.
+      const profile = await repository.setMediaUrl(ownerId, kind, null);
+
+      try {
+        await repository.removeMediaExcept(ownerId, kind, null);
+      } catch (error) {
+        // Swallowed for the same reason as above: the image is already gone
+        // from the page, which is what the publisher asked for.
+        log.error("Removed profile media could not be deleted.", error, {
           ownerId,
           kind,
         });

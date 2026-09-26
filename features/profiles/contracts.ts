@@ -166,4 +166,5 @@ export type ProfileMediaInput = z.infer<typeof profileMediaSchema>;
  */
 export const compiledProfileUpdateSchema = z.compile(profileUpdateSchema);
 export const compiledProfileMediaSchema = z.compile(profileMediaSchema);
+export const compiledProfileMediaKindSchema = z.compile(profileMediaKindSchema);
 export const compiledUsernameSchema = z.compile(usernameSchema);

@@ -23,7 +23,10 @@ deferred post-MVP. Next is Phase 5 — Location & Media.
 stale copy.
 
 **Overall MVP:** Authentication, profiles and events are real. A publisher can
-create an event, upload a cover, publish it and see it at `/u/:username/:slug`.
+create an event from a dialog on the events list, upload a cover, publish it
+with a toggle and see it at `/publishers/:username/:slug`. See the Phase 4
+post-completion record for the dashboard and public-page refinements made
+after the phase closed.
 Discovery and analytics remain mock-backed until their own phases replace
 those adapters.
 
@@ -264,9 +267,13 @@ before it was committed.
    `other`. A single select on the signup form is the whole "person or
    organization?" question under this model.
 
-10. **Open: `/u/:username` or `/p/:username`?** `u` means user, but the page
-    now represents venues and bands too. Changing the prefix is cheap today
-    and breaks every shared link after launch. Undecided.
+10. ~~**Open: `/u/:username` or `/p/:username`?**~~ **Resolved 2026-09-26.**
+    The public page is `/publishers/:username`, chosen in the PR #6 review.
+    Every route is built through `lib/routes.ts`.
+
+11. **Profile images can now be removed** (2026-09-26). Previously a cover or
+    avatar, once uploaded, could only be replaced, so a publisher who wanted
+    a page without a cover banner had no way back to one.
 
 ---
 
@@ -347,7 +354,7 @@ blueprint confirmed before any code was written.
 | DAL | `supabase-events-repository.ts`. Filtering moved into SQL — the interface no longer exposes "list everything", which is what made the in-memory version load every row. |
 | Dates | `lib/datetime.ts` converts between `datetime-local` readings and instants for a named zone using `Intl`, resolved in two passes so a daylight-saving boundary lands correctly. `date-fns` v4 needs the separate `@date-fns/tz` package for this; 60 lines beat a dependency. |
 | UI | One `EventForm` serves create and edit. Inapplicable fields are absent rather than disabled. New `/dashboard/events/[id]/edit` with an `EventLifecycle` panel for publish, postpone, cancel, unpublish and a two-step delete. |
-| Removed | `InMemoryEventsRepository` and `NewEventDialog`. The dialog was a second, non-functional copy of the create form; its triggers now link to the real page. |
+| Removed | `InMemoryEventsRepository` and the old, non-functional `NewEventDialog`. **Superseded** in the post-completion pass below: creation is a dialog again, now backed by the real `EventForm`, and the `/dashboard/events/new` page is gone. |
 
 ### Validation results
 
@@ -360,13 +367,13 @@ blueprint confirmed before any code was written.
 | RLS and Storage | `events_rls.test.sql` (22 assertions) and `event_media_storage.test.sql` (9) added. pgTAP still needs Docker, so they were not run as a suite. Their equivalents were run against the hosted project in rolled-back transactions: 12 structural checks, 6 constraint probes, 12 RLS probes, 6 storage probes. All held, and no probe rows remained. |
 | Security advisors | Only the pre-existing "leaked password protection disabled" warning. |
 | Performance advisors | Three "unused index" notices, expected on an empty table. `events_search_idx` is deliberately unused until discovery. |
-| In browser | **Not yet done.** Every check above is automated or database-level; nobody has created an event through the UI. |
+| In browser | **Not done at completion.** The post-completion refinements below came from the developer using the events screens in the browser, but no full end-to-end checklist pass is recorded. |
 
 ### Open follow-ups
 
-1. **Nothing has been exercised in the browser.** Create, publish, edit,
-   cover upload, cancel, delete and the public page are all unverified by a
-   human. That is the first task of the next session.
+1. **No recorded end-to-end browser pass.** The list, dialog, toggle and
+   public page have been used while refining them, but create → publish →
+   edit → cancel → delete has not been run as one checklist.
 2. **Discovery and analytics are still mock-backed** and now inconsistent with
    reality: `/discover` reads `lib/mock-data.ts`, where `EVENTS` is empty, so
    it shows nothing while real events exist. Phase 7 replaces that adapter.
@@ -376,6 +383,37 @@ blueprint confirmed before any code was written.
 5. **`search_vector` is written but never read.** Intentional; Phase 7 uses it.
 6. **Categories are fixed at the seeded eight.** Changing them needs a
    migration, which is the point, but there is no admin surface for it.
+7. **Upload progress is not a percentage.** Uploads go through Server
+   Actions, which report no byte progress, so the uploader shows an
+   indeterminate bar. A real percentage needs a direct-to-Storage upload
+   (signed upload URL + XHR `upload.onprogress`); worth it only if large
+   files or slow connections make the wait long enough to matter.
+
+## Phase 4 post-completion refinements — 2026-09-26
+
+On the same branch, after the completion record above. Each change came from
+using the screens.
+
+| Area | Change |
+| --- | --- |
+| Standards | Phase 4 brought up to the PR #6 rules: routes via `lib/routes.ts`, compiled schemas, logger and `toUserMessage` in actions, named `<Name>Props`, ternaries in JSX. |
+| Create flow | Creating an event is always a dialog over the events list (native `<dialog>`, pinned footer). `/dashboard/events/new` is deleted — one create path. Edit also opens the dialog, with a "Full editor" link to `/dashboard/events/[id]/edit` for the remaining fields. |
+| Tickets | Migration `20260926140000_add_event_ticket_cta.sql` adds `events.ticket_cta_label`. The dialog's Tickets section sets the button text and URL; unticking clears both; publishing is blocked when a labelled button has no link. Free/Paid stays on the edit page. |
+| Country | Typed by hand with a `<datalist>` of names. `countryCodeFromInput` (`lib/countries.ts`) resolves "Georgia", "georgia" and "GE" to the stored ISO code; an unknown value is a field error. |
+| Time zone | Removed from the dialog — times are read in the browser's zone. The edit page still exposes the control. |
+| Events list | Rows carry a publish toggle (`Switch`, `role="switch"`, status spelled out beside it — it replaced the status column), edit, and an in-place delete confirm. Cancel and postpone stay on the edit page. |
+| Listing card | Shows category, date, poster, title, summary, venue, address, map link, description and the ticket button. No longer wrapped in an anchor; the title link stretches instead. Map link is an OpenStreetMap hyperlink (`lib/maps.ts`) until Phase 5 brings Mapbox. |
+| Preview | Opens the publisher page in a new tab with `?preview=1`, which hides the site header. |
+| Cursor | A base-layer rule restores `cursor: pointer` on every enabled control, which Tailwind v4's reset had dropped. |
+| Uploads | Profile media and event cover show a spinner, a lime indeterminate bar along the frame's bottom edge, and the chosen image dimmed underneath while uploading. |
+| Profile images | Avatar and cover have a Remove action: `removeProfileMediaAction` → `removeProfileMedia` clears the column, then deletes the stored files. With no cover, the public page renders without the banner. |
+| Selects | New `SelectControl` in `components/forms/field.tsx`; every dashboard select (publisher type, category, event type, time zone) is now the same 42px height as the text inputs. |
+| Public page | Removed the "Publishing your own events? Claim your events-lab page" box from `/publishers/:username`. |
+| Footer | `SiteFooter` is now the wordmark only; the Discover, Start publishing and "Prototype" items are gone. |
+
+Validation for the last five rows: `biome check` clean, `tsc` clean,
+`vitest` 10 files / 123 tests, `next build` passed. Not yet checked in the
+browser.
 
 ---
 
@@ -549,3 +587,9 @@ coordinates, showing it on a map, and answering "near me".
 | 2026-09-26 | Publish rules live in the BLL | A draft may be incomplete, so readiness cannot be a CHECK or a stricter parse of the same payload |
 | 2026-09-26 | Slug unique per owner, locked when public | Two venues may both run a "jazz night"; once public the slug is a live URL with no redirect history |
 | 2026-09-26 | Filtering pushed into the DAL interface | A repository that can only "list everything" makes in-memory filtering the path of least resistance |
+| 2026-09-26 | Events are created in a dialog only | One create path; the standalone `/dashboard/events/new` page was a second copy of the flow |
+| 2026-09-26 | `ticket_cta_label` column | The button's wording depends on the event; a hard-coded "Get tickets" is wrong for a free workshop |
+| 2026-09-26 | Country typed, stored as ISO code | Free text is faster than a 250-row select; resolving to a code keeps discovery filters from splitting one country three ways |
+| 2026-09-26 | OpenStreetMap link before Mapbox | A plain hyperlink needs no key or SDK, so it does not introduce a second map provider |
+| 2026-09-26 | Indeterminate upload progress | Server Actions report no byte progress; a fake percentage would claim what the app cannot measure |
+| 2026-09-26 | Profile media is removable | Clearing the column first, then deleting files, mirrors the replace order: a failure never leaves a broken image referenced |

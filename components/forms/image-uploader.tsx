@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { LoaderCircle, Upload } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/format";
 
@@ -18,7 +18,11 @@ export interface ImageUploaderProps {
   previewUrl?: string | null;
   onSelect?: (file: File) => void;
   busy?: boolean;
+  /** What the frame says while `busy`. */
+  busyLabel?: string;
   error?: string;
+  /** Offered under the frame while an image is set; omit to hide it. */
+  onRemove?: () => void;
 }
 
 /**
@@ -28,6 +32,10 @@ export interface ImageUploaderProps {
  * styled div, so it is keyboard-reachable and announced as a file control.
  * With a `previewUrl` the frame shows the current image and the same control
  * replaces it.
+ *
+ * While `busy`, a spinner and an indeterminate bar run along the bottom edge.
+ * The uploads go through Server Actions, which report no byte progress, so the
+ * bar shows that work is happening rather than inventing a percentage.
  */
 export function ImageUploader({
   id,
@@ -39,7 +47,9 @@ export function ImageUploader({
   previewUrl,
   onSelect,
   busy = false,
+  busyLabel = "Uploading…",
   error,
+  onRemove,
 }: ImageUploaderProps) {
   const message = error ?? description;
 
@@ -71,10 +81,25 @@ export function ImageUploader({
             <span aria-hidden className="absolute inset-0 bg-black/40" />
           </>
         ) : null}
-        <Upload className="relative size-5 text-muted-foreground" aria-hidden />
-        <span className="relative font-mono text-xs uppercase tracking-widest text-muted-foreground">
+        {busy ? (
+          <LoaderCircle
+            className="relative size-5 animate-spin text-primary"
+            aria-hidden
+          />
+        ) : (
+          <Upload
+            className="relative size-5 text-muted-foreground"
+            aria-hidden
+          />
+        )}
+        <span
+          className={cn(
+            "relative font-mono text-xs uppercase tracking-widest",
+            busy ? "text-primary" : "text-muted-foreground",
+          )}
+        >
           {busy
-            ? "Uploading…"
+            ? busyLabel
             : previewUrl
               ? "Click to replace"
               : "Click to upload"}
@@ -82,6 +107,15 @@ export function ImageUploader({
         <span className="relative font-mono text-xs text-muted-foreground">
           {hint}
         </span>
+        {busy ? (
+          <span
+            role="progressbar"
+            aria-label={busyLabel}
+            className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-white/10"
+          >
+            <span className="animate-upload-progress block h-full w-2/5 bg-primary" />
+          </span>
+        ) : null}
         <input
           id={id}
           type="file"
@@ -100,6 +134,15 @@ export function ImageUploader({
           }}
         />
       </label>
+      {onRemove && previewUrl && !busy ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-destructive"
+        >
+          Remove
+        </button>
+      ) : null}
       {message ? (
         <p
           id={`${id}-message`}

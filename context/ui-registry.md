@@ -180,6 +180,29 @@ The public header carries exactly two actions — a ghost `Log in` and a solid
 app navigation: Discover is reached from the landing page, and the dashboard
 is reached from its own sidebar once signed in. Do not add nav links here.
 
+### SiteFooter
+
+File: components/layout/site-footer.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                            |
+| ---------------- | ------------------------------------------------ |
+| Background       | inherits `bg-background`                          |
+| Border           | `border-t border-border`                          |
+| Border radius    | none                                              |
+| Text — primary   | wordmark `font-display text-lg font-extrabold uppercase tracking-tighter` |
+| Text — secondary | none                                              |
+| Spacing          | `max-w-7xl px-6 py-10`                            |
+| Hover state      | none                                              |
+| Shadow           | none                                              |
+| Accent usage     | `text-primary` on the wordmark hyphen only        |
+
+**Pattern notes:**
+The footer is the wordmark and nothing else. The Discover and Start
+publishing links and the "Prototype — no live data" note were removed on
+2026-09-26 at the developer's request. Like `SiteHeader`, it carries no app
+navigation; do not add links back without asking.
+
 ### DashboardShell (sidebar)
 
 File: components/layout/dashboard-shell.tsx
@@ -356,6 +379,14 @@ Last updated: 2026-09-26
 styling — import it rather than restating the classes, so the three never
 drift apart. Every control has a real `<label htmlFor>`.
 
+Selects render through `SelectControl` (same file, added 2026-09-26), never a
+bare `<select>`. A native select draws its own box, ignores padding and comes
+out shorter than the inputs beside it. `SelectControl` drops the native
+appearance (`appearance-none`), pins the height to the input's
+`h-[2.625rem]` (42px), reserves `pr-10` and draws a `ChevronDown` (`size-4
+text-muted-foreground`, `right-4`, `pointer-events-none`) in the arrow's
+place. It takes every `<select>` prop, so wiring and `aria-*` are unchanged.
+
 A field carries at most one message: `error` replaces `hint` rather than
 stacking under it, because once a control is invalid the correction is the only
 guidance that matters. Wire the control with `fieldDescribedBy({ id, hasHint,
@@ -427,7 +458,7 @@ never inject text.
 ### ImageUploader
 
 File: components/forms/image-uploader.tsx
-Last updated: 2026-09-21
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -439,7 +470,7 @@ Last updated: 2026-09-21
 | Spacing          | `px-6 py-12`, `gap-3`                               |
 | Hover state      | `hover:border-primary/50 hover:bg-white/[0.02]`     |
 | Shadow           | none                                                |
-| Accent usage     | `focus-within:border-primary`                       |
+| Accent usage     | `focus-within:border-primary`; while busy, spinner, label and progress bar are `text-primary`/`bg-primary` |
 
 **Pattern notes:**
 The dashed frame is a `<label>` wrapping an `sr-only` file input, never a
@@ -454,15 +485,32 @@ width of a form.
 
 With `previewUrl` the frame fills with the image (`object-cover`) under a
 `bg-black/40` scrim so the mono label stays legible, and the label reads "Click
-to replace". While `busy`, the image dims to `opacity-50`, the label reads
-"Uploading…", the input is disabled and the frame carries `aria-busy`. An
+to replace". While `busy`, the image dims to `opacity-50`, the `Upload` icon
+becomes a spinning `LoaderCircle` in `text-primary`, the label reads
+`busyLabel` (default "Uploading…", "Removing…" during a removal) in
+`text-primary`, the input is disabled and the frame carries `aria-busy`. A
+`role="progressbar"` track runs along the frame's bottom edge (`h-1
+bg-white/10`) with a `w-2/5 bg-primary` bar sweeping across it
+(`animate-upload-progress`, defined in `globals.css`). It is indeterminate on
+purpose: uploads go through Server Actions, which report no byte progress, so
+never show a percentage here. Under reduced motion the bar stands still at
+full width and the label carries the state. A caller that has the file shows
+it immediately as a local `blob:` preview under the bar.
+
+`onRemove` (added 2026-09-26) renders a "Remove" text button under the frame
+while an image is set and nothing is in flight: `mt-1.5 font-mono text-xs
+uppercase tracking-widest text-muted-foreground hover:text-destructive`. It is
+a quiet text action, not a filled button, because removal is secondary to
+choosing an image. An
 `error` replaces `description` below the frame in `text-destructive`, exactly
 as `Field` swaps hint for error. It is a client component: it owns the change
 handler, and it resets the input so choosing the same file twice still fires.
 
 Profile media uses it through `ProfileMediaField`, which uploads on selection
 rather than on the form's Save: an image is its own write, so a failed upload
-never discards unsaved text. Avatar frames are `aspect-square px-3 py-6` in a
+never discards unsaved text. It also wires `onRemove`, which clears the image
+on the server; success is announced in the same `aria-live` line ("Cover
+image removed."). Avatar frames are `aspect-square px-3 py-6` in a
 `10rem` column; covers are `aspect-[3/1] min-h-40`.
 
 
@@ -495,7 +543,7 @@ beside it; if a use ever shows it alone, give it an accessible name first.
 ### Publisher page header
 
 File: app/publishers/[username]/page.tsx
-Last updated: 2026-09-21
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -515,7 +563,13 @@ with `priority` because it is the first thing on the page. It renders only
 when a cover exists; with none, the header starts the page unchanged, so a
 publisher without images sees the page exactly as before. The avatar sits
 beside the name, not overlapping the cover. Link previews use the cover, or
-failing that the avatar, as their Open Graph image.
+failing that the avatar, as their Open Graph image. The publisher can remove
+the cover from the dashboard, and the page then starts at the header.
+
+The page ends with the event lists; there is no "Publishing your own events?
+Claim your events-lab page" call to action (removed 2026-09-26). A
+publisher's page is theirs, not a signup funnel. `?preview=1` hides the site
+header for a publisher previewing their own page.
 
 ### Account forms (ProfileForm, EmailForm, PasswordForm)
 

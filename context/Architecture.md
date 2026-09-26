@@ -500,6 +500,13 @@ The browser may also request geolocation for:
 
 Browser geolocation must never be the only method of choosing a location.
 
+> **Implemented so far (2026-09-26).** Venue, address, city and country are
+> real columns. Country is typed by hand, with suggestions, and resolved to
+> the ISO alpha-2 code the column stores (`lib/countries.ts`). Coordinates
+> stay null until the map layer. Until then the listing card links to
+> OpenStreetMap as a plain hyperlink — no key or SDK, so Mapbox remains the
+> only map provider.
+
 ---
 
 # 15. Geographic Search
@@ -542,6 +549,10 @@ Europe/London
 ```
 
 Never store an event's time only as a formatted display string.
+
+> **Implemented 2026-09-26.** The create dialog reads times in the browser's
+> own zone and stores it; the full editor exposes the zone for an event held
+> elsewhere. Conversion lives in `lib/datetime.ts`.
 
 ---
 
@@ -641,9 +652,14 @@ Events may contain:
 ```text
 is_free
 ticket_url
+ticket_cta_label
 price_information
 external_url
 ```
+
+> **`ticket_cta_label` added 2026-09-26.** The button text is the
+> publisher's, since "Get tickets" is wrong for a free workshop. A labelled
+> button with no `ticket_url` blocks publishing.
 
 The primary flow is:
 
@@ -845,6 +861,17 @@ Expected capabilities:
 * optimize images where appropriate
 
 Storage policies must be explicitly defined.
+
+> **Implemented (2026-09-26).** Avatars, profile covers and event covers
+> upload through Server Actions into the `profile-media` and `event-media`
+> buckets. Avatar and cover can be removed: the column is cleared first, then
+> the files are deleted, so a failure never leaves a broken image referenced.
+> A profile with no cover renders its public page without a banner.
+>
+> Server Actions report no upload progress, so the uploader shows an
+> indeterminate bar rather than a percentage. A measured percentage would
+> need a direct-to-Storage upload with a signed URL; that is a deliberate
+> later choice, not a gap to paper over with a simulated number.
 
 ---
 
