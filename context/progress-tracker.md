@@ -406,7 +406,7 @@ using the screens.
 | Preview | Opens the publisher page in a new tab with `?preview=1`, which hides the site header. |
 | Cursor | A base-layer rule restores `cursor: pointer` on every enabled control, which Tailwind v4's reset had dropped. |
 | Uploads | Profile media and event cover show a spinner, a lime indeterminate bar along the frame's bottom edge, and the chosen image dimmed underneath while uploading. |
-| Profile images | Avatar and cover have a Remove action: `removeProfileMediaAction` → `removeProfileMedia` clears the column, then deletes the stored files. With no cover, the public page renders without the banner. |
+| Profile images | A set image shows alone with two icon chips in its corner — pencil to replace, bin to remove — instead of the upload text. The event poster gets the same bin; it clears the field and the file is deleted on Save. Avatar and cover remove immediately: `removeProfileMediaAction` → `removeProfileMedia` clears the column, then deletes the stored files. With no cover, the public page renders without the banner. |
 | Selects | New `SelectControl` in `components/forms/field.tsx`; every dashboard select (publisher type, category, event type, time zone) is now the same 42px height as the text inputs. |
 | Public page | Removed the "Publishing your own events? Claim your events-lab page" box from `/publishers/:username`. |
 | Footer | `SiteFooter` is now the wordmark only; the Discover, Start publishing and "Prototype" items are gone. |

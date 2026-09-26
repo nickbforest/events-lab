@@ -463,14 +463,14 @@ Last updated: 2026-09-26
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
 | Background       | transparent; `hover:bg-white/[0.02]`                |
-| Border           | `border border-dashed border-border`                |
+| Border           | empty `border border-dashed border-border`; with an image `border border-border` |
 | Border radius    | `rounded-md`                                        |
 | Text — primary   | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
 | Text — secondary | constraint line `font-mono text-xs text-muted-foreground` |
 | Spacing          | `px-6 py-12`, `gap-3`                               |
 | Hover state      | `hover:border-primary/50 hover:bg-white/[0.02]`     |
 | Shadow           | none                                                |
-| Accent usage     | `focus-within:border-primary`; while busy, spinner, label and progress bar are `text-primary`/`bg-primary` |
+| Accent usage     | `focus-within:border-primary`; while busy, spinner, label and progress bar are `text-primary`/`bg-primary`; remove chip `hover:text-destructive` |
 
 **Pattern notes:**
 The dashed frame is a `<label>` wrapping an `sr-only` file input, never a
@@ -483,34 +483,45 @@ used for below the frame, kept separate from the in-frame format/size `hint`;
 `className` constrains the frame, since a square target should not stretch the
 width of a form.
 
-With `previewUrl` the frame fills with the image (`object-cover`) under a
-`bg-black/40` scrim so the mono label stays legible, and the label reads "Click
-to replace". While `busy`, the image dims to `opacity-50`, the `Upload` icon
-becomes a spinning `LoaderCircle` in `text-primary`, the label reads
-`busyLabel` (default "Uploading…", "Removing…" during a removal) in
-`text-primary`, the input is disabled and the frame carries `aria-busy`. A
-`role="progressbar"` track runs along the frame's bottom edge (`h-1
-bg-white/10`) with a `w-2/5 bg-primary` bar sweeping across it
-(`animate-upload-progress`, defined in `globals.css`). It is indeterminate on
-purpose: uploads go through Server Actions, which report no byte progress, so
-never show a percentage here. Under reduced motion the bar stands still at
-full width and the label carries the state. A caller that has the file shows
-it immediately as a local `blob:` preview under the bar.
+With `previewUrl` the frame is a different element: a solid-bordered `div`
+(`border border-border bg-secondary`) showing the image alone, `object-cover`,
+with no scrim, icon or "click to upload" text over it. Its two actions sit
+as icon chips in the top-right corner (`absolute top-2 right-2 flex gap-2`):
 
-`onRemove` (added 2026-09-26) renders a "Remove" text button under the frame
-while an image is set and nothing is in flight: `mt-1.5 font-mono text-xs
-uppercase tracking-widest text-muted-foreground hover:text-destructive`. It is
-a quiet text action, not a filled button, because removal is secondary to
-choosing an image. An
-`error` replaces `description` below the frame in `text-destructive`, exactly
-as `Field` swaps hint for error. It is a client component: it owns the change
-handler, and it resets the input so choosing the same file twice still fires.
+* **Replace** — a `Pencil` inside a `<label>` that wraps the same `sr-only`
+  file input, with `focus-within:ring-2 focus-within:ring-ring` so keyboard
+  focus shows on the chip.
+* **Remove** — a `Trash2` `<button>`, `hover:text-destructive`, rendered only
+  when the caller passes `onRemove`.
+
+Both chips are `size-9 rounded-md bg-black/60 text-white backdrop-blur-sm
+hover:bg-black/80` so they read on light and dark photos, carry an `sr-only`
+name ("Replace cover image") and a matching `title`, and are always visible
+rather than hover-only, because touch screens have no hover.
+
+While `busy`, the image dims to `opacity-50`, the chips hide, and a
+`bg-black/40` overlay centres a spinning `LoaderCircle` and the `busyLabel`
+(default "Uploading…", "Removing…" during a removal), both `text-primary`.
+The input is disabled and the frame carries `aria-busy`. A
+`role="progressbar"` track runs along the bottom edge (`h-1 bg-white/10`) with
+a `w-2/5 bg-primary` bar sweeping across it (`animate-upload-progress` in
+`globals.css`). It is indeterminate on purpose: uploads go through Server
+Actions, which report no byte progress, so never show a percentage here.
+Under reduced motion the bar stands still at full width. A caller that has
+the file shows it at once as a local `blob:` preview under the bar.
+
+An `error` replaces `description` below the frame in `text-destructive`,
+exactly as `Field` swaps hint for error. It is a client component: it owns
+the change handler, and it resets the input so choosing the same file twice
+still fires.
 
 Profile media uses it through `ProfileMediaField`, which uploads on selection
 rather than on the form's Save: an image is its own write, so a failed upload
 never discards unsaved text. It also wires `onRemove`, which clears the image
 on the server; success is announced in the same `aria-live` line ("Cover
-image removed."). Avatar frames are `aspect-square px-3 py-6` in a
+image removed."). The event poster wires `onRemove` to clear the form field
+only; saving the event deletes the stored file it no longer points at, so
+the removal takes effect on Save, like every other event field. Avatar frames are `aspect-square px-3 py-6` in a
 `10rem` column; covers are `aspect-[3/1] min-h-40`.
 
 

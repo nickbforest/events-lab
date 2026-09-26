@@ -509,6 +509,12 @@ export function EventForm({
           busy={coverBusy}
           error={coverError}
           onSelect={(file) => void uploadCover(file)}
+          // Clearing the field is enough: saving the event deletes the
+          // stored file it no longer points at.
+          onRemove={() => {
+            setCoverError(undefined);
+            field.handleChange("");
+          }}
         />
       )}
     </form.Field>
