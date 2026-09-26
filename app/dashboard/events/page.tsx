@@ -1,5 +1,4 @@
 import { CalendarPlus, Eye, Plus } from "lucide-react";
-import Link from "next/link";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents, listEventCategories } from "@/features/events/queries";

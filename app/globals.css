@@ -93,6 +93,32 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  /*
+   * Tailwind v4's reset dropped `cursor: pointer` on buttons, so every
+   * control in the app looked unclickable. A thing that does something when
+   * you click it says so on hover — that is the only cue a pointer gives,
+   * and losing it made toggles and icon buttons read as decoration.
+   *
+   * Anchors already get it from the browser. Disabled controls are excluded
+   * so they keep the default arrow, and components that want `not-allowed`
+   * still set it themselves.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  /* A label wrapping its own control is part of that control's target. */
+  label:has(input[type="checkbox"]:not(:disabled)),
+  label:has(input[type="radio"]:not(:disabled)) {
+    cursor: pointer;
+  }
 }
 
 /* ---------------------------------------------------------------------------

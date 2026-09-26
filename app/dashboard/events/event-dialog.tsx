@@ -94,13 +94,13 @@ export function NewEventProvider({
     <EventDialogContext.Provider value={{ openCreate, openEdit }}>
       {children}
 
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: the keyboard path is
+          Escape, which <dialog> handles natively and reports through onClose. */}
       <dialog
         ref={dialogRef}
         aria-labelledby="new-event-title"
         onClose={close}
         // A backdrop click lands on the dialog itself, never on its content.
-        // biome-ignore lint/a11y/useKeyWithClickEvents: the keyboard path is
-        // Escape, which <dialog> handles natively and reports through onClose.
         onClick={(clickEvent) => {
           if (clickEvent.target === dialogRef.current) {
             close();

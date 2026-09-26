@@ -1,5 +1,4 @@
 import { ExternalLink } from "lucide-react";
-import Link from "next/link";
 
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getCurrentProfile } from "@/features/profiles/queries";
