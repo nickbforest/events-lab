@@ -14,6 +14,7 @@ import { EventCard } from "@/components/events/event-card";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { Avatar } from "@/components/ui/avatar";
 import {
   getPublishedEventBySlug,
   getRelatedEvents,
@@ -25,15 +26,18 @@ import {
   isoDateTime,
   priceLabel,
 } from "@/lib/format";
+import { routes } from "@/lib/routes";
 import type { EventWithRelations } from "@/lib/types";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/u/[username]/[slug]">): Promise<Metadata> {
+}: PageProps<"/publishers/[username]/[slug]">): Promise<Metadata> {
   const { username, slug } = await params;
   const event = await getPublishedEventBySlug(username, slug);
 
-  if (!event) return { title: "Event not found" };
+  if (!event) {
+    return { title: "Event not found" };
+  }
 
   return {
     title: event.title,
@@ -88,15 +92,13 @@ function eventJsonLd(event: EventWithRelations) {
   };
 }
 
-function InfoRow({
-  icon,
-  label,
-  children,
-}: {
+export interface InfoRowProps {
   icon: React.ReactNode;
   label: string;
   children: React.ReactNode;
-}) {
+}
+
+function InfoRow({ icon, label, children }: InfoRowProps) {
   return (
     <div className="flex items-start gap-3">
       <span className="mt-1 text-primary">{icon}</span>
@@ -112,11 +114,13 @@ function InfoRow({
 
 export default async function EventPage({
   params,
-}: PageProps<"/u/[username]/[slug]">) {
+}: PageProps<"/publishers/[username]/[slug]">) {
   const { username, slug } = await params;
   const event = await getPublishedEventBySlug(username, slug);
 
-  if (!event) notFound();
+  if (!event) {
+    notFound();
+  }
 
   const related = await getRelatedEvents(event);
   const date = formatEventDate(event.start_at, event.timezone);
@@ -132,7 +136,7 @@ export default async function EventPage({
       <SiteHeader />
 
       <main className="flex-1">
-        {event.cover_image_url && (
+        {event.cover_image_url ? (
           <div className="relative h-[280px] w-full overflow-hidden border-b border-border bg-card md:h-[420px]">
             <Image
               src={event.cover_image_url}
@@ -143,7 +147,7 @@ export default async function EventPage({
               className="object-cover"
             />
           </div>
-        )}
+        ) : null}
 
         {isCancelled && (
           <div
@@ -181,14 +185,14 @@ export default async function EventPage({
                 {event.title}
               </h1>
 
-              {event.short_description && (
+              {event.short_description ? (
                 <p className="text-lg leading-relaxed text-muted-foreground">
                   {event.short_description}
                 </p>
-              )}
+              ) : null}
             </div>
 
-            {event.description && (
+            {event.description ? (
               <div>
                 <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                   About
@@ -197,7 +201,7 @@ export default async function EventPage({
                   {event.description}
                 </p>
               </div>
-            )}
+            ) : null}
 
             {event.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -217,15 +221,15 @@ export default async function EventPage({
                 Organised by
               </h2>
               <Link
-                href={`/u/${event.owner.username}`}
+                href={routes.publisher(event.owner.username)}
                 className="group flex items-center gap-3"
               >
-                <span
-                  aria-hidden
-                  className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary font-display font-bold"
-                >
-                  {event.owner.display_name[0]?.toUpperCase()}
-                </span>
+                <Avatar
+                  src={event.owner.avatar_url}
+                  name={event.owner.display_name}
+                  sizes="40px"
+                  className="size-10 font-bold"
+                />
                 <span>
                   <span className="block font-medium transition-colors group-hover:text-primary">
                     {event.owner.display_name}
@@ -267,11 +271,11 @@ export default async function EventPage({
                   label="Location"
                 >
                   {event.venue_name}
-                  {event.address && (
+                  {event.address ? (
                     <span className="block text-xs font-normal text-muted-foreground">
                       {event.address}
                     </span>
-                  )}
+                  ) : null}
                   <span className="block text-xs font-normal text-muted-foreground">
                     {[event.city, event.country_code]
                       .filter(Boolean)

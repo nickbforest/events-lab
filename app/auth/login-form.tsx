@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -15,12 +16,15 @@ import {
   fieldDescribedBy,
 } from "@/components/forms/field";
 import { signInAction } from "@/features/auth/actions";
-import { signInSchema } from "@/features/auth/contracts";
+import { authNoticeSchema, signInSchema } from "@/features/auth/contracts";
 import { firstErrorMessage } from "@/lib/forms";
+import { routes } from "@/lib/routes";
 
 type SignInField = "email" | "password";
 
 export function LoginForm() {
+  const notice = authNoticeSchema.parse(useSearchParams().get("notice"));
+  const passwordChanged = notice === "password-changed";
   const [formError, setFormError] = useState<string | null>(null);
   const [serverFieldErrors, setServerFieldErrors] = useState<
     Partial<Record<SignInField, string>>
@@ -56,7 +60,7 @@ export function LoginForm() {
         <>
           Don&rsquo;t have an account?{" "}
           <Link
-            href="/auth?mode=signup"
+            href={routes.auth.signUp()}
             replace
             className="text-primary hover:underline"
           >
@@ -65,6 +69,17 @@ export function LoginForm() {
         </>
       }
     >
+      {/* A confirmation, not an error, so it is announced politely. */}
+      {passwordChanged && (
+        <p
+          role="status"
+          className="mb-5 font-mono text-xs leading-relaxed text-primary"
+        >
+          Password changed. You have been signed out everywhere — log in with
+          your new password.
+        </p>
+      )}
+
       <form
         className="space-y-5"
         noValidate
@@ -141,7 +156,7 @@ export function LoginForm() {
           }}
         </form.Field>
 
-        {formError && <FormAlert message={formError} />}
+        {Boolean(formError) && <FormAlert message={formError ?? ""} />}
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
@@ -157,7 +172,7 @@ export function LoginForm() {
 
         <p className="text-center">
           <Link
-            href="/auth/forgot-password"
+            href={routes.auth.forgotPassword()}
             className="font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
           >
             Forgot your password?

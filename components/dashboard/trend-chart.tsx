@@ -30,13 +30,12 @@ function tickLabel(date: string) {
   return date.slice(5);
 }
 
-export function TrendChart({
-  series,
-  caption,
-}: {
+export interface TrendChartProps {
   series: AnalyticsPoint[];
   caption: string;
-}) {
+}
+
+export function TrendChart({ series, caption }: TrendChartProps) {
   const definition = useMemo(
     () =>
       defineChart({

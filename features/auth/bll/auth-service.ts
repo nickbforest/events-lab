@@ -1,4 +1,6 @@
 import type {
+  ChangeEmailInput,
+  ChangePasswordInput,
   PasswordResetRequestInput,
   SignInInput,
   SignUpInput,
@@ -11,6 +13,7 @@ import {
   type EmailConfirmationType,
 } from "@/features/auth/dal/auth-repository";
 import { ApplicationError } from "@/lib/errors";
+import { createLogger } from "@/lib/logging";
 
 /**
  * Username ownership lives in the profiles domain. Auth depends on this narrow
@@ -53,9 +56,30 @@ export type UpdatePasswordOutcome =
   | { ok: true }
   | { ok: false; reason: "WEAK_PASSWORD" };
 
+export type ChangeEmailOutcome =
+  | { ok: true }
+  | { ok: false; reason: "SAME_EMAIL" | "EMAIL_TAKEN" | "RATE_LIMITED" };
+
+export type ChangePasswordOutcome =
+  | { ok: true }
+  | {
+      ok: false;
+      reason:
+        | "WRONG_PASSWORD"
+        | "WEAK_PASSWORD"
+        | "SAME_PASSWORD"
+        | "RATE_LIMITED";
+    };
+
 export type ConfirmEmailOutcome =
   | { ok: true; type: EmailConfirmationType }
   | { ok: false };
+
+export type ExchangeAuthCodeOutcome =
+  | { ok: true; isRecovery: boolean }
+  | { ok: false };
+
+const log = createLogger("auth.service");
 
 export interface AuthService {
   signUp(input: SignUpInput): Promise<SignUpOutcome>;
@@ -63,6 +87,7 @@ export interface AuthService {
     tokenHash: string,
     type: EmailConfirmationType,
   ): Promise<ConfirmEmailOutcome>;
+  exchangeAuthCode(code: string): Promise<ExchangeAuthCodeOutcome>;
   signIn(input: SignInInput): Promise<SignInOutcome>;
   signOut(): Promise<void>;
   requestPasswordReset(
@@ -72,6 +97,19 @@ export interface AuthService {
     input: PasswordResetRequestInput,
   ): Promise<PasswordResetOutcome>;
   updatePassword(input: UpdatePasswordInput): Promise<UpdatePasswordOutcome>;
+  changeEmail(
+    actor: AuthUser,
+    input: ChangeEmailInput,
+  ): Promise<ChangeEmailOutcome>;
+  /**
+   * Unlike `updatePassword`, which finishes a reset whose email link already
+   * proved ownership, this runs on an ordinary session, so the current
+   * password is re-checked first.
+   */
+  changePassword(
+    actor: AuthUser,
+    input: ChangePasswordInput,
+  ): Promise<ChangePasswordOutcome>;
   getAuthenticatedUser(): Promise<AuthUser | null>;
 }
 
@@ -103,7 +141,9 @@ export function createAuthService(dependencies: {
           hasSession: result.hasSession,
         };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "EMAIL_TAKEN":
@@ -140,7 +180,9 @@ export function createAuthService(dependencies: {
         await authRepository.verifyEmailToken(tokenHash, type);
         return { ok: true, type };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         // An expired or already-used link is ordinary user behaviour, not a
         // fault worth surfacing as an error page.
@@ -159,6 +201,25 @@ export function createAuthService(dependencies: {
       }
     },
 
+    async exchangeAuthCode(code) {
+      try {
+        const { isRecovery } = await authRepository.exchangeAuthCode(code);
+        return { ok: true, isRecovery };
+      } catch (error) {
+        if (
+          error instanceof AuthProviderError &&
+          error.reason === "INVALID_TOKEN"
+        ) {
+          return { ok: false };
+        }
+        throw new ApplicationError(
+          "EXTERNAL_SERVICE_FAILED",
+          "Could not complete the email link.",
+          error,
+        );
+      }
+    },
+
     async signIn(input) {
       try {
         const user = await authRepository.signInWithPassword(
@@ -167,7 +228,9 @@ export function createAuthService(dependencies: {
         );
         return { ok: true, user };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "INVALID_CREDENTIALS":
@@ -186,7 +249,7 @@ export function createAuthService(dependencies: {
       }
     },
 
-    signOut: () => authRepository.signOut(),
+    signOut: () => authRepository.signOut("global"),
 
     async requestPasswordReset(input) {
       try {
@@ -237,6 +300,101 @@ export function createAuthService(dependencies: {
         }
         throw error;
       }
+    },
+
+    async changeEmail(actor, input) {
+      if (input.email === actor.email) {
+        return { ok: false, reason: "SAME_EMAIL" };
+      }
+
+      try {
+        await authRepository.requestEmailChange(input.email, urls.confirmUrl);
+        return { ok: true };
+      } catch (error) {
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
+
+        switch (error.reason) {
+          case "EMAIL_TAKEN":
+            return { ok: false, reason: "EMAIL_TAKEN" };
+          case "RATE_LIMITED":
+            return { ok: false, reason: "RATE_LIMITED" };
+          default:
+            throw new ApplicationError(
+              "EXTERNAL_SERVICE_FAILED",
+              "Email change failed.",
+              error,
+            );
+        }
+      }
+    },
+
+    async changePassword(actor, input) {
+      if (!actor.email) {
+        throw new ApplicationError(
+          "FORBIDDEN",
+          "This account has no email, so it has no password to change.",
+        );
+      }
+
+      try {
+        await authRepository.signInWithPassword(
+          actor.email,
+          input.currentPassword,
+        );
+      } catch (error) {
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
+
+        switch (error.reason) {
+          case "INVALID_CREDENTIALS":
+            return { ok: false, reason: "WRONG_PASSWORD" };
+          case "RATE_LIMITED":
+            return { ok: false, reason: "RATE_LIMITED" };
+          default:
+            throw new ApplicationError(
+              "EXTERNAL_SERVICE_FAILED",
+              "Could not verify the current password.",
+              error,
+            );
+        }
+      }
+
+      try {
+        await authRepository.updatePassword(input.newPassword);
+      } catch (error) {
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
+
+        switch (error.reason) {
+          case "WEAK_PASSWORD":
+            return { ok: false, reason: "WEAK_PASSWORD" };
+          case "SAME_PASSWORD":
+            return { ok: false, reason: "SAME_PASSWORD" };
+          default:
+            throw new ApplicationError(
+              "EXTERNAL_SERVICE_FAILED",
+              "Password change failed.",
+              error,
+            );
+        }
+      }
+
+      // A password is often changed because someone else may know it, so
+      // every session ends — including any on a device the owner lost.
+      try {
+        await authRepository.signOut("global");
+      } catch (error) {
+        // Swallowed on purpose: the password did change, so reporting a
+        // failure here would be wrong. The log is the only evidence that the
+        // other sessions outlived it.
+        log.error("Password changed but sessions were not ended.", error);
+      }
+
+      return { ok: true };
     },
 
     getAuthenticatedUser: () => authRepository.getAuthenticatedUser(),

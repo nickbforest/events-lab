@@ -1,7 +1,7 @@
 import "server-only";
 
 import { verifySession } from "@/features/auth/queries";
-import { profileUsernameSchema } from "@/features/profiles/contracts";
+import { usernameSchema } from "@/features/profiles/contracts";
 import {
   getProfilesService,
   getPublicProfilesService,
@@ -12,14 +12,19 @@ import type { Profile } from "@/lib/types";
 export async function getProfileByUsername(
   username: string,
 ): Promise<Profile | null> {
-  return getPublicProfilesService().getProfileByUsername(
-    profileUsernameSchema.parse(username),
-  );
+  // A malformed username is a 404, not a crash: this runs on a public route
+  // parameter, so anything the constraint would reject simply has no profile.
+  const parsed = usernameSchema.safeParse(username);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return getPublicProfilesService().getProfileByUsername(parsed.data);
 }
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   return getPublicProfilesService().isUsernameAvailable(
-    profileUsernameSchema.parse(username),
+    usernameSchema.parse(username),
   );
 }
 

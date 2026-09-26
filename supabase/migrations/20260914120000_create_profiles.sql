@@ -1,7 +1,7 @@
 -- Profiles: the public identity behind every authenticated account.
 --
 -- MVP-1 uses a personal publisher model, so a profile is what owns events and
--- what /u/:username renders. The row is created by a trigger on auth.users
+-- what /publishers/:username renders. The row is created by a trigger on auth.users
 -- rather than by the application: signup may or may not return a session
 -- depending on whether email confirmation is enabled, and only the trigger can
 -- guarantee an auth user never exists without a profile.

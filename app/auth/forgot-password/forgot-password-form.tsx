@@ -17,6 +17,7 @@ import {
 import { requestPasswordResetAction } from "@/features/auth/actions";
 import { passwordResetRequestSchema } from "@/features/auth/contracts";
 import { firstErrorMessage } from "@/lib/forms";
+import { routes } from "@/lib/routes";
 
 export function ForgotPasswordForm() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function ForgotPasswordForm() {
         subheading="If that address has an account, a password reset link is on its way."
         footer={
           <Link
-            href="/auth?mode=login"
+            href={routes.auth.signIn()}
             className="text-primary hover:underline"
           >
             Back to log in
@@ -65,7 +66,10 @@ export function ForgotPasswordForm() {
       heading="Reset password"
       subheading="Enter your email and we will send you a link to set a new password."
       footer={
-        <Link href="/auth?mode=login" className="text-primary hover:underline">
+        <Link
+          href={routes.auth.signIn()}
+          className="text-primary hover:underline"
+        >
           Back to log in
         </Link>
       }
@@ -107,7 +111,7 @@ export function ForgotPasswordForm() {
           }}
         </form.Field>
 
-        {formError && <FormAlert message={formError} />}
+        {formError ? <FormAlert message={formError} /> : null}
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (

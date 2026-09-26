@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuthProviderError,
   type AuthRepository,
+  type AuthUser,
 } from "@/features/auth/dal/auth-repository";
 import { ApplicationError } from "@/lib/errors";
 
@@ -15,25 +16,35 @@ const SIGN_UP_INPUT = {
   password: "supersecret",
 };
 
+const ACTOR: AuthUser = {
+  id: "user-1",
+  email: SIGN_UP_INPUT.email,
+  emailVerified: true,
+  pendingEmail: null,
+};
+
 function createRepository(
   overrides: Partial<AuthRepository> = {},
 ): AuthRepository {
   return {
     signUp: vi.fn(async () => ({
-      user: { id: "user-1", email: SIGN_UP_INPUT.email, emailVerified: false },
+      user: {
+        id: "user-1",
+        email: SIGN_UP_INPUT.email,
+        emailVerified: false,
+        pendingEmail: null,
+      },
       hasSession: true,
     })),
     verifyEmailToken: vi.fn(async () => {}),
-    signInWithPassword: vi.fn(async () => ({
-      id: "user-1",
-      email: SIGN_UP_INPUT.email,
-      emailVerified: true,
-    })),
+    exchangeAuthCode: vi.fn(async () => ({ isRecovery: false })),
+    signInWithPassword: vi.fn(async () => ACTOR),
     signOut: vi.fn(async () => {}),
     getAuthenticatedUser: vi.fn(async () => null),
     sendPasswordResetEmail: vi.fn(async () => {}),
     resendConfirmationEmail: vi.fn(async () => {}),
     updatePassword: vi.fn(async () => {}),
+    requestEmailChange: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -88,6 +99,7 @@ describe("signUp", () => {
           id: "user-1",
           email: SIGN_UP_INPUT.email,
           emailVerified: false,
+          pendingEmail: null,
         },
         hasSession: false,
       })),
@@ -212,6 +224,49 @@ describe("confirmEmail", () => {
   });
 });
 
+describe("exchangeAuthCode", () => {
+  it("reports a password-reset link so the caller can send the user to set one", async () => {
+    const { service } = createService(
+      createRepository({
+        exchangeAuthCode: vi.fn(async () => ({ isRecovery: true })),
+      }),
+    );
+
+    await expect(service.exchangeAuthCode("code")).resolves.toEqual({
+      ok: true,
+      isRecovery: true,
+    });
+  });
+
+  it("treats a reused code or one from another browser as an expired link", async () => {
+    const { service } = createService(
+      createRepository({
+        exchangeAuthCode: vi.fn(async () => {
+          throw new AuthProviderError("INVALID_TOKEN", "no verifier");
+        }),
+      }),
+    );
+
+    await expect(service.exchangeAuthCode("code")).resolves.toEqual({
+      ok: false,
+    });
+  });
+
+  it("escalates a provider outage instead of blaming the link", async () => {
+    const { service } = createService(
+      createRepository({
+        exchangeAuthCode: vi.fn(async () => {
+          throw new AuthProviderError("UNKNOWN", "503");
+        }),
+      }),
+    );
+
+    await expect(service.exchangeAuthCode("code")).rejects.toBeInstanceOf(
+      ApplicationError,
+    );
+  });
+});
+
 describe("requestPasswordReset", () => {
   let repository: AuthRepository;
 
@@ -238,5 +293,120 @@ describe("requestPasswordReset", () => {
     await expect(
       service.requestPasswordReset({ email: SIGN_UP_INPUT.email }),
     ).resolves.toEqual({ ok: false, reason: "RATE_LIMITED" });
+  });
+});
+
+describe("changeEmail", () => {
+  it("refuses the address already on the account without calling the provider", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(
+      service.changeEmail(ACTOR, { email: ACTOR.email ?? "" }),
+    ).resolves.toEqual({ ok: false, reason: "SAME_EMAIL" });
+    expect(repository.requestEmailChange).not.toHaveBeenCalled();
+  });
+
+  it("sends the confirmation link back through the confirm route", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(
+      service.changeEmail(ACTOR, { email: "new@example.com" }),
+    ).resolves.toEqual({ ok: true });
+    expect(repository.requestEmailChange).toHaveBeenCalledWith(
+      "new@example.com",
+      "https://events.test/auth/confirm",
+    );
+  });
+
+  it("reports an address another account already uses", async () => {
+    const repository = createRepository({
+      requestEmailChange: vi.fn(async () => {
+        throw new AuthProviderError("EMAIL_TAKEN", "exists");
+      }),
+    });
+    const { service } = createService(repository);
+
+    await expect(
+      service.changeEmail(ACTOR, { email: "taken@example.com" }),
+    ).resolves.toEqual({ ok: false, reason: "EMAIL_TAKEN" });
+  });
+});
+
+describe("changePassword", () => {
+  const input = {
+    currentPassword: "oldsecret",
+    newPassword: "newsecret1",
+    confirmPassword: "newsecret1",
+  };
+
+  it("checks the current password against the actor's own email first", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(service.changePassword(ACTOR, input)).resolves.toEqual({
+      ok: true,
+    });
+    expect(repository.signInWithPassword).toHaveBeenCalledWith(
+      ACTOR.email,
+      "oldsecret",
+    );
+    expect(repository.updatePassword).toHaveBeenCalledWith("newsecret1");
+  });
+
+  it("ends every session once the password has changed", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await service.changePassword(ACTOR, input);
+
+    expect(repository.signOut).toHaveBeenCalledWith("global");
+  });
+
+  it("still reports success when ending sessions fails, since the password did change", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const repository = createRepository({
+      signOut: vi.fn(async () => {
+        throw new AuthProviderError("UNKNOWN", "signout failed");
+      }),
+    });
+    const { service } = createService(repository);
+
+    await expect(service.changePassword(ACTOR, input)).resolves.toEqual({
+      ok: true,
+    });
+    consoleError.mockRestore();
+  });
+
+  it("never changes the password when the current one is wrong", async () => {
+    const repository = createRepository({
+      signInWithPassword: vi.fn(async () => {
+        throw new AuthProviderError("INVALID_CREDENTIALS", "bad");
+      }),
+    });
+    const { service } = createService(repository);
+
+    await expect(service.changePassword(ACTOR, input)).resolves.toEqual({
+      ok: false,
+      reason: "WRONG_PASSWORD",
+    });
+    expect(repository.updatePassword).not.toHaveBeenCalled();
+  });
+
+  it("reports a password the provider rejects as unchanged", async () => {
+    const repository = createRepository({
+      updatePassword: vi.fn(async () => {
+        throw new AuthProviderError("SAME_PASSWORD", "same");
+      }),
+    });
+    const { service } = createService(repository);
+
+    await expect(service.changePassword(ACTOR, input)).resolves.toEqual({
+      ok: false,
+      reason: "SAME_PASSWORD",
+    });
   });
 });

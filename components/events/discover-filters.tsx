@@ -13,20 +13,18 @@ const RANGE_LABELS: Record<(typeof DATE_RANGES)[number], string> = {
   month: "This month",
 };
 
+export interface FilterChipProps {
+  isActive: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
 /**
  * The reference implements these chips as bare buttons whose only selected
  * indicator is colour. ui-rules.md §13 forbids that, so each chip is a real
  * toggle carrying `aria-pressed` plus a non-colour marker.
  */
-function FilterChip({
-  isActive,
-  onClick,
-  children,
-}: {
-  isActive: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function FilterChip({ isActive, onClick, children }: FilterChipProps) {
   return (
     <button
       type="button"
@@ -39,17 +37,17 @@ function FilterChip({
           : "border-border text-muted-foreground hover:text-foreground",
       )}
     >
-      {isActive && <span aria-hidden>✓ </span>}
+      {isActive ? <span aria-hidden>✓ </span> : null}
       {children}
     </button>
   );
 }
 
-export function DiscoverFilters({
-  categories,
-}: {
+export interface DiscoverFiltersProps {
   categories: readonly Category[];
-}) {
+}
+
+export function DiscoverFilters({ categories }: DiscoverFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -60,8 +58,11 @@ export function DiscoverFilters({
   function update(patch: Record<string, string | undefined>) {
     const next = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(patch)) {
-      if (value) next.set(key, value);
-      else next.delete(key);
+      if (value) {
+        next.set(key, value);
+      } else {
+        next.delete(key);
+      }
     }
     router.replace(`/discover?${next.toString()}`, { scroll: false });
   }

@@ -2,16 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import {
-  type FormResult,
-  passwordResetRequestSchema,
-  signInSchema,
-  signUpSchema,
-  updatePasswordSchema,
+  compiledChangeEmailSchema,
+  compiledChangePasswordSchema,
+  compiledPasswordResetRequestSchema,
+  compiledSignInSchema,
+  compiledSignUpSchema,
+  compiledUpdatePasswordSchema,
 } from "@/features/auth/contracts";
+import { verifySession } from "@/features/auth/queries";
 import { getAuthService } from "@/features/auth/service";
+import { type FormResult, firstFieldErrors } from "@/lib/forms";
+import { routes } from "@/lib/routes";
 
 type SignUpField = "displayName" | "username" | "email" | "password";
 type SignInField = "email" | "password";
@@ -19,24 +22,10 @@ type SignInField = "email" | "password";
 const RATE_LIMITED_MESSAGE =
   "Too many attempts. Please wait a few minutes and try again.";
 
-function firstFieldErrors<TField extends string>(
-  error: z.ZodError,
-): Partial<Record<TField, string>> {
-  const { fieldErrors } = z.flattenError(error);
-  const result: Partial<Record<TField, string>> = {};
-
-  for (const [field, messages] of Object.entries(fieldErrors)) {
-    const message = (messages as string[] | undefined)?.[0];
-    if (message) result[field as TField] = message;
-  }
-
-  return result;
-}
-
 export async function signUpAction(
   input: unknown,
 ): Promise<FormResult<SignUpField>> {
-  const parsed = signUpSchema.safeParse(input);
+  const parsed = compiledSignUpSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -74,7 +63,7 @@ export async function signUpAction(
   // Redirect throws, so it must sit outside any try/catch above it.
   redirect(
     outcome.hasSession
-      ? "/dashboard"
+      ? routes.dashboard.root()
       : `/auth/check-email?email=${encodeURIComponent(outcome.email)}`,
   );
 }
@@ -82,7 +71,7 @@ export async function signUpAction(
 export async function signInAction(
   input: unknown,
 ): Promise<FormResult<SignInField>> {
-  const parsed = signInSchema.safeParse(input);
+  const parsed = compiledSignInSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -109,7 +98,7 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(routes.dashboard.root());
 }
 
 export async function signOutAction(): Promise<void> {
@@ -117,13 +106,13 @@ export async function signOutAction(): Promise<void> {
   await service.signOut();
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(routes.home());
 }
 
 export async function requestPasswordResetAction(
   input: unknown,
 ): Promise<FormResult<"email">> {
-  const parsed = passwordResetRequestSchema.safeParse(input);
+  const parsed = compiledPasswordResetRequestSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -144,7 +133,7 @@ export async function requestPasswordResetAction(
 export async function resendConfirmationAction(
   input: unknown,
 ): Promise<FormResult<"email">> {
-  const parsed = passwordResetRequestSchema.safeParse(input);
+  const parsed = compiledPasswordResetRequestSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -163,7 +152,7 @@ export async function resendConfirmationAction(
 export async function updatePasswordAction(
   input: unknown,
 ): Promise<FormResult<"password">> {
-  const parsed = updatePasswordSchema.safeParse(input);
+  const parsed = compiledUpdatePasswordSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -182,5 +171,90 @@ export async function updatePasswordAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(routes.dashboard.root());
+}
+
+export async function changeEmailAction(
+  input: unknown,
+): Promise<FormResult<"email">> {
+  const parsed = compiledChangeEmailSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      fieldErrors: firstFieldErrors<"email">(parsed.error),
+    };
+  }
+
+  const actor = await verifySession();
+  const service = await getAuthService();
+  const outcome = await service.changeEmail(actor, parsed.data);
+
+  if (!outcome.ok) {
+    switch (outcome.reason) {
+      case "SAME_EMAIL":
+        return {
+          status: "error",
+          fieldErrors: { email: "That is already your email address." },
+        };
+      case "EMAIL_TAKEN":
+        return {
+          status: "error",
+          fieldErrors: {
+            email: "Another account already uses this email address.",
+          },
+        };
+      case "RATE_LIMITED":
+        return { status: "error", message: RATE_LIMITED_MESSAGE };
+    }
+  }
+
+  revalidatePath(routes.dashboard.settings());
+  return { status: "success" };
+}
+
+export async function changePasswordAction(
+  input: unknown,
+): Promise<FormResult<"currentPassword" | "newPassword" | "confirmPassword">> {
+  const parsed = compiledChangePasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      fieldErrors: firstFieldErrors<
+        "currentPassword" | "newPassword" | "confirmPassword"
+      >(parsed.error),
+    };
+  }
+
+  const actor = await verifySession();
+  const service = await getAuthService();
+  const outcome = await service.changePassword(actor, parsed.data);
+
+  if (!outcome.ok) {
+    switch (outcome.reason) {
+      case "WRONG_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: { currentPassword: "That password is not correct." },
+        };
+      case "WEAK_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: { newPassword: "Please choose a stronger password." },
+        };
+      case "SAME_PASSWORD":
+        return {
+          status: "error",
+          fieldErrors: {
+            newPassword: "Choose a password different from your current one.",
+          },
+        };
+      case "RATE_LIMITED":
+        return { status: "error", message: RATE_LIMITED_MESSAGE };
+    }
+  }
+
+  // The service has ended every session, so the owner proves the new
+  // password straight away rather than discovering a typo later.
+  revalidatePath("/", "layout");
+  redirect(routes.auth.mode("login", "password-changed"));
 }

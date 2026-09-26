@@ -4,6 +4,8 @@ export interface AuthUser {
   email: string | null;
   /** Drives the verification prompt; gates publishing from Phase 5 onward. */
   emailVerified: boolean;
+  /** The address an email change is waiting to be confirmed for, if any. */
+  pendingEmail: string | null;
 }
 
 export interface SignUpCommand {
@@ -34,6 +36,7 @@ export type AuthFailureReason =
   | "EMAIL_NOT_CONFIRMED"
   | "EMAIL_TAKEN"
   | "WEAK_PASSWORD"
+  | "SAME_PASSWORD"
   | "RATE_LIMITED"
   | "PROFILE_CREATION_FAILED"
   | "INVALID_TOKEN"
@@ -62,11 +65,19 @@ export interface AuthRepository {
     tokenHash: string,
     type: EmailConfirmationType,
   ): Promise<void>;
+  /**
+   * Exchanges the `code` that Supabase's default email links carry. Works only
+   * in the browser that requested the email, which holds the PKCE verifier.
+   */
+  exchangeAuthCode(code: string): Promise<{ isRecovery: boolean }>;
   signInWithPassword(email: string, password: string): Promise<AuthUser>;
-  signOut(): Promise<void>;
+  /** `global` ends every session for the user, not only this browser's. */
+  signOut(scope: "local" | "global"): Promise<void>;
   /** Validates the session against the auth server; null when signed out. */
   getAuthenticatedUser(): Promise<AuthUser | null>;
   sendPasswordResetEmail(email: string, redirectTo: string): Promise<void>;
   resendConfirmationEmail(email: string, redirectTo: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
+  /** Starts an email change; it completes only once the emailed link is used. */
+  requestEmailChange(email: string, redirectTo: string): Promise<void>;
 }

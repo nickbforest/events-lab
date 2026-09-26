@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents, listEventCategories } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
 import { formatEventDate, isoDateTime } from "@/lib/format";
+import { routes } from "@/lib/routes";
 
 export default async function DashboardEventsPage() {
   const profile = await getCurrentProfile();
@@ -28,7 +29,7 @@ export default async function DashboardEventsPage() {
             actions={
               <>
                 <Link
-                  href={`/u/${profile.username}`}
+                  href={routes.publisher(profile.username)}
                   className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
                 >
                   <Eye className="size-4" aria-hidden />

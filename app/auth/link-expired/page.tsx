@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AuthCard } from "@/components/auth/auth-card";
+import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "Link expired" };
 
@@ -13,7 +14,7 @@ export default function LinkExpiredPage() {
         subheading="That link has already been used or is no longer valid."
         footer={
           <Link
-            href="/auth?mode=login"
+            href={routes.auth.signIn()}
             className="text-primary hover:underline"
           >
             Back to log in

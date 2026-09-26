@@ -2,6 +2,7 @@ import { Info } from "lucide-react";
 import Link from "next/link";
 import { verifySession } from "@/features/auth/queries";
 import { listEventCategories } from "@/features/events/queries";
+import { routes } from "@/lib/routes";
 
 /**
  * Visual scaffold of the event creation form.
@@ -13,17 +14,14 @@ import { listEventCategories } from "@/features/events/queries";
 const inputClass =
   "w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none";
 
-function Section({
-  step,
-  title,
-  description,
-  children,
-}: {
+export interface SectionProps {
   step: number;
   title: string;
   description?: string;
   children: React.ReactNode;
-}) {
+}
+
+function Section({ step, title, description, children }: SectionProps) {
   return (
     <section className="border-t border-border py-8 first:border-t-0 first:pt-0">
       <div className="mb-5">
@@ -33,28 +31,24 @@ function Section({
         <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">
           {title}
         </h2>
-        {description && (
+        {description ? (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        )}
+        ) : null}
       </div>
       <div className="space-y-5">{children}</div>
     </section>
   );
 }
 
-function Field({
-  label,
-  htmlFor,
-  hint,
-  required,
-  children,
-}: {
+export interface FieldProps {
   label: string;
   htmlFor: string;
   hint?: string;
   required?: boolean;
   children: React.ReactNode;
-}) {
+}
+
+function Field({ label, htmlFor, hint, required, children }: FieldProps) {
   return (
     <div>
       <label
@@ -62,15 +56,17 @@ function Field({
         className="mb-2 block font-mono text-xs uppercase tracking-widest text-muted-foreground"
       >
         {label}
-        {required && (
+        {required ? (
           <span className="ml-1 text-primary" aria-hidden>
             *
           </span>
-        )}
-        {required && <span className="sr-only"> (required)</span>}
+        ) : null}
+        {required ? <span className="sr-only"> (required)</span> : null}
       </label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
+      {hint ? (
+        <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }
@@ -333,7 +329,7 @@ export default async function NewEventPage() {
                 Save as draft
               </button>
               <Link
-                href="/dashboard/events"
+                href={routes.dashboard.events()}
                 className="rounded-md px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Cancel

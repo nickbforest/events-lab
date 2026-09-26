@@ -5,6 +5,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   LogOut,
+  Settings,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { signOutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/format";
+import { routes } from "@/lib/routes";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", Icon: LayoutDashboard, exact: true },
@@ -22,15 +24,20 @@ const NAV_ITEMS = [
     exact: false,
   },
   { href: "/dashboard/profile", label: "Profile", Icon: User, exact: false },
+  {
+    href: "/dashboard/settings",
+    label: "Settings",
+    Icon: Settings,
+    exact: false,
+  },
 ];
 
-export function DashboardShell({
-  children,
-  username,
-}: {
+export interface DashboardShellProps {
   children: ReactNode;
   username: string;
-}) {
+}
+
+export function DashboardShell({ children, username }: DashboardShellProps) {
   const pathname = usePathname();
 
   return (
@@ -71,7 +78,7 @@ export function DashboardShell({
 
           <div className="space-y-1 border-t border-border pt-6">
             <Link
-              href={`/u/${username}`}
+              href={routes.publisher(username)}
               className="flex items-center gap-2 px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
             >
               <ExternalLink className="size-3" aria-hidden />

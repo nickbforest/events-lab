@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { routes } from "@/lib/routes";
 
 export function SiteFooter() {
   return (
@@ -9,13 +10,13 @@ export function SiteFooter() {
         </div>
         <div className="flex flex-wrap items-center gap-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">
           <Link
-            href="/discover"
+            href={routes.discover()}
             className="transition-colors hover:text-foreground"
           >
             Discover
           </Link>
           <Link
-            href="/auth?mode=signup"
+            href={routes.auth.signUp()}
             className="transition-colors hover:text-foreground"
           >
             Start publishing

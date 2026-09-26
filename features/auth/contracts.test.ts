@@ -1,31 +1,43 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  changePasswordSchema,
   emailSchema,
   passwordSchema,
   signUpSchema,
-  usernameSchema,
 } from "./contracts";
 
-describe("usernameSchema", () => {
-  it("normalises case and surrounding whitespace", () => {
-    expect(usernameSchema.parse("  NickB  ")).toBe("nickb");
+describe("changePasswordSchema", () => {
+  it("rejects reusing the current password, against the new-password field", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "samesecret",
+      newPassword: "samesecret",
+      confirmPassword: "samesecret",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["newPassword"]);
   });
 
-  it.each(["ab", "-leading", "trailing-", "double--hyphen", "has space", "É"])(
-    "rejects %j because the database check constraint would too",
-    (value) => {
-      expect(usernameSchema.safeParse(value).success).toBe(false);
-    },
-  );
-
-  it.each(["abc", "nick_b", "nick-b", "a1_b-c2"])("accepts %j", (value) => {
-    expect(usernameSchema.safeParse(value).success).toBe(true);
+  it("requires the current password", () => {
+    expect(
+      changePasswordSchema.safeParse({
+        currentPassword: "",
+        newPassword: "newsecret1",
+        confirmPassword: "newsecret1",
+      }).success,
+    ).toBe(false);
   });
 
-  it("rejects anything longer than the 32 character column limit", () => {
-    expect(usernameSchema.safeParse("a".repeat(33)).success).toBe(false);
-    expect(usernameSchema.safeParse("a".repeat(32)).success).toBe(true);
+  it("rejects a confirmation that does not match, so a typo cannot lock the owner out", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "oldsecret",
+      newPassword: "newsecret1",
+      confirmPassword: "newsecret2",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["confirmPassword"]);
   });
 });
 

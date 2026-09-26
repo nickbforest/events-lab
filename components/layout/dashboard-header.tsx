@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 
+export interface DashboardHeaderProps {
+  kicker: string;
+  title: string;
+  description?: ReactNode;
+  actions?: ReactNode;
+}
+
 /**
  * The header every dashboard screen opens with: a mono kicker, the screen
  * title, an optional line of context, and the screen's actions.
@@ -12,12 +19,7 @@ export function DashboardHeader({
   title,
   description,
   actions,
-}: {
-  kicker: string;
-  title: string;
-  description?: ReactNode;
-  actions?: ReactNode;
-}) {
+}: DashboardHeaderProps) {
   return (
     <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -27,13 +29,15 @@ export function DashboardHeader({
         <h1 className="font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl">
           {title}
         </h1>
-        {description && (
+        {description ? (
           <div className="mt-2 font-mono text-sm text-muted-foreground">
             {description}
           </div>
-        )}
+        ) : null}
       </div>
-      {actions && <div className="flex items-center gap-3">{actions}</div>}
+      {actions ? (
+        <div className="flex items-center gap-3">{actions}</div>
+      ) : null}
     </div>
   );
 }

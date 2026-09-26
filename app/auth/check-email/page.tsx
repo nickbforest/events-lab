@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { emailSchema } from "@/features/auth/contracts";
-
+import { routes } from "@/lib/routes";
 import { ResendButton } from "./resend-button";
 
 export const metadata: Metadata = { title: "Confirm your email" };
@@ -25,7 +25,7 @@ export default async function CheckEmailPage({
         }
         footer={
           <Link
-            href="/auth?mode=login"
+            href={routes.auth.signIn()}
             className="text-primary hover:underline"
           >
             Back to log in
@@ -38,7 +38,7 @@ export default async function CheckEmailPage({
             short while, and the inbox may file it as spam.
           </p>
 
-          {parsed.success && <ResendButton email={parsed.data} />}
+          {parsed.success ? <ResendButton email={parsed.data} /> : null}
         </div>
       </AuthCard>
     </main>

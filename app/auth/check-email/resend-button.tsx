@@ -4,7 +4,11 @@ import { useState } from "react";
 
 import { resendConfirmationAction } from "@/features/auth/actions";
 
-export function ResendButton({ email }: { email: string }) {
+export interface ResendButtonProps {
+  email: string;
+}
+
+export function ResendButton({ email }: ResendButtonProps) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
@@ -40,11 +44,11 @@ export function ResendButton({ email }: { email: string }) {
         {state === "sent" ? "Sent. Check your inbox again." : ""}
       </p>
 
-      {message && (
+      {message ? (
         <p role="alert" className="text-sm text-destructive">
           {message}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

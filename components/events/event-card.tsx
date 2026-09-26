@@ -7,14 +7,19 @@ import {
   isoDateTime,
   priceLabel,
 } from "@/lib/format";
+import { routes } from "@/lib/routes";
 import type { EventWithRelations } from "@/lib/types";
 import { EventStatusBadge } from "./event-status-badge";
+
+export interface EventCardProps {
+  event: EventWithRelations;
+}
 
 /**
  * ui-rules.md §5 — one clear clickable area, no controls nested inside.
  * Order of emphasis: date, title, location, organizer, price.
  */
-export function EventCard({ event }: { event: EventWithRelations }) {
+export function EventCard({ event }: EventCardProps) {
   const date = formatEventDate(event.start_at, event.timezone);
   const showStatus = event.status !== "published";
 
@@ -27,7 +32,7 @@ export function EventCard({ event }: { event: EventWithRelations }) {
 
   return (
     <Link
-      href={`/u/${event.owner.username}/${event.slug}`}
+      href={routes.event(event.owner.username, event.slug)}
       className="group flex flex-col gap-6 rounded-lg border border-border bg-card/30 p-6 transition-colors hover:border-primary/50 md:flex-row"
     >
       <div className="flex shrink-0 flex-row items-baseline gap-3 md:w-32 md:flex-col md:items-start md:gap-1">
@@ -50,11 +55,11 @@ export function EventCard({ event }: { event: EventWithRelations }) {
           {showStatus && <EventStatusBadge status={event.status} />}
         </div>
 
-        {event.short_description && (
+        {event.short_description ? (
           <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
             {event.short_description}
           </p>
-        )}
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-3 font-mono text-xs uppercase text-muted-foreground">
           <span className="text-foreground/70">{event.category.label}</span>
@@ -67,7 +72,7 @@ export function EventCard({ event }: { event: EventWithRelations }) {
         </div>
       </div>
 
-      {event.cover_image_url && (
+      {event.cover_image_url ? (
         <div className="relative aspect-[4/3] shrink-0 overflow-hidden rounded bg-secondary md:size-32">
           <Image
             src={event.cover_image_url}
@@ -77,7 +82,7 @@ export function EventCard({ event }: { event: EventWithRelations }) {
             className="object-cover"
           />
         </div>
-      )}
+      ) : null}
     </Link>
   );
 }

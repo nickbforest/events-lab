@@ -1,20 +1,29 @@
+import type {
+  ProfileMediaInput,
+  ProfileUpdateInput,
+} from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
+import { createLogger } from "@/lib/logging";
+import { RESERVED_ROUTE_SEGMENTS } from "@/lib/routes";
 import type { Profile } from "@/lib/types";
 
+const log = createLogger("profiles.service");
+
 /**
- * Usernames become public URLs and appear alongside product surfaces, so a few
- * are held back: routes we may add later, and names that would let an account
- * pass itself off as part of events-lab.
+ * Usernames become public URLs, so a few are held back: the route segments
+ * the application already owns, plus names that would let an account pass
+ * itself off as part of events-lab.
+ *
+ * The route segments come from `lib/routes.ts` rather than being restated
+ * here — adding a top-level route and forgetting to reserve its name is how
+ * an existing account starts shadowing a page.
  */
-const RESERVED_USERNAMES = new Set([
+const RESERVED_USERNAMES = new Set<string>([
+  ...RESERVED_ROUTE_SEGMENTS,
   "about",
   "admin",
   "administrator",
-  "api",
-  "auth",
   "contact",
-  "dashboard",
-  "discover",
   "event",
   "events",
   "events-lab",
@@ -27,6 +36,7 @@ const RESERVED_USERNAMES = new Set([
   "new",
   "privacy",
   "profile",
+  "publisher",
   "root",
   "settings",
   "signup",
@@ -34,7 +44,6 @@ const RESERVED_USERNAMES = new Set([
   "support",
   "system",
   "terms",
-  "u",
   "user",
 ]);
 
@@ -42,6 +51,15 @@ export interface ProfilesService {
   getProfileById(id: string): Promise<Profile | null>;
   getProfileByUsername(username: string): Promise<Profile | null>;
   isUsernameAvailable(username: string): Promise<boolean>;
+  /**
+   * `ownerId` comes from the verified session at the composition root, never
+   * from the submitted payload — it is the whole authorization decision.
+   */
+  updateProfile(ownerId: string, input: ProfileUpdateInput): Promise<Profile>;
+  updateProfileMedia(
+    ownerId: string,
+    input: ProfileMediaInput,
+  ): Promise<Profile>;
 }
 
 export function createProfilesService(
@@ -53,8 +71,57 @@ export function createProfilesService(
     getProfileByUsername: (username) => repository.findByUsername(username),
 
     async isUsernameAvailable(username) {
-      if (RESERVED_USERNAMES.has(username)) return false;
+      if (RESERVED_USERNAMES.has(username)) {
+        return false;
+      }
       return !(await repository.isUsernameTaken(username));
+    },
+
+    updateProfile(ownerId, input) {
+      // Links the publisher cleared are dropped from the map rather than
+      // stored as null, so `social_links` only ever holds live links.
+      const socialLinks: Record<string, string> = {};
+      for (const [key, value] of Object.entries(input.socialLinks)) {
+        if (value) {
+          socialLinks[key] = value;
+        }
+      }
+
+      return repository.update(ownerId, {
+        display_name: input.displayName,
+        publisher_type: input.publisherType,
+        bio: input.bio,
+        city: input.city,
+        country_code: input.countryCode,
+        website_url: input.websiteUrl,
+        social_links: socialLinks,
+      });
+    },
+
+    async updateProfileMedia(ownerId, { kind, file }) {
+      // Upload, then repoint the profile, then clean up. In this order a
+      // failure at any step leaves the page showing a working image: at worst
+      // an unreferenced file is left behind, never a broken one referenced.
+      const stored = await repository.uploadMedia(ownerId, kind, file);
+      const profile = await repository.setMediaUrl(
+        ownerId,
+        kind,
+        stored.publicUrl,
+      );
+
+      try {
+        await repository.removeMediaExcept(ownerId, kind, stored.path);
+      } catch (error) {
+        // Swallowed on purpose: the new image is already live, so failing the
+        // upload over a leftover file would be worse than leaking one. The
+        // log is what makes that leak findable.
+        log.error("Replaced profile media could not be removed.", error, {
+          ownerId,
+          kind,
+        });
+      }
+
+      return profile;
     },
   };
 }

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AuthError, SupabaseClient, User } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import {
   type AuthFailureReason,
@@ -13,11 +14,20 @@ import {
 } from "@/features/auth/dal/auth-repository";
 import type { Database } from "@/lib/supabase/database.types";
 
+/**
+ * auth-js returns `redirectType` from `exchangeCodeForSession` at runtime
+ * ("recovery" for password-reset links) but omits it from the declared type.
+ */
+const exchangeResultSchema = z.object({
+  redirectType: z.string().nullish(),
+});
+
 function toAuthUser(user: User): AuthUser {
   return {
     id: user.id,
     email: user.email ?? null,
     emailVerified: user.email_confirmed_at != null,
+    pendingEmail: user.new_email ?? null,
   };
 }
 
@@ -32,6 +42,8 @@ function reasonFor(error: AuthError): AuthFailureReason {
       return "EMAIL_TAKEN";
     case "weak_password":
       return "WEAK_PASSWORD";
+    case "same_password":
+      return "SAME_PASSWORD";
     case "over_email_send_rate_limit":
     case "over_request_rate_limit":
       return "RATE_LIMITED";
@@ -74,7 +86,9 @@ export function createSupabaseAuthRepository(
         },
       });
 
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
       if (!data.user) {
         throw new AuthProviderError(
           "UNKNOWN",
@@ -93,7 +107,28 @@ export function createSupabaseAuthRepository(
         token_hash: tokenHash,
         type,
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
+    },
+
+    async exchangeAuthCode(code) {
+      const { data, error } = await client.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        // An expired or reused code, or one opened in a browser that never
+        // requested it (no PKCE verifier cookie), is ordinary link failure.
+        throw new AuthProviderError(
+          error.status != null && error.status >= 500
+            ? "UNKNOWN"
+            : "INVALID_TOKEN",
+          error.message,
+          error,
+        );
+      }
+
+      const { redirectType } = exchangeResultSchema.parse(data);
+      return { isRecovery: redirectType === "recovery" };
     },
 
     async signInWithPassword(email, password) {
@@ -102,7 +137,9 @@ export function createSupabaseAuthRepository(
         password,
       });
 
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
       if (!data.user) {
         throw new AuthProviderError(
           "UNKNOWN",
@@ -113,16 +150,20 @@ export function createSupabaseAuthRepository(
       return toAuthUser(data.user);
     },
 
-    async signOut() {
-      const { error } = await client.auth.signOut();
-      if (error) fail(error);
+    async signOut(scope) {
+      const { error } = await client.auth.signOut({ scope });
+      if (error) {
+        fail(error);
+      }
     },
 
     async getAuthenticatedUser() {
       const { data, error } = await client.auth.getUser();
 
       // A missing or expired session is an expected state, not a failure.
-      if (error) return null;
+      if (error) {
+        return null;
+      }
       return data.user ? toAuthUser(data.user) : null;
     },
 
@@ -130,7 +171,9 @@ export function createSupabaseAuthRepository(
       const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async resendConfirmationEmail(email, redirectTo) {
@@ -139,12 +182,26 @@ export function createSupabaseAuthRepository(
         email,
         options: { emailRedirectTo: redirectTo },
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async updatePassword(password) {
       const { error } = await client.auth.updateUser({ password });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
+    },
+
+    async requestEmailChange(email, redirectTo) {
+      const { error } = await client.auth.updateUser(
+        { email },
+        { emailRedirectTo: redirectTo },
+      );
+      if (error) {
+        fail(error);
+      }
     },
   };
 }

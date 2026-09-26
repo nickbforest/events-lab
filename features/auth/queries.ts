@@ -5,6 +5,7 @@ import { cache } from "react";
 
 import type { AuthUser } from "@/features/auth/dal/auth-repository";
 import { getAuthService } from "@/features/auth/service";
+import { routes } from "@/lib/routes";
 
 /**
  * Memoised for the render pass so a page, its layout, and any nested component
@@ -24,6 +25,8 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
  */
 export const verifySession = cache(async (): Promise<AuthUser> => {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth?mode=login");
+  if (!user) {
+    redirect(routes.auth.signIn());
+  }
   return user;
 });

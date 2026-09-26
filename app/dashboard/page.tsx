@@ -13,6 +13,7 @@ import {
 import { getDashboardSummary } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
 import { formatEventDate, isoDateTime } from "@/lib/format";
+import { routes } from "@/lib/routes";
 
 export default async function DashboardOverviewPage({
   searchParams,
@@ -107,7 +108,7 @@ export default async function DashboardOverviewPage({
                     className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                   >
                     <Link
-                      href={`/u/${event.owner.username}/${event.slug}`}
+                      href={routes.event(event.owner.username, event.slug)}
                       className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight transition-colors hover:text-primary"
                     >
                       {event.title}

@@ -200,8 +200,9 @@ Last updated: 2026-09-03
 **Pattern notes:**
 Nav items pair a `size-4` lucide icon with a `gap-3` label; the active item is
 marked with `aria-current="page"` and `bg-white/5`. Order is fixed: Overview,
-Events, Profile in the main nav, then a `border-t` footer holding the public
-preview link (`font-mono text-xs`, `ExternalLink` at `size-3`) and Sign out.
+Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
+`border-t` footer holding the public preview link (`font-mono text-xs`,
+`ExternalLink` at `size-3`) and Sign out.
 Sign out is always last and uses the same idle-nav-item treatment rather than
 a destructive color — it is a navigation action, not a dangerous one.
 
@@ -366,6 +367,18 @@ Sections are grouped by `FormSection`, whose lime mono heading over a hairline
 rule is the only section marker used in dashboard forms. Two-column field grids
 are `sm:grid-cols-2` with `gap-5`.
 
+`formSubmitClass` (same file, added 2026-09-21) is the single source for a
+dashboard form's lime submit button: `rounded-md bg-primary px-6 py-3 text-sm
+font-medium text-primary-foreground hover:brightness-110
+disabled:cursor-not-allowed disabled:opacity-60`. It matches `authSubmitClass`
+except for `w-full`. The button swaps its label to a present participle while
+submitting ("Saving…").
+
+A value the owner can see but not change (username, current email) is a real
+`<input readOnly disabled>` with `fieldControlClass` plus `cursor-not-allowed
+opacity-60`, and its hint says why it is fixed. Never render it as plain text:
+it has to read as a field.
+
 ### AuthCard
 
 File: components/auth/auth-card.tsx
@@ -403,10 +416,15 @@ to `Field`. Advisory confirmations — username availability, "link resent" — 
 an `aria-live="polite"` paragraph in `font-mono text-xs text-primary`, never an
 alert, because they are not errors.
 
+A notice carried in from another screen (login's `?notice=password-changed`)
+is a `role="status"` paragraph in `mb-5 font-mono text-xs leading-relaxed
+text-primary` above the form. Only known notice values render, so the URL can
+never inject text.
+
 ### ImageUploader
 
 File: components/forms/image-uploader.tsx
-Last updated: 2026-09-09
+Last updated: 2026-09-21
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -431,6 +449,105 @@ used for below the frame, kept separate from the in-frame format/size `hint`;
 `className` constrains the frame, since a square target should not stretch the
 width of a form.
 
+With `previewUrl` the frame fills with the image (`object-cover`) under a
+`bg-black/40` scrim so the mono label stays legible, and the label reads "Click
+to replace". While `busy`, the image dims to `opacity-50`, the label reads
+"Uploading…", the input is disabled and the frame carries `aria-busy`. An
+`error` replaces `description` below the frame in `text-destructive`, exactly
+as `Field` swaps hint for error. It is a client component: it owns the change
+handler, and it resets the input so choosing the same file twice still fires.
+
+Profile media uses it through `ProfileMediaField`, which uploads on selection
+rather than on the form's Save: an image is its own write, so a failed upload
+never discards unsaved text. Avatar frames are `aspect-square px-3 py-6` in a
+`10rem` column; covers are `aspect-[3/1] min-h-40`.
+
+
+### Avatar
+
+File: components/ui/avatar.tsx
+Last updated: 2026-09-21
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-secondary` (shows behind the letter fallback)   |
+| Border           | none                                                |
+| Border radius    | `rounded-lg`, never a circle                        |
+| Text — primary   | `font-display`; weight and size set by the caller   |
+| Text — secondary | n/a                                                 |
+| Spacing          | none; `grid place-items-center` centres the letter  |
+| Hover state      | none; hover belongs to the surrounding link         |
+| Shadow           | none                                                |
+| Accent usage     | none                                                |
+
+**Pattern notes:**
+A publisher's image, or the first letter of their name when there is none.
+Every existing letter block was replaced by this, so no page hand-rolls one.
+The caller sets size and letter weight together: `size-20 text-3xl
+font-extrabold` in the publisher header, `size-10 font-bold` beside a byline.
+`sizes` must match the rendered width so next/image does not fetch a larger
+file than it shows. It is `aria-hidden` because the name is always printed
+beside it; if a use ever shows it alone, give it an accessible name first.
+
+### Publisher page header
+
+File: app/publishers/[username]/page.tsx
+Last updated: 2026-09-21
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | cover banner `bg-secondary` behind the image        |
+| Border           | cover `border-b border-border`; header `border-b`   |
+| Border radius    | none on the cover; it runs full-bleed               |
+| Text — primary   | `font-display text-4xl font-extrabold uppercase tracking-tighter md:text-5xl` |
+| Text — secondary | handle `font-mono text-sm text-muted-foreground`; meta `font-mono text-xs uppercase` |
+| Spacing          | header `px-6 py-16`, avatar-to-text `gap-6`         |
+| Hover state      | meta links `hover:text-primary`                     |
+| Shadow           | none                                                |
+| Accent usage     | the publisher-type kicker above the name            |
+
+**Pattern notes:**
+The cover is an `aspect-[3/1] max-h-80 w-full` banner above the header, loaded
+with `priority` because it is the first thing on the page. It renders only
+when a cover exists; with none, the header starts the page unchanged, so a
+publisher without images sees the page exactly as before. The avatar sits
+beside the name, not overlapping the cover. Link previews use the cover, or
+failing that the avatar, as their Open Graph image.
+
+### Account forms (ProfileForm, EmailForm, PasswordForm)
+
+Files: app/dashboard/profile/profile-form.tsx, app/dashboard/settings/*.tsx
+Last updated: 2026-09-21
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | none; fields carry `bg-card` via `fieldControlClass` |
+| Border           | profile footer `border-t border-border pt-6`        |
+| Border radius    | inherited from `Field` and `formSubmitClass`        |
+| Text — primary   | via `Field`                                         |
+| Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
+| Spacing          | fields `space-y-5`; footer `flex justify-between gap-4` |
+| Hover state      | submit `hover:brightness-110`                       |
+| Shadow           | none                                                |
+| Accent usage     | `formSubmitClass`, and success lines in `text-primary` |
+
+**Pattern notes:**
+Each is a TanStack Form client component rendered by a thin Server Component
+page that loads the data. The footer pairs a left-hand status line with the
+right-hand submit button. Success is an `aria-live="polite"` line in
+`font-mono text-xs text-primary` ("Profile saved."); a result that is not yet
+final says so ("Confirmation pending for …"), never "changed". A form whose
+success leaves the page (password change signs out) states that consequence in
+the footer before submit instead.
+
+Server field errors are held beside TanStack's own and cleared when that field
+is edited, so a stale server message never outlives the input that caused it.
+
+Settings stacks one `FormSection` per concern (Email, Password), each with its
+own submit, so one failing never blocks the other. The profile form is a single
+submission with a closing `border-t` footer. Password fields autocomplete as
+`current-password` / `new-password` next to a hidden `username` input, so
+password managers file the change under the right account.
 
 ### NewEventDialog
 

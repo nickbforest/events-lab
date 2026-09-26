@@ -17,11 +17,13 @@ import {
   fieldDescribedBy,
 } from "@/components/forms/field";
 import { signUpAction } from "@/features/auth/actions";
-import { signUpSchema, usernameSchema } from "@/features/auth/contracts";
+import { signUpSchema } from "@/features/auth/contracts";
+import { usernameSchema } from "@/features/profiles/contracts";
 import { firstErrorMessage } from "@/lib/forms";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { apiClient } from "@/lib/http/client";
 import { queryKeys } from "@/lib/query/keys";
+import { routes } from "@/lib/routes";
 
 type SignUpField = "displayName" | "username" | "email" | "password";
 
@@ -89,7 +91,7 @@ export function SignupForm() {
         <>
           Already have an account?{" "}
           <Link
-            href="/auth?mode=login"
+            href={routes.auth.signIn()}
             replace
             className="text-primary hover:underline"
           >
@@ -272,7 +274,7 @@ export function SignupForm() {
           }}
         </form.Field>
 
-        {formError && <FormAlert message={formError} />}
+        {formError ? <FormAlert message={formError} /> : null}
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (

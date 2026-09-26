@@ -1,20 +1,10 @@
 import { z } from "zod";
 
-/**
- * Mirrors the `profiles_username_format` check constraint. Keeping the two in
- * sync matters: the database is the authority, and a value this schema accepts
- * but the constraint rejects would surface as an opaque signup failure.
- */
-export const usernameSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(3, { error: "Username must be at least 3 characters." })
-  .max(32, { error: "Username must be 32 characters or fewer." })
-  .regex(/^[a-z0-9_](-?[a-z0-9_])*$/, {
-    error:
-      "Use lowercase letters, numbers and underscores. Hyphens must sit between characters.",
-  });
+import {
+  displayNameSchema,
+  usernameSchema,
+} from "@/features/profiles/contracts";
+import { AUTH_NOTICES } from "@/lib/routes";
 
 export const emailSchema = z
   .string()
@@ -27,12 +17,6 @@ export const passwordSchema = z
   .min(8, { error: "Password must be at least 8 characters." })
   // bcrypt silently truncates beyond 72 bytes, so reject rather than mislead.
   .max(72, { error: "Password must be 72 characters or fewer." });
-
-export const displayNameSchema = z
-  .string()
-  .trim()
-  .min(1, { error: "Enter a name." })
-  .max(80, { error: "Name must be 80 characters or fewer." });
 
 export const signUpSchema = z.object({
   displayName: displayNameSchema,
@@ -54,8 +38,35 @@ export const updatePasswordSchema = z.object({
   password: passwordSchema,
 });
 
+export const changeEmailSchema = z.object({
+  email: emailSchema,
+});
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, { error: "Enter your current password." }),
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.newPassword !== value.currentPassword, {
+    path: ["newPassword"],
+    error: "Choose a password different from your current one.",
+  })
+  // The new password is never shown, so a single typo would lock the owner out.
+  .refine((value) => value.confirmPassword === value.newPassword, {
+    path: ["confirmPassword"],
+    error: "The passwords do not match.",
+  });
+
 export const usernameAvailabilitySchema = z.object({
   username: usernameSchema,
+});
+
+/** The `code` Supabase's default email templates append to the redirect. */
+export const authCodeSchema = z.object({
+  code: z.string().min(1),
 });
 
 /** Query parameters Supabase appends to confirmation and recovery links. */
@@ -65,16 +76,18 @@ export const emailConfirmationSchema = z.object({
 });
 
 /**
- * What a Server Action hands back to a form: either it succeeded, or it failed
- * with a message for the form and/or messages attached to specific fields.
+ * Which form `/auth` shows. A query parameter is user-controlled, so it is
+ * parsed rather than compared: `.catch` makes an absent, misspelled or
+ * hand-edited value fall back to signup instead of rendering nothing.
  */
-export type FormResult<TField extends string = never> =
-  | { status: "success" }
-  | {
-      status: "error";
-      message?: string;
-      fieldErrors?: Partial<Record<TField, string>>;
-    };
+export const authModeSchema = z.enum(["login", "signup"]).catch("signup");
+
+/**
+ * The one-off notice an auth screen may show after a redirect. An enum, not
+ * free text — a URL that can put arbitrary strings on the page is how content
+ * injection starts.
+ */
+export const authNoticeSchema = z.enum(AUTH_NOTICES).nullable().catch(null);
 
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
@@ -82,3 +95,26 @@ export type PasswordResetRequestInput = z.infer<
   typeof passwordResetRequestSchema
 >;
 export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+/**
+ * Compiled parsers for the auth schemas on a per-request path. See the note
+ * in `features/profiles/contracts.ts` for why these are built at module
+ * scope rather than inside the handler.
+ */
+export const compiledSignUpSchema = z.compile(signUpSchema);
+export const compiledSignInSchema = z.compile(signInSchema);
+export const compiledPasswordResetRequestSchema = z.compile(
+  passwordResetRequestSchema,
+);
+export const compiledUpdatePasswordSchema = z.compile(updatePasswordSchema);
+export const compiledChangeEmailSchema = z.compile(changeEmailSchema);
+export const compiledChangePasswordSchema = z.compile(changePasswordSchema);
+export const compiledUsernameAvailabilitySchema = z.compile(
+  usernameAvailabilitySchema,
+);
+export const compiledAuthCodeSchema = z.compile(authCodeSchema);
+export const compiledEmailConfirmationSchema = z.compile(
+  emailConfirmationSchema,
+);
