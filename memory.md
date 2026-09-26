@@ -1,68 +1,76 @@
-# Memory — Phase 4 Events, and the PR #6 review pass
+# Memory — Dashboard UI polish (uploads, images, selects, navigation)
 
 Last updated: 2026-09-26
 
 ## What was built
 
-Two strands, on two branches.
+Committed on `feat/phase-4-events`, which is on top of `main`.
+Commits `4bae605`, `4403cc4`, `0a68c0f`, `90c5d00`, plus a docs commit.
 
-**Phase 4 — Events**, committed on `feat/phase-4-events` (branched from
-`feat/phase-2-profiles`, so it stacks on PR #6). Real events end to end:
-migrations for `categories`, `tags`, `events`, `event_tags` and the
-`event-media` bucket, all applied to the hosted Supabase project; contracts,
-BLL, Supabase DAL, a shared create/edit form, a lifecycle panel, and
-`lib/datetime.ts`. Full record in `context/progress-tracker.md` Phase 4.
-
-**PR #6 review pass**, on `feat/phase-2-profiles`. Nine inline comments from
-`geo318` plus a standing instruction to fix each pattern repo-wide. New
-`lib/routes.ts`, `lib/logging.ts`, a rewritten `lib/errors.ts`, hardened
-Biome rules, and every invariant written into `context/code-standard.md`.
+- **Upload feedback.** `components/forms/image-uploader.tsx` shows a spinning
+  `LoaderCircle`, a `busyLabel` ("Uploading…" / "Removing…") and a lime
+  indeterminate bar (`animate-upload-progress` in `app/globals.css`) over a
+  dimmed local preview.
+- **Image actions.** A set image shows alone, with icon chips in its corner:
+  a pencil (a label wrapping the file input) to replace it and a bin to remove
+  it. The empty state is still the dashed "Click to upload" frame.
+- **Removal.** Avatar and cover are removed right away:
+  `removeProfileMediaAction` → `ProfilesService.removeProfileMedia` clears the
+  column, then deletes the files (3 BLL tests). The event poster's bin clears
+  the form field, and the events service deletes the old file on Save.
+- **`SelectControl`** in `components/forms/field.tsx`: every dashboard select
+  is now 42px tall, like the inputs.
+- **Public page:** the "Claim your events-lab page" box is removed.
+  **Footer:** the wordmark only.
+- **`WordmarkLink`** (`components/layout/wordmark-link.tsx`): in the dashboard
+  the logo goes to Overview, and on the public header it goes home. On the
+  page it already points at, it reloads.
+- **Sidebar page link** opens `routes.publisherPreview` in a new tab.
+- **Docs:** the progress tracker (Phase 4 post-completion refinements table
+  and decision log), the build plan, Architecture §14/16/21/28, the UI
+  registry (ImageUploader, Field/SelectControl, SiteHeader, SiteFooter,
+  DashboardShell, Publisher page) and UI rules §9.
 
 ## Decisions made
 
-- `/u/:username` is now `/publishers/:username`. Chosen in review; the old
-  URL is gone, and no route may be a string literal outside `lib/routes.ts`.
-- No `completed` event status. Completion derives from `end_at`.
-- Organizations stay deferred; MVP-1 publishes through profiles.
-- Publish-readiness is a BLL rule, not a CHECK and not a stricter schema.
-- `z.compile` for per-request schemas, compiled at module scope only.
-- Errors: codes and user-facing wording live in `lib/errors.ts`; all logging
-  goes through `lib/logging.ts`; `console.*` is banned by lint.
-- Component props are named exported `<Name>Props` interfaces.
-- JSX conditionals use `cond ? <X/> : null`, not `&&`.
+- Upload progress is indeterminate, never a percentage. Server Actions report
+  no byte progress. A real percentage would need signed-URL direct-to-Storage
+  uploads with XHR.
+- Removing an image clears the column first, then deletes the files.
+- Image action chips are always visible, not hover-only, so they work on
+  touch screens.
+- Inside the dashboard the logo means Overview. The footer and public page
+  carry no signup or marketing links.
+- Every preview link opens in a new tab with `?preview=1`.
 
 ## Problems solved
 
-- Biome's `--unsafe` autofix silently deleted two `console.error` calls and
-  left empty `catch {}` blocks. Both restored through the logger. Check for
-  this after any `--unsafe` run.
-- Zod's stricter publish schema re-parsed already-parsed output, so `""`→null
-  transforms rejected their own results. Publish rules moved to the BLL.
-- `publishIntent` as React state was read stale inside the submit closure, so
-  the first Publish click saved a draft. It is a ref now.
-- Biome writes diagnostics to stderr and truncates them; scripts need
-  `--colors=off --max-diagnostics=200` and must read stderr.
-- pgTAP still needs Docker. Assertions are verified against the hosted
-  project inside transactions that roll back.
+- "Hide the cover when none is set" was already how the page worked. The real
+  gap was that an image could not be removed.
+- Native selects came out shorter than the inputs. `appearance-none` plus a
+  fixed height fixes it.
+- A `<Link>` to the current URL does nothing visible. `WordmarkLink` renders
+  a plain `<a>` in that case so the page reloads.
 
 ## Current state
 
-- Phase 4: committed, all automated checks green.
-  **Never opened in a browser.** Create, publish, edit, cover upload, cancel,
-  delete and the public page are unverified by a human.
-- PR #6 review pass: all nine comments addressed, 68 files changed,
-  uncommitted at the time of writing.
+- biome clean, tsc clean, vitest 10 files / 123 tests, `next build` passes.
+- **None of today's changes have been checked in the browser.**
+- Phase 4 still has no recorded end-to-end browser pass.
 
 ## Next session starts with
 
-1. Browser-test Phase 4 end to end. This is the oldest unpaid debt.
-2. Rebase `feat/phase-4-events` onto the merged `main` and bring it up to the
-   new standards — it predates all of them: hardcoded routes, inline prop
-   types, `&&` in JSX, uncompiled schemas, no logger.
+1. Browser-check today's changes: upload animation, pencil and bin on the
+   avatar, cover and poster, the page without a cover, select heights, the
+   logo → Overview, and the sidebar link opening a new tab.
+2. Run a Phase 4 end-to-end pass: create → publish → edit → cancel → delete.
+3. Then Phase 5, the map layer (Mapbox, geocoding, near me).
 
 ## Open questions
 
-- Phase 4 needs a real standards pass, not just a rebase (~1,800 lines).
-- Recurrence still deferred.
-- Discovery and analytics remain mock-backed and now contradict real events.
-- Custom SMTP still needed before launch; email change still untested.
+- Does the upload wait ever get long enough to justify real percentages?
+- Discovery and analytics are still mock-backed.
+- Custom SMTP is needed before launch. Email change is untested.
+- Recurrence is deferred.
+- Today's commits are not pushed. PR #6 is merged to `main`, and this branch
+  sits on top of it.

@@ -180,6 +180,36 @@ The public header carries exactly two actions — a ghost `Log in` and a solid
 app navigation: Discover is reached from the landing page, and the dashboard
 is reached from its own sidebar once signed in. Do not add nav links here.
 
+The wordmark is `WordmarkLink` (`components/layout/wordmark-link.tsx`, added
+2026-09-26), shared with the dashboard sidebar. It takes the destination:
+`routes.home()` here, `routes.dashboard.root()` (Overview) in the dashboard.
+From another page it is a client-side `<Link>`; on the page it already points
+at it renders a plain `<a>`, so clicking it reloads the page. Never hand-roll
+the wordmark as a link again.
+
+### SiteFooter
+
+File: components/layout/site-footer.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                            |
+| ---------------- | ------------------------------------------------ |
+| Background       | inherits `bg-background`                          |
+| Border           | `border-t border-border`                          |
+| Border radius    | none                                              |
+| Text — primary   | wordmark `font-display text-lg font-extrabold uppercase tracking-tighter` |
+| Text — secondary | none                                              |
+| Spacing          | `max-w-7xl px-6 py-10`                            |
+| Hover state      | none                                              |
+| Shadow           | none                                              |
+| Accent usage     | `text-primary` on the wordmark hyphen only        |
+
+**Pattern notes:**
+The footer is the wordmark and nothing else. The Discover and Start
+publishing links and the "Prototype — no live data" note were removed on
+2026-09-26 at the developer's request. Like `SiteHeader`, it carries no app
+navigation; do not add links back without asking.
+
 ### DashboardShell (sidebar)
 
 File: components/layout/dashboard-shell.tsx
@@ -198,11 +228,16 @@ Last updated: 2026-09-03
 | Accent usage     | wordmark hyphen; preview link `hover:text-primary`  |
 
 **Pattern notes:**
+The sidebar wordmark leads to Overview, never to the public landing page —
+inside the dashboard, "click the logo" means "back to the start of the
+dashboard". It uses `WordmarkLink` (see `SiteHeader`). Nav items take their
+hrefs from `routes.dashboard.*`.
+
 Nav items pair a `size-4` lucide icon with a `gap-3` label; the active item is
 marked with `aria-current="page"` and `bg-white/5`. Order is fixed: Overview,
 Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
 `border-t` footer holding the public preview link (`font-mono text-xs`,
-`ExternalLink` at `size-3`) and Sign out.
+`ExternalLink` at `size-3`) and Sign out. The preview link opens `routes.publisherPreview` in a new tab (`target="_blank" rel="noopener noreferrer"`, with an `sr-only` ", opens in a new tab"), like every preview link in the dashboard.
 Sign out is always last and uses the same idle-nav-item treatment rather than
 a destructive color — it is a navigation action, not a dangerous one.
 
@@ -336,7 +371,7 @@ descriptive label and the `View as table` disclosure with all plotted values.
 ### Field / FormSection
 
 File: components/forms/field.tsx, components/forms/form-section.tsx
-Last updated: 2026-09-14
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -356,6 +391,14 @@ Last updated: 2026-09-14
 styling — import it rather than restating the classes, so the three never
 drift apart. Every control has a real `<label htmlFor>`.
 
+Selects render through `SelectControl` (same file, added 2026-09-26), never a
+bare `<select>`. A native select draws its own box, ignores padding and comes
+out shorter than the inputs beside it. `SelectControl` drops the native
+appearance (`appearance-none`), pins the height to the input's
+`h-[2.625rem]` (42px), reserves `pr-10` and draws a `ChevronDown` (`size-4
+text-muted-foreground`, `right-4`, `pointer-events-none`) in the arrow's
+place. It takes every `<select>` prop, so wiring and `aria-*` are unchanged.
+
 A field carries at most one message: `error` replaces `hint` rather than
 stacking under it, because once a control is invalid the correction is the only
 guidance that matters. Wire the control with `fieldDescribedBy({ id, hasHint,
@@ -365,7 +408,10 @@ an error is present. Never surface an error through colour alone.
 
 Sections are grouped by `FormSection`, whose lime mono heading over a hairline
 rule is the only section marker used in dashboard forms. Two-column field grids
-are `sm:grid-cols-2` with `gap-5`.
+are `sm:grid-cols-2` with `gap-5`. Its optional `description` (added
+2026-09-26) sits under the rule as `text-sm text-muted-foreground` — use it
+when the heading alone does not say what the section is for, and keep it to
+one line.
 
 `formSubmitClass` (same file, added 2026-09-21) is the single source for a
 dashboard form's lime submit button: `rounded-md bg-primary px-6 py-3 text-sm
@@ -424,19 +470,19 @@ never inject text.
 ### ImageUploader
 
 File: components/forms/image-uploader.tsx
-Last updated: 2026-09-21
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
 | Background       | transparent; `hover:bg-white/[0.02]`                |
-| Border           | `border border-dashed border-border`                |
+| Border           | empty `border border-dashed border-border`; with an image `border border-border` |
 | Border radius    | `rounded-md`                                        |
 | Text — primary   | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
 | Text — secondary | constraint line `font-mono text-xs text-muted-foreground` |
 | Spacing          | `px-6 py-12`, `gap-3`                               |
 | Hover state      | `hover:border-primary/50 hover:bg-white/[0.02]`     |
 | Shadow           | none                                                |
-| Accent usage     | `focus-within:border-primary`                       |
+| Accent usage     | `focus-within:border-primary`; while busy, spinner, label and progress bar are `text-primary`/`bg-primary`; remove chip `hover:text-destructive` |
 
 **Pattern notes:**
 The dashed frame is a `<label>` wrapping an `sr-only` file input, never a
@@ -449,17 +495,45 @@ used for below the frame, kept separate from the in-frame format/size `hint`;
 `className` constrains the frame, since a square target should not stretch the
 width of a form.
 
-With `previewUrl` the frame fills with the image (`object-cover`) under a
-`bg-black/40` scrim so the mono label stays legible, and the label reads "Click
-to replace". While `busy`, the image dims to `opacity-50`, the label reads
-"Uploading…", the input is disabled and the frame carries `aria-busy`. An
-`error` replaces `description` below the frame in `text-destructive`, exactly
-as `Field` swaps hint for error. It is a client component: it owns the change
-handler, and it resets the input so choosing the same file twice still fires.
+With `previewUrl` the frame is a different element: a solid-bordered `div`
+(`border border-border bg-secondary`) showing the image alone, `object-cover`,
+with no scrim, icon or "click to upload" text over it. Its two actions sit
+as icon chips in the top-right corner (`absolute top-2 right-2 flex gap-2`):
+
+* **Replace** — a `Pencil` inside a `<label>` that wraps the same `sr-only`
+  file input, with `focus-within:ring-2 focus-within:ring-ring` so keyboard
+  focus shows on the chip.
+* **Remove** — a `Trash2` `<button>`, `hover:text-destructive`, rendered only
+  when the caller passes `onRemove`.
+
+Both chips are `size-9 rounded-md bg-black/60 text-white backdrop-blur-sm
+hover:bg-black/80` so they read on light and dark photos, carry an `sr-only`
+name ("Replace cover image") and a matching `title`, and are always visible
+rather than hover-only, because touch screens have no hover.
+
+While `busy`, the image dims to `opacity-50`, the chips hide, and a
+`bg-black/40` overlay centres a spinning `LoaderCircle` and the `busyLabel`
+(default "Uploading…", "Removing…" during a removal), both `text-primary`.
+The input is disabled and the frame carries `aria-busy`. A
+`role="progressbar"` track runs along the bottom edge (`h-1 bg-white/10`) with
+a `w-2/5 bg-primary` bar sweeping across it (`animate-upload-progress` in
+`globals.css`). It is indeterminate on purpose: uploads go through Server
+Actions, which report no byte progress, so never show a percentage here.
+Under reduced motion the bar stands still at full width. A caller that has
+the file shows it at once as a local `blob:` preview under the bar.
+
+An `error` replaces `description` below the frame in `text-destructive`,
+exactly as `Field` swaps hint for error. It is a client component: it owns
+the change handler, and it resets the input so choosing the same file twice
+still fires.
 
 Profile media uses it through `ProfileMediaField`, which uploads on selection
 rather than on the form's Save: an image is its own write, so a failed upload
-never discards unsaved text. Avatar frames are `aspect-square px-3 py-6` in a
+never discards unsaved text. It also wires `onRemove`, which clears the image
+on the server; success is announced in the same `aria-live` line ("Cover
+image removed."). The event poster wires `onRemove` to clear the form field
+only; saving the event deletes the stored file it no longer points at, so
+the removal takes effect on Save, like every other event field. Avatar frames are `aspect-square px-3 py-6` in a
 `10rem` column; covers are `aspect-[3/1] min-h-40`.
 
 
@@ -492,7 +566,7 @@ beside it; if a use ever shows it alone, give it an accessible name first.
 ### Publisher page header
 
 File: app/publishers/[username]/page.tsx
-Last updated: 2026-09-21
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -512,7 +586,13 @@ with `priority` because it is the first thing on the page. It renders only
 when a cover exists; with none, the header starts the page unchanged, so a
 publisher without images sees the page exactly as before. The avatar sits
 beside the name, not overlapping the cover. Link previews use the cover, or
-failing that the avatar, as their Open Graph image.
+failing that the avatar, as their Open Graph image. The publisher can remove
+the cover from the dashboard, and the page then starts at the header.
+
+The page ends with the event lists; there is no "Publishing your own events?
+Claim your events-lab page" call to action (removed 2026-09-26). A
+publisher's page is theirs, not a signup funnel. `?preview=1` hides the site
+header for a publisher previewing their own page.
 
 ### Account forms (ProfileForm, EmailForm, PasswordForm)
 
@@ -551,8 +631,8 @@ password managers file the change under the right account.
 
 ### NewEventDialog
 
-File: components/events/new-event-dialog.tsx
-Last updated: 2026-09-09
+File: app/dashboard/events/event-create-dialog.tsx
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -560,27 +640,258 @@ Last updated: 2026-09-09
 | Border           | `border border-border`; header `border-b`, footer `border-t` |
 | Border radius    | `rounded-lg`                                        |
 | Text — primary   | header `font-display text-sm font-extrabold uppercase tracking-tight` |
-| Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
+| Text — secondary | `text-muted-foreground`                             |
 | Spacing          | header/footer `px-6 py-4`, body `px-6 pt-6`         |
 | Hover state      | close button `hover:bg-white/5 hover:text-foreground` |
 | Shadow           | none — the backdrop does the separating             |
-| Accent usage     | the submit button only                              |
+| Accent usage     | the single primary submit in the footer             |
 
 **Pattern notes:**
+Creating an event is always a modal over the events list; there is no
+standalone create page, so there is one create path rather than two.
+
 Built on the native `<dialog>` with `showModal()`, never a hand-rolled overlay
 — focus trapping, Escape, `inert` background and top-layer stacking all come
-from the platform, and those are exactly what custom modals get wrong. Sizing
-is `max-h-[90vh] w-[min(46rem,calc(100vw-2rem))]`, and the panel is a flex
-column: fixed header, `overflow-y-auto` body, footer pinned with a solid
-`bg-card` so content scrolls under it rather than through it. Backdrop clicks
-are detected by comparing `event.target` to the dialog element itself.
+from the platform. Sizing is `max-h-[90vh] w-[min(46rem,calc(100vw-2rem))]`,
+and the panel is a flex column: fixed header, `min-h-0 flex-1 overflow-y-auto`
+body, footer pinned with a solid `bg-card` so content scrolls under it rather
+than through it. Backdrop clicks are detected by comparing `event.target` to
+the dialog element.
+
+The form is mounted only while the dialog is open, so it resets between
+creations instead of keeping the last event's half-typed values.
+
+One dialog serves creating and editing. `openEdit(event)` fills it, and the
+form is keyed by event id so switching rows rebuilds it instead of leaving
+the previous event's values in the inputs. The heading and the submit change
+with the mode; a dialog edit closes back to the list rather than navigating.
 
 Multiple triggers share one dialog through `NewEventProvider` — never mount a
-second copy per button, or the field ids duplicate. `NewEventTrigger` takes
-its classes from the caller so a trigger can be a primary button in a header
-and the CTA inside an `EmptyState` (via its `actionSlot`) without either one
-restating the dialog. Form content reuses `FormSection`, `Field` and
-`ImageUploader` exactly as a full-page form would.
+second copy per button, or every field id on the page duplicates.
+`NewEventTrigger` takes its classes from the caller, so the same dialog opens
+from a header button and from an `EmptyState` `actionSlot`.
+
+### EventForm
+
+File: app/dashboard/events/event-form.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | inherits; controls `bg-card` via `fieldControlClass` |
+| Border           | section rule `border-b border-border`; dialog footer `border-t` |
+| Border radius    | controls and buttons `rounded-md`                   |
+| Text — primary   | section heading `font-mono text-xs uppercase tracking-widest text-primary` |
+| Text — secondary | section description `text-sm text-muted-foreground` |
+| Spacing          | sections `mb-10`; fields `space-y-5`; paired fields `gap-5 sm:grid-cols-2` |
+| Image target     | poster `aspect-[4/3] max-h-[28rem]` — a poster is looked at, not filed |
+| Hover state      | submit `hover:brightness-110`; secondary `hover:bg-white/5` |
+| Shadow           | none                                                |
+| Accent usage     | section headings and the one primary submit         |
+
+**Pattern notes:**
+One component serves four cases: create and edit, page and dialog. `layout`
+picks the chrome — `page` lays sections down the page with descriptions,
+`dialog` renders a scrolling body plus a pinned footer for the dialog shell to
+host. The values, the payload and the Server Actions are identical either way;
+a second form would be a second thing to keep in step with `eventDraftSchema`.
+
+Field values live in `event-form-values.ts`, shared by both layouts. The
+dialog shows the essential set and the page shows everything (slug, tags,
+price, external link) — same shape, fewer fields.
+
+The Tickets section is a checkbox that reveals two fields, indented behind a
+`border-l border-border pl-5` rule: the button text (placeholder `Get
+Tickets`) and the purchase URL. Unticking clears both columns on submit, so a
+disabled button never leaves a stale URL in the row. The stored label is what
+the public event page renders, falling back to "Get tickets".
+
+Inapplicable fields are absent, not disabled: `form.Subscribe` on `eventType`
+hides the venue block for an online event and the join link for an in-person
+one, and on `isFree` hides price details. Those two conditionals are load
+bearing — publish-readiness requires a join link for an online event and a
+price or ticket link for a paid one, so hiding the field would make the event
+unpublishable with no way to fix it.
+
+Repeated text inputs come from a local `textField({ ... })` **function call**,
+never a `<TextField />` element. A component declared inside another component
+is a new type on every render, so React remounts the input and the field loses
+focus after every keystroke.
+
+Country is a free-text input with a `<datalist>` of names from
+`lib/countries.ts`. It is typed by hand; `countryCodeFromInput` resolves the
+name to the ISO code the column stores, and an unrecognised value is a field
+error rather than a silently bad row. The field shows the name, never the
+code.
+
+The time zone control appears only in the page layout. The dialog reads its
+times in the browser's own zone, which is right for a publisher creating an
+event in front of them — the value is still submitted, just not asked for.
+
+Dates are held as `datetime-local` readings plus a separate zone and resolved
+at submit through `lib/datetime`. Never compare a wall-clock string as if it
+were an instant.
+
+### TagInput
+
+File: app/dashboard/events/event-form.tsx (Tags section, page layout only)
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | input `bg-card` via `fieldControlClass`; chips transparent |
+| Border           | chips `border border-border`                        |
+| Border radius    | chips `rounded-full`; input `rounded-md`            |
+| Text — primary   | chip label `font-mono text-xs uppercase`            |
+| Text — secondary | chips `text-muted-foreground`                       |
+| Spacing          | input-to-chips `space-y-3`; chip row `gap-2`; chip `px-3 py-1` |
+| Hover state      | remove button `hover:text-destructive`              |
+| Shadow           | none                                                |
+| Accent usage     | none — tags are metadata, not a call to action      |
+
+**Pattern notes:**
+The chip shape is the same `rounded-full border border-border px-3 py-1
+font-mono text-xs uppercase text-muted-foreground` the public event page uses
+to display tags, so entry and display read as one thing.
+
+Enter, a comma, or blurring the field commits a tag; Backspace on an empty
+input removes the last one. The input disables itself at the limit rather than
+silently dropping what is typed. Each chip's remove button carries an
+`sr-only` label naming the tag it removes.
+
+### EventCard
+
+File: components/events/event-card.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/30`                                        |
+| Border           | `border border-border`; location rail `border-l-2 border-primary` |
+| Border radius    | `rounded-lg`; poster `rounded`; ticket button `rounded-md` |
+| Text — primary   | title `font-display text-2xl font-extrabold uppercase tracking-tight md:text-3xl`; day `text-4xl md:text-5xl` |
+| Text — secondary | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | card `p-6`, `gap-6 md:gap-8`; blocks `mb-5`         |
+| Hover state      | `hover:border-primary/50`, title `group-hover:text-primary` |
+| Shadow           | none                                                |
+| Accent usage     | category kicker, location rail and pin, map link, ticket button |
+
+**Pattern notes:**
+Carries everything needed to decide without opening the event: category, day
+and month, poster, title, summary, location, description and the way in.
+
+**The card is not wrapped in an anchor.** The ticket and map links inside it
+would be nested anchors — invalid markup that browsers resolve by breaking
+one of them. The title's `<Link>` stretches over the card with
+`after:absolute after:inset-0`, and the inner links sit above it on
+`relative z-10`. Any future card with a control inside it does the same.
+
+The date rail is a horizontal strip on mobile and a column from `md`, so the
+poster sits beside the date on a phone rather than pushing the title down.
+
+The description is `line-clamp-4`: a listing where one event runs three
+screens tall has stopped being a listing. The event page has the whole text.
+
+The ticket button uses `event.ticket_cta_label`, falling back to "Get
+tickets", and is hidden entirely for a cancelled event — sending someone to
+buy a ticket for an event that is off is worse than showing nothing.
+
+### Switch
+
+File: components/ui/switch.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | track on `bg-primary`, off `bg-secondary`; knob `bg-background` |
+| Border           | none                                                |
+| Border radius    | `rounded-full` on both track and knob               |
+| Text — secondary | state label `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | track `h-6 w-11`, knob `size-5`, label gap `gap-3`  |
+| Hover state      | none — the state change is the feedback             |
+| Shadow           | none                                                |
+| Accent usage     | the track when on                                   |
+
+**Pattern notes:**
+A real `<button role="switch">` with `aria-checked`, never a styled checkbox
+or a div. The role is what makes a screen reader say "switch, on", and the
+button gives keyboard reach plus Space and Enter for free.
+
+**The button wraps the state label as well as the track.** The text beside a
+toggle is the obvious thing to aim at — leaving it outside the control gives
+a dead zone that shows an arrow and does nothing on click. Track and label
+are one target, and the label brightens on `group-hover` so the whole control
+reacts together.
+
+The state is always spelled out in text beside the track (ui-rules.md §16):
+lime-or-not is invisible in greyscale and to a colour-blind viewer. The label
+carries the real state where there is one — an events row shows "Published",
+"Cancelled" or "Draft", not just on and off.
+
+### EventRowActions
+
+File: app/dashboard/events/event-row-actions.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | transparent; hover `hover:bg-white/5`, destructive `hover:bg-destructive/10` |
+| Border           | none at rest; confirm buttons `border border-border` / `border-destructive/40` |
+| Border radius    | `rounded-md`                                        |
+| Text — primary   | icons only, `size-4`                                |
+| Text — secondary | confirm prompt `font-mono text-xs uppercase text-muted-foreground` |
+| Spacing          | buttons `size-8`, row `gap-1`; confirm row `gap-2`  |
+| Hover state      | `hover:text-foreground`; destructive `hover:text-destructive` |
+| Shadow           | none                                                |
+| Accent usage     | none — a row of actions is not a call to action     |
+
+**Pattern notes:**
+Three controls per row: a `Switch` for publish/unpublish with the status
+spelled out beside it, then edit and delete icons. Only the toggle is inline — cancel and postpone change
+what a ticket holder sees, so they stay on the edit page rather than sitting
+one stray click away in a list.
+
+Edit opens the same dialog as creating, through `useEventDialog().openEdit`,
+rather than navigating away — the list is where the publisher already is. The
+dialog footer keeps a "Full editor" link for the fields it does not show.
+
+Delete confirms in place: the icons are replaced by "Delete? Yes / No" in the
+same cell. No `confirm()`, no modal for a decision this small.
+
+Every control carries an `sr-only` label naming the event. A column of
+identical icons is unusable otherwise, and `title` alone is not announced
+reliably.
+
+### EventLifecycle
+
+File: app/dashboard/events/[id]/edit/event-lifecycle.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/40`                                        |
+| Border           | `border border-border`; destructive `border-destructive/40` |
+| Border radius    | `rounded-lg`; buttons `rounded-md`                  |
+| Text — primary   | heading `font-mono text-xs uppercase tracking-widest text-primary` |
+| Text — secondary | explanation `text-sm text-muted-foreground`         |
+| Spacing          | panel `p-5`, `space-y-4`; button row `gap-3`        |
+| Hover state      | default `hover:bg-white/5`; destructive `hover:bg-destructive/10` |
+| Shadow           | none                                                |
+| Accent usage     | the one forward action (Publish / Back on)          |
+
+**Pattern notes:**
+The same `bg-card/40` bordered panel as the dashboard `Panel`, used here for a
+set of actions rather than content. Available transitions come from a lookup
+keyed by status, not a chain of conditions, so the UI can never offer a change
+the service would refuse.
+
+Exactly one action per state is primary. Destructive actions are outlined in
+`border-destructive/40` and never filled — a filled red button next to a
+filled lime one reads as a pair of equals.
+
+Delete is two-step in place: the button becomes "Delete permanently" beside
+"Keep it", with an explanation of what delete costs over unpublish. No
+`confirm()`, and no modal for a decision this small.
 
 ### DiscoverFilters
 

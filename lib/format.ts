@@ -106,10 +106,6 @@ export const EVENT_STATUS_META: Record<
     label: "Postponed",
     className: "border-warning/40 text-warning",
   },
-  completed: {
-    label: "Completed",
-    className: "border-border text-muted-foreground",
-  },
   archived: {
     label: "Archived",
     className: "border-border text-muted-foreground",

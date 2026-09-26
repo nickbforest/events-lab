@@ -154,6 +154,12 @@ Prefer skeletons for content-heavy screens.
 
 Avoid blank screens.
 
+An upload shows it is in flight: a spinner, a busy label and an
+indeterminate progress bar, over a dimmed preview of the chosen image
+(`ImageUploader` in `ui-registry.md`). Never show a percentage the app cannot
+measure — Server Actions report no byte progress, so the bar is
+indeterminate. Added 2026-09-26.
+
 ---
 
 # 10. Empty States
@@ -369,3 +375,30 @@ spacing, color, tooltip, and reduced-motion patterns.
 Do not let TanStack headless defaults create a competing visual system. Register
 new reusable form, table, and chart patterns in `context/ui-registry.md` after they
 are implemented.
+
+---
+
+## Cursors
+
+Added 2026-09-26.
+
+Anything that acts on click shows a pointer on hover. Tailwind v4's reset
+dropped `cursor: pointer` from `button`, so without this every control in the
+app reads as decoration — a toggle in particular looks like a status light
+rather than a switch.
+
+The rule lives once in `app/globals.css` under `@layer base`, covering
+`button`, `[role="button"]`, `[role="switch"]`, checkable inputs, a label
+wrapping one, and `summary`. Disabled controls are excluded so they keep the
+default arrow; a component wanting `not-allowed` still sets it itself.
+
+Do not sprinkle `cursor-pointer` per component. If something clickable is
+missing the cursor, the base rule needs another selector.
+
+Two exceptions, both about the shape of the target rather than the cursor:
+
+- A compound control states it explicitly, because the cursor is part of
+  what tells you the whole thing is one button (see `Switch`).
+- A control's visible label belongs **inside** its `<button>`, not beside it.
+  Text next to a toggle is the obvious thing to aim at; leaving it outside
+  makes a dead zone that shows an arrow and does nothing when clicked.

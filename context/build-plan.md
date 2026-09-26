@@ -149,9 +149,30 @@ Implement:
 
 ---
 
-# Phase 3 — Organizations
+# Phase 3 — Organizations — DEFERRED POST-MVP
 
-Implement:
+## Decision — 2026-09-26
+
+MVP-1 publishes through profiles. A profile already carries `publisher_type`
+(venue, business, theater, band, cinema, church …), so a bar's page and a
+person's page are the same row shape — an `organizations` table would restate
+it and add `organization_members`, invites, four roles and membership-aware
+RLS on every event query.
+
+This overrides `context/Architecture.md` §6–§10 for MVP-1. Events are owned by
+profiles: `events.owner_id → profiles.id`, RLS on `auth.uid() = owner_id`.
+
+It costs exactly two capabilities: a publisher cannot be managed by two
+people, and one person cannot run two publishers. Revisit before launch if
+either becomes a requirement; see `context/progress-tracker.md` Phase 3 for
+the retrofit cost.
+
+In its place, two small items carry into Phase 4:
+
+* [ ] Publisher-neutral UI wording across profile and settings copy
+* [ ] `publisher_type` select on the signup form (currently defaults to `other`)
+
+Deferred items:
 
 * [ ] Organization schema
 * [ ] Organization types
@@ -170,84 +191,103 @@ Implement:
 
 ---
 
-# Phase 4 — Event Foundation
+# Phase 4 — Events
+
+**Numbering note (2026-09-26):** this document previously split events across
+Phase 4 (Foundation) and Phase 5 (Creation), while `progress-tracker.md`
+carried them as one phase. The tracker's grouping wins, and the phases below
+are renumbered to match it. Phase numbers now mean the same thing in both
+documents.
+
+## Completion record — 2026-09-26
+
+Complete on `feat/phase-4-events`, branched from the unmerged
+`feat/phase-2-profiles`. See `context/progress-tracker.md` for the full record,
+validation results and open follow-ups.
+
+Deviations from the original plan, each agreed before implementation:
+
+1. **There is no `completed` status.** Architecture §11 lists one; completion
+   is derived from `end_at` instead. Documented in §11.
+2. **Cover images arrived here, not in the media phase.** An event list with
+   no images is not worth looking at, and the Phase 2 upload pattern was
+   reusable as-is.
+3. **Recurrence is deferred.** Architecture §13 wants it eventually; single
+   events land first and the columns stay reserved.
+4. **Events are created in a dialog.** The original non-functional
+   `NewEventDialog` was deleted at completion; in the post-completion pass the
+   dialog came back on top of the real `EventForm`, and the
+   `/dashboard/events/new` page was removed so there is one create path.
+5. **Ticket button label.** `events.ticket_cta_label` was added so the public
+   button reads what the publisher chose, not a fixed "Get tickets".
+
+UI polish after completion (2026-09-26) — list rows, publish toggle, upload
+feedback, image replace/remove, select heights, public-page and footer
+cleanup, logo → Overview, previews in a new tab — is recorded in
+`progress-tracker.md` under "Phase 4 post-completion refinements". None of it
+changes the plan; it is not yet browser-verified.
 
 Implement:
 
-* [ ] Event database model
-* [ ] Event statuses
-* [ ] Event validation
-* [ ] Event types
-* [ ] Categories
-* [ ] Tags
-* [ ] Slug generation
-* [ ] Date/time
-* [ ] Timezone
-* [ ] Free/paid
-* [ ] Online/in-person/hybrid
+* [x] Event database model
+* [x] Event statuses
+* [x] Event validation
+* [x] Event types
+* [x] Categories
+* [x] Tags
+* [x] Slug generation
+* [x] Date/time
+* [x] Timezone
+* [x] Free/paid
+* [x] Online/in-person/hybrid
+* [x] Create event
+* [x] Save draft
+* [x] Edit event
+* [x] Delete/archive
+* [x] Publish
+* [x] Cover image
+* [x] Preview — opens the public page in a new tab with `?preview=1`, which
+  hides the site header
+* [ ] Recurrence — deferred. Architecture §13 wants daily, weekly, selected
+  weekdays, monthly and an end date, and warns against an engine more complex
+  than that. It had its own phase in an earlier numbering; it is now an open
+  item here, to be scheduled once single events have been used in anger.
 
 ---
 
-# Phase 5 — Event Creation
+# Phase 5 — Location & Media
 
-Create the event creation workflow.
+## Location
 
-Sections:
+The `events` table already carries `venue_name`, `address`, `city`,
+`country_code`, `latitude` and `longitude` from Phase 4. Text entry works;
+this phase adds the map layer on top of those columns.
 
-1. Basic information
-2. Date & time
-3. Location
-4. Media
-5. Ticket/external links
-6. Categories/tags
-7. Publishing
-
-Features:
-
-* [ ] Create event
-* [ ] Save draft
-* [ ] Edit event
-* [ ] Delete/archive
-* [ ] Preview
-* [ ] Publish
-
----
-
-# Phase 6 — Location
-
-Implement:
-
-* [ ] Venue
-* [ ] Address
-* [ ] City
-* [ ] Country
-* [ ] Latitude
-* [ ] Longitude
+* [x] Venue, address, city, country — columns and form fields
+* [x] Latitude and longitude — columns, nullable and not yet populated
 * [ ] Mapbox
 * [ ] Geocoding
 * [ ] Location picker
 * [ ] Browser geolocation
 * [ ] Nearby-event calculations
 
----
+## Media
 
-# Phase 7 — Media
-
-Implement:
-
-* [ ] Event cover image
+* [x] User avatar — Phase 2, `profile-media` bucket
+* [x] Event cover image — Phase 4, `event-media` bucket
+* [x] Image upload and deletion — both buckets; avatar and cover also have a
+  Remove action (2026-09-26)
+* [x] Upload feedback — spinner and indeterminate progress bar (2026-09-26).
+  A real percentage needs direct-to-Storage uploads; see the Phase 4
+  follow-ups in `progress-tracker.md`
+* [x] File validation — both buckets
+* [x] Storage policies — both buckets
 * [ ] Gallery
-* [ ] Image upload
-* [ ] Image deletion
 * [ ] Gallery ordering
-* [ ] Organization logo
-* [x] User avatar — built in Phase 2, with the `profile-media` bucket
-* [ ] File validation — done for profile media; event media still to follow
-* [ ] Storage policies — done for `profile-media`; event media still to follow
 
 ---
 
-# Phase 8 — Public Event Pages
+# Phase 6 — Public Event Experience
 
 Build the main public events-lab experience.
 
@@ -272,7 +312,7 @@ Implement:
 
 ---
 
-# Phase 9 — Discovery
+# Phase 7 — Discovery
 
 Implement:
 
@@ -297,22 +337,7 @@ Implement:
 
 ---
 
-# Phase 10 — Recurring Events
-
-Implement controlled recurrence:
-
-* [ ] Daily
-* [ ] Weekly
-* [ ] Selected weekdays
-* [ ] Monthly
-* [ ] End date
-* [ ] Recurrence validation
-
-Do not build an advanced recurrence engine.
-
----
-
-# Phase 11 — Moderation
+# Phase 8 — Moderation
 
 Implement:
 
@@ -328,7 +353,7 @@ Implement:
 
 ---
 
-# Phase 12 — Notifications
+# Phase 9 — Notifications
 
 Implement only required notifications:
 
@@ -341,7 +366,7 @@ Implement only required notifications:
 
 ---
 
-# Phase 13 — Production Hardening
+# Phase 10 — Production Hardening
 
 ## Testing
 
@@ -368,7 +393,7 @@ Implement only required notifications:
 * [ ] Tablet review
 * [ ] Desktop review
 * [ ] Accessibility review
-* [ ] Loading states
+* [ ] Loading states — upload feedback done 2026-09-26; the rest open
 * [ ] Error states
 * [ ] Empty states
 

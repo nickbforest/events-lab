@@ -31,15 +31,19 @@ export interface ProfilesRepository {
     kind: ProfileMediaKind,
     file: File,
   ): Promise<StoredMedia>;
+  /** `null` clears the image, so the public page renders without it. */
   setMediaUrl(
     ownerId: string,
     kind: ProfileMediaKind,
-    url: string,
+    url: string | null,
   ): Promise<Profile>;
-  /** Removes every stored object of `kind` for the owner except `keepPath`. */
+  /**
+   * Removes every stored object of `kind` for the owner except `keepPath`;
+   * with `null`, removes all of them.
+   */
   removeMediaExcept(
     ownerId: string,
     kind: ProfileMediaKind,
-    keepPath: string,
+    keepPath: string | null,
   ): Promise<void>;
 }

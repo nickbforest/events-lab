@@ -232,6 +232,15 @@ Codex must not introduce an ORM merely because it is commonly used.
 
 # 6. User Architecture
 
+> **MVP-1 amendment — 2026-09-26.** Sections 6–9 describe the target
+> architecture. MVP-1 does not build the organizations layer: a profile is the
+> publisher, classified by `publisher_type`, and events are owned by
+> `profiles.id`. A venue, band or business registers as a profile like anyone
+> else. The §7 type taxonomy survives as that enum; the §8 organization roles
+> and the §9 organization page do not exist yet. This costs shared publisher
+> accounts and multi-publisher users, and nothing else. See
+> `context/build-plan.md` Phase 3 and `context/progress-tracker.md` Phase 3.
+
 The primary relationship is:
 
 ```text
@@ -255,6 +264,9 @@ A user may:
 ---
 
 # 7. Organization Architecture
+
+> **MVP-1:** deferred — see the §6 amendment. The type list below is
+> implemented as the `public.publisher_type` enum on `profiles`.
 
 Organizations represent entities that publish events.
 
@@ -387,6 +399,14 @@ Do not store relational data in JSON when a proper relational model is appropria
 
 # 11. Event Status
 
+> **Implemented 2026-09-26 without `COMPLETED`.** The `event_status` enum is
+> `draft | published | cancelled | postponed | archived`. Whether an event has
+> finished is a fact about `end_at`, not an author's intent: storing it needs a
+> scheduled job, and until that job runs the row contradicts its own date.
+> Past-ness is derived in queries (`hasFinished` in the events service). The
+> `events_rls` test asserts the enum has no `completed` value, so restoring it
+> has to be a deliberate change.
+
 MVP statuses:
 
 ```text
@@ -480,6 +500,13 @@ The browser may also request geolocation for:
 
 Browser geolocation must never be the only method of choosing a location.
 
+> **Implemented so far (2026-09-26).** Venue, address, city and country are
+> real columns. Country is typed by hand, with suggestions, and resolved to
+> the ISO alpha-2 code the column stores (`lib/countries.ts`). Coordinates
+> stay null until the map layer. Until then the listing card links to
+> OpenStreetMap as a plain hyperlink — no key or SDK, so Mapbox remains the
+> only map provider.
+
 ---
 
 # 15. Geographic Search
@@ -522,6 +549,10 @@ Europe/London
 ```
 
 Never store an event's time only as a formatted display string.
+
+> **Implemented 2026-09-26.** The create dialog reads times in the browser's
+> own zone and stores it; the full editor exposes the zone for an event held
+> elsewhere. Conversion lives in `lib/datetime.ts`.
 
 ---
 
@@ -621,9 +652,14 @@ Events may contain:
 ```text
 is_free
 ticket_url
+ticket_cta_label
 price_information
 external_url
 ```
+
+> **`ticket_cta_label` added 2026-09-26.** The button text is the
+> publisher's, since "Get tickets" is wrong for a free workshop. A labelled
+> button with no `ticket_url` blocks publishing.
 
 The primary flow is:
 
@@ -825,6 +861,17 @@ Expected capabilities:
 * optimize images where appropriate
 
 Storage policies must be explicitly defined.
+
+> **Implemented (2026-09-26).** Avatars, profile covers and event covers
+> upload through Server Actions into the `profile-media` and `event-media`
+> buckets. Avatar and cover can be removed: the column is cleared first, then
+> the files are deleted, so a failure never leaves a broken image referenced.
+> A profile with no cover renders its public page without a banner.
+>
+> Server Actions report no upload progress, so the uploader shows an
+> indeterminate bar rather than a percentage. A measured percentage would
+> need a direct-to-Storage upload with a signed URL; that is a deliberate
+> later choice, not a gap to paper over with a simulated number.
 
 ---
 

@@ -6,31 +6,21 @@
  * row types to these domain types. Field names are snake_case for that reason.
  */
 
-export type PublisherType =
-  | "artist"
-  | "band"
-  | "theater"
-  | "cinema"
-  | "sports_team"
-  | "event_organizer"
-  | "school"
-  | "university"
-  | "conference_organizer"
-  | "church"
-  | "community"
-  | "venue"
-  | "business"
-  | "other";
+import type { Enums } from "@/lib/supabase/database.types";
 
-export type EventType = "in_person" | "online" | "hybrid";
+export type PublisherType = Enums<"publisher_type">;
 
-export type EventStatus =
-  | "draft"
-  | "published"
-  | "cancelled"
-  | "postponed"
-  | "completed"
-  | "archived";
+export type EventType = Enums<"event_type">;
+
+/**
+ * Derived from the generated enum, so a migration that adds or removes a value
+ * is a compile error everywhere it is handled rather than a silent mismatch.
+ *
+ * There is deliberately no `completed`: whether an event has finished is a
+ * fact about `end_at`, not an author's intent. See `hasFinished` in the events
+ * service and the note in the events migration.
+ */
+export type EventStatus = Enums<"event_status">;
 
 export interface Profile {
   id: string;
@@ -80,6 +70,8 @@ export interface EventRecord {
   is_free: boolean;
   price_info: string | null;
   ticket_url: string | null;
+  /** Label for the ticket button. Null falls back to "Get tickets". */
+  ticket_cta_label: string | null;
   external_url: string | null;
 
   cover_image_url: string | null;

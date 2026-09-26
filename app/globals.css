@@ -93,6 +93,32 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  /*
+   * Tailwind v4's reset dropped `cursor: pointer` on buttons, so every
+   * control in the app looked unclickable. A thing that does something when
+   * you click it says so on hover — that is the only cue a pointer gives,
+   * and losing it made toggles and icon buttons read as decoration.
+   *
+   * Anchors already get it from the browser. Disabled controls are excluded
+   * so they keep the default arrow, and components that want `not-allowed`
+   * still set it themselves.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  /* A label wrapping its own control is part of that control's target. */
+  label:has(input[type="checkbox"]:not(:disabled)),
+  label:has(input[type="radio"]:not(:disabled)) {
+    cursor: pointer;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -131,6 +157,24 @@
   animation: marquee 50s linear infinite reverse;
 }
 
+/*
+ * An upload in flight. Server Actions report no byte progress, so this is an
+ * indeterminate bar — it says "still working", never a percentage it cannot
+ * back up.
+ */
+@keyframes upload-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.animate-upload-progress {
+  animation: upload-progress 1.2s var(--ease-studio) infinite;
+}
+
 /* The reference has no reduced-motion handling. ui-rules.md §13 requires it. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -146,5 +190,12 @@
   .animate-marquee-reverse {
     animation: none !important;
     transform: none !important;
+  }
+
+  /* A still, full bar: the "Uploading…" label carries the state instead. */
+  .animate-upload-progress {
+    animation: none !important;
+    transform: none !important;
+    width: 100% !important;
   }
 }

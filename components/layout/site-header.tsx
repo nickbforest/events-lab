@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WordmarkLink } from "@/components/layout/wordmark-link";
 import { routes } from "@/lib/routes";
 
 export function SiteHeader() {
@@ -8,12 +9,7 @@ export function SiteHeader() {
         aria-label="Main"
         className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6"
       >
-        <Link
-          href="/"
-          className="font-display text-xl font-extrabold uppercase tracking-tighter"
-        >
-          events<span className="text-primary">-</span>lab
-        </Link>
+        <WordmarkLink href={routes.home()} />
 
         <div className="flex items-center gap-1 sm:gap-3">
           <Link

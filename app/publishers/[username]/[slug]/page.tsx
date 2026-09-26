@@ -306,7 +306,7 @@ export default async function EventPage({
                 rel="noopener noreferrer"
                 className="block w-full rounded-md bg-primary px-6 py-4 text-center font-medium text-primary-foreground transition-all hover:brightness-110"
               >
-                Get tickets ↗
+                {event.ticket_cta_label ?? "Get tickets"} ↗
               </a>
             )}
 

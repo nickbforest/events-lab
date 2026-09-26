@@ -27,6 +27,9 @@ const PUBLIC = {
  */
 const PUBLISHERS_SEGMENT = "publishers";
 
+/** Marks a public page as being previewed by its own publisher. */
+export const PREVIEW_PARAM = "preview";
+
 export type AuthMode = "login" | "signup";
 
 /** Notices an auth screen can be asked to show. Never free text in a URL. */
@@ -40,6 +43,13 @@ export const routes = {
 
   /** A publisher's public page. */
   publisher: (username: string) => `/${PUBLISHERS_SEGMENT}/${username}`,
+
+  /**
+   * The same page without the site header, for a publisher checking their
+   * own work. Opened in a new tab, so the dashboard stays where it was.
+   */
+  publisherPreview: (username: string) =>
+    `/${PUBLISHERS_SEGMENT}/${username}?${PREVIEW_PARAM}=1`,
 
   /** A single public event under its publisher. */
   event: (username: string, slug: string) =>
@@ -64,7 +74,9 @@ export const routes = {
   dashboard: {
     root: () => "/dashboard",
     events: () => "/dashboard/events",
-    newEvent: () => "/dashboard/events/new",
+    // No standalone create page: events are created in a modal over the
+    // events list, so there is one create path rather than two.
+    editEvent: (eventId: string) => `/dashboard/events/${eventId}/edit`,
     profile: () => "/dashboard/profile",
     settings: () => "/dashboard/settings",
   },

@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Profile images are capped at 5MB; multipart framing needs headroom
+      // Profile and event images are capped at 5MB; multipart framing needs headroom
       // above that or a file right at the limit would be rejected.
       bodySizeLimit: "6mb",
     },

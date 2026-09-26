@@ -3,7 +3,10 @@
 import { useState } from "react";
 
 import { ImageUploader } from "@/components/forms/image-uploader";
-import { updateProfileMediaAction } from "@/features/profiles/actions";
+import {
+  removeProfileMediaAction,
+  updateProfileMediaAction,
+} from "@/features/profiles/actions";
 import {
   PROFILE_MEDIA_MIME_TYPES,
   type ProfileMediaKind,
@@ -31,13 +34,13 @@ export function ProfileMediaField({
   className,
 }: ProfileMediaFieldProps) {
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<"upload" | "remove" | null>(null);
   const [error, setError] = useState<string | undefined>();
-  const [saved, setSaved] = useState(false);
+  const [notice, setNotice] = useState("");
 
   async function upload(file: File) {
     setError(undefined);
-    setSaved(false);
+    setNotice("");
 
     const parsed = profileMediaSchema.safeParse({ kind, file });
     if (!parsed.success) {
@@ -47,7 +50,7 @@ export function ProfileMediaField({
 
     const preview = URL.createObjectURL(file);
     setLocalPreview(preview);
-    setBusy(true);
+    setPending("upload");
 
     const formData = new FormData();
     formData.set("kind", kind);
@@ -62,16 +65,35 @@ export function ProfileMediaField({
             "The image could not be uploaded.",
         );
       } else {
-        setSaved(true);
+        setNotice(`${label} updated.`);
       }
     } catch {
       setError("The image could not be uploaded. Please try again.");
     } finally {
       // The revalidated page has delivered the stored URL by now, so the
       // local preview can give way to it.
-      setBusy(false);
+      setPending(null);
       setLocalPreview(null);
       URL.revokeObjectURL(preview);
+    }
+  }
+
+  async function remove() {
+    setError(undefined);
+    setNotice("");
+    setPending("remove");
+
+    try {
+      const result = await removeProfileMediaAction(kind);
+      if (result.status === "error") {
+        setError(result.message ?? "The image could not be removed.");
+      } else {
+        setNotice(`${label} removed.`);
+      }
+    } catch {
+      setError("The image could not be removed. Please try again.");
+    } finally {
+      setPending(null);
     }
   }
 
@@ -85,15 +107,17 @@ export function ProfileMediaField({
         description={description}
         className={className}
         previewUrl={localPreview ?? currentUrl}
-        busy={busy}
+        busy={pending !== null}
+        busyLabel={pending === "remove" ? "Removing…" : "Uploading…"}
         error={error}
         onSelect={upload}
+        onRemove={() => void remove()}
       />
       <p
         aria-live="polite"
         className="mt-1.5 font-mono text-xs text-primary empty:mt-0"
       >
-        {saved ? `${label} updated.` : ""}
+        {notice}
       </p>
     </div>
   );

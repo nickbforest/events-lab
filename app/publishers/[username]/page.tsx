@@ -1,7 +1,6 @@
 import { CalendarPlus, Globe, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCard } from "@/components/events/event-card";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -12,9 +11,10 @@ import {
   getPastEventsByUsername,
   getUpcomingEventsByUsername,
 } from "@/features/events/queries";
+import { previewFlagSchema } from "@/features/profiles/contracts";
 import { getProfileByUsername } from "@/features/profiles/queries";
 import { publisherTypeLabel } from "@/lib/format";
-import { routes } from "@/lib/routes";
+import { PREVIEW_PARAM, routes } from "@/lib/routes";
 
 // No generateStaticParams: profiles are created continuously by signup, so
 // eagerly enumerating every username at build time would mean a new account
@@ -48,8 +48,14 @@ export async function generateMetadata({
 
 export default async function PublisherPage({
   params,
+  searchParams,
 }: PageProps<"/publishers/[username]">) {
-  const { username } = await params;
+  const [{ username }, query] = await Promise.all([params, searchParams]);
+
+  // A publisher previewing their own page wants to see the page, not the
+  // signed-out marketing header above it.
+  const isPreview = previewFlagSchema.parse(query[PREVIEW_PARAM]);
+
   const profile = await getProfileByUsername(username);
 
   if (!profile) {
@@ -67,7 +73,7 @@ export default async function PublisherPage({
 
   return (
     <>
-      <SiteHeader />
+      {isPreview ? null : <SiteHeader />}
 
       <main className="flex-1">
         {profile.cover_url ? (
@@ -149,7 +155,7 @@ export default async function PublisherPage({
                 icon={<CalendarPlus className="size-8" aria-hidden />}
                 title="No upcoming events"
                 description={`${profile.display_name} has nothing scheduled right now. Check back soon, or browse what else is happening.`}
-                action={{ href: "/discover", label: "Browse all events" }}
+                action={{ href: routes.discover(), label: "Browse all events" }}
               />
             )}
 
@@ -165,18 +171,6 @@ export default async function PublisherPage({
                 </div>
               </>
             )}
-
-            <div className="mt-16 rounded-lg border border-border bg-card/30 p-8 text-center">
-              <p className="mb-4 text-sm text-muted-foreground">
-                Publishing your own events?
-              </p>
-              <Link
-                href={routes.auth.signUp()}
-                className="font-display text-lg font-extrabold uppercase tracking-tight text-primary hover:underline"
-              >
-                Claim your events-lab page →
-              </Link>
-            </div>
           </div>
         </section>
       </main>
