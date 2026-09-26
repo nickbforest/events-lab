@@ -11,12 +11,13 @@ import {
   useState,
 } from "react";
 
-import type { Category } from "@/lib/types";
+import { routes } from "@/lib/routes";
+import type { Category, EventWithRelations } from "@/lib/types";
 
 import { EventForm } from "./event-form";
 
 /**
- * Event creation, in a modal over the events list.
+ * Creating *and* editing an event, in a modal over the events list.
  *
  * Built on the native `<dialog>` with `showModal()` rather than a hand-rolled
  * overlay: focus trapping, Escape to close, the inert background and
@@ -28,17 +29,24 @@ import { EventForm } from "./event-form";
  * every field id on the page.
  *
  * The form inside is the same `EventForm` the edit page uses, in its `dialog`
- * layout. Creating is not a different form from editing, only a shorter one.
+ * layout. Creating is not a different form from editing, only a shorter one —
+ * so the same dialog serves both, with the event it was opened on deciding
+ * which.
  */
 
-const NewEventContext = createContext<(() => void) | null>(null);
+interface EventDialogApi {
+  openCreate: () => void;
+  openEdit: (event: EventWithRelations) => void;
+}
 
-function useOpenNewEvent() {
-  const open = useContext(NewEventContext);
-  if (!open) {
-    throw new Error("NewEventTrigger must be rendered inside NewEventProvider");
+const EventDialogContext = createContext<EventDialogApi | null>(null);
+
+export function useEventDialog(): EventDialogApi {
+  const api = useContext(EventDialogContext);
+  if (!api) {
+    throw new Error("useEventDialog must be used inside NewEventProvider");
   }
-  return open;
+  return api;
 }
 
 export interface NewEventProviderProps {
@@ -51,9 +59,19 @@ export function NewEventProvider({
   children,
 }: NewEventProviderProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [editing, setEditing] = useState<EventWithRelations | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  const open = useCallback(() => setIsOpen(true), []);
+  const openCreate = useCallback(() => {
+    setEditing(null);
+    setIsOpen(true);
+  }, []);
+
+  const openEdit = useCallback((event: EventWithRelations) => {
+    setEditing(event);
+    setIsOpen(true);
+  }, []);
+
   const close = useCallback(() => setIsOpen(false), []);
 
   // `showModal()` is imperative, so open state is mirrored onto the element
@@ -73,7 +91,7 @@ export function NewEventProvider({
   }, [isOpen]);
 
   return (
-    <NewEventContext.Provider value={open}>
+    <EventDialogContext.Provider value={{ openCreate, openEdit }}>
       {children}
 
       <dialog
@@ -81,6 +99,8 @@ export function NewEventProvider({
         aria-labelledby="new-event-title"
         onClose={close}
         // A backdrop click lands on the dialog itself, never on its content.
+        // biome-ignore lint/a11y/useKeyWithClickEvents: the keyboard path is
+        // Escape, which <dialog> handles natively and reports through onClose.
         onClick={(clickEvent) => {
           if (clickEvent.target === dialogRef.current) {
             close();
@@ -97,7 +117,7 @@ export function NewEventProvider({
                 id="new-event-title"
                 className="font-display text-sm font-extrabold uppercase tracking-tight"
               >
-                New event
+                {editing ? "Edit event" : "New event"}
               </h2>
               <button
                 type="button"
@@ -110,14 +130,28 @@ export function NewEventProvider({
             </div>
 
             <EventForm
+              // Keyed by event so switching rows rebuilds the form rather
+              // than leaving the previous event's values in the inputs.
+              key={editing?.id ?? "new"}
               categories={categories}
+              event={editing}
               layout="dialog"
               onSaved={close}
+              footerSlot={
+                editing ? (
+                  <a
+                    href={routes.dashboard.editEvent(editing.id)}
+                    className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Full editor
+                  </a>
+                ) : null
+              }
             />
           </div>
         ) : null}
       </dialog>
-    </NewEventContext.Provider>
+    </EventDialogContext.Provider>
   );
 }
 
@@ -126,12 +160,12 @@ export interface NewEventTriggerProps {
   children: ReactNode;
 }
 
-/** A button that opens the shared dialog. Styling comes from the caller. */
+/** Opens the shared dialog to create. Styling comes from the caller. */
 export function NewEventTrigger({ className, children }: NewEventTriggerProps) {
-  const open = useOpenNewEvent();
+  const { openCreate } = useEventDialog();
 
   return (
-    <button type="button" onClick={open} className={className}>
+    <button type="button" onClick={openCreate} className={className}>
       {children}
     </button>
   );

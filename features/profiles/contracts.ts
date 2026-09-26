@@ -117,6 +117,16 @@ export const profileUpdateSchema = z.object({
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type ProfileUpdateValues = z.input<typeof profileUpdateSchema>;
 
+/**
+ * Whether a public page is being previewed by its own publisher. A URL
+ * parameter is user input, so it is parsed, not read — `.catch` makes
+ * anything unexpected simply not a preview.
+ */
+export const previewFlagSchema = z
+  .union([z.literal("1"), z.literal("true")])
+  .transform(() => true)
+  .catch(false);
+
 /** Mirrors the `profile-media` bucket's own limits, which are the authority. */
 export const PROFILE_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
 export const PROFILE_MEDIA_MIME_TYPES = [

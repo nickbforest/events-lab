@@ -8,7 +8,7 @@ import { getCurrentProfile } from "@/features/profiles/queries";
 import { formatEventDate, isoDateTime } from "@/lib/format";
 import { routes } from "@/lib/routes";
 
-import { NewEventProvider, NewEventTrigger } from "./event-create-dialog";
+import { NewEventProvider, NewEventTrigger } from "./event-dialog";
 import { EventRowActions } from "./event-row-actions";
 
 export default async function DashboardEventsPage() {
@@ -27,14 +27,19 @@ export default async function DashboardEventsPage() {
             title="Events"
             actions={
               <>
-                <Link
-                  href={routes.publisher(profile.username)}
+                <a
+                  href={routes.publisherPreview(profile.username)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
                 >
                   <Eye className="size-4" aria-hidden />
                   Preview
-                  <span className="sr-only"> your public page</span>
-                </Link>
+                  <span className="sr-only">
+                    {" "}
+                    your public page, opens in a new tab
+                  </span>
+                </a>
                 <NewEventTrigger className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110">
                   <Plus className="size-4" aria-hidden />
                   New
@@ -101,11 +106,7 @@ export default async function DashboardEventsPage() {
                           <EventStatusBadge status={event.status} />
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <EventRowActions
-                            eventId={event.id}
-                            title={event.title}
-                            status={event.status}
-                          />
+                          <EventRowActions event={event} />
                         </td>
                       </tr>
                     );

@@ -17,13 +17,16 @@ export default async function DashboardProfilePage() {
           title="Profile"
           description={`events-lab/${profile.username}`}
           actions={
-            <Link
-              href={routes.publisher(profile.username)}
+            <a
+              href={routes.publisherPreview(profile.username)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors hover:bg-white/5"
             >
               <ExternalLink className="size-3.5" aria-hidden />
               View page
-            </Link>
+              <span className="sr-only">, opens in a new tab</span>
+            </a>
           }
         />
 

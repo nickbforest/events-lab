@@ -584,6 +584,11 @@ the dialog element.
 The form is mounted only while the dialog is open, so it resets between
 creations instead of keeping the last event's half-typed values.
 
+One dialog serves creating and editing. `openEdit(event)` fills it, and the
+form is keyed by event id so switching rows rebuilds it instead of leaving
+the previous event's values in the inputs. The heading and the submit change
+with the mode; a dialog edit closes back to the list rather than navigating.
+
 Multiple triggers share one dialog through `NewEventProvider` — never mount a
 second copy per button, or every field id on the page duplicates.
 `NewEventTrigger` takes its classes from the caller, so the same dialog opens
@@ -714,6 +719,32 @@ The ticket button uses `event.ticket_cta_label`, falling back to "Get
 tickets", and is hidden entirely for a cancelled event — sending someone to
 buy a ticket for an event that is off is worse than showing nothing.
 
+### Switch
+
+File: components/ui/switch.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | track on `bg-primary`, off `bg-secondary`; knob `bg-background` |
+| Border           | none                                                |
+| Border radius    | `rounded-full` on both track and knob               |
+| Text — secondary | state label `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | track `h-6 w-11`, knob `size-5`, label gap `gap-3`  |
+| Hover state      | none — the state change is the feedback             |
+| Shadow           | none                                                |
+| Accent usage     | the track when on                                   |
+
+**Pattern notes:**
+A real `<button role="switch">` with `aria-checked`, never a styled checkbox
+or a div. The role is what makes a screen reader say "switch, on", and the
+button gives keyboard reach plus Space and Enter for free.
+
+The state is always spelled out in text beside the track (ui-rules.md §16):
+lime-or-not is invisible in greyscale and to a colour-blind viewer. The label
+carries the real state where there is one — an events row shows "Published",
+"Cancelled" or "Draft", not just on and off.
+
 ### EventRowActions
 
 File: app/dashboard/events/event-row-actions.tsx
@@ -732,10 +763,14 @@ Last updated: 2026-09-26
 | Accent usage     | none — a row of actions is not a call to action     |
 
 **Pattern notes:**
-Three controls per row: publish/unpublish (an eye that flips to a struck-out
-eye), edit, delete. Only the toggle is inline — cancel and postpone change
+Three controls per row: a `Switch` for publish/unpublish with the status
+spelled out beside it, then edit and delete icons. Only the toggle is inline — cancel and postpone change
 what a ticket holder sees, so they stay on the edit page rather than sitting
 one stray click away in a list.
+
+Edit opens the same dialog as creating, through `useEventDialog().openEdit`,
+rather than navigating away — the list is where the publisher already is. The
+dialog footer keeps a "Full editor" link for the fields it does not show.
 
 Delete confirms in place: the icons are replaced by "Delete? Yes / No" in the
 same cell. No `confirm()`, no modal for a decision this small.

@@ -63,6 +63,8 @@ export interface EventFormProps {
   layout?: "page" | "dialog";
   /** Called after a successful save, so a dialog can close itself. */
   onSaved?: (eventId: string) => void;
+  /** Extra content for the dialog footer, left of the buttons. */
+  footerSlot?: React.ReactNode;
 }
 
 export function EventForm({
@@ -70,6 +72,7 @@ export function EventForm({
   event = null,
   layout = "page",
   onSaved,
+  footerSlot,
 }: EventFormProps) {
   const router = useRouter();
   const isEdit = Boolean(event);
@@ -115,6 +118,14 @@ export function EventForm({
     }
 
     setSaved(true);
+
+    if (isDialog) {
+      // The list behind the dialog is what the publisher wants to see next,
+      // so refresh it and close rather than navigating them somewhere else.
+      router.refresh();
+      onSaved?.(result.eventId ?? event?.id ?? "");
+      return;
+    }
 
     if (!event && result.eventId) {
       onSaved?.(result.eventId);
@@ -724,27 +735,38 @@ export function EventForm({
           <div className="mb-3 empty:mb-0">{feedback}</div>
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <button
-                  type="submit"
-                  className="rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    publishIntent.current = false;
-                  }}
-                >
-                  Save as draft
-                </button>
-                <button
-                  type="submit"
-                  className={formSubmitClass}
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    publishIntent.current = true;
-                  }}
-                >
-                  {isSubmitting ? "Publishing…" : "Publish"}
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>{footerSlot}</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {isEdit ? null : (
+                    <button
+                      type="submit"
+                      className="rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        publishIntent.current = false;
+                      }}
+                    >
+                      Save as draft
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className={formSubmitClass}
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      publishIntent.current = !isEdit;
+                    }}
+                  >
+                    {isEdit
+                      ? isSubmitting
+                        ? "Saving…"
+                        : "Save changes"
+                      : isSubmitting
+                        ? "Publishing…"
+                        : "Publish"}
+                  </button>
+                </div>
               </div>
             )}
           </form.Subscribe>
