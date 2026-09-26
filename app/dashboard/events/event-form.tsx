@@ -28,6 +28,7 @@ import { routes } from "@/lib/routes";
 import type { Category, EventType, EventWithRelations } from "@/lib/types";
 
 import {
+  DEFAULT_TICKET_CTA,
   EVENT_TYPE_LABELS,
   type EventFormValues,
   toFormValues,
@@ -536,24 +537,58 @@ export function EventForm({
     </div>
   );
 
-  const links = (
+  const tickets = (
     <div className="space-y-5">
-      {textField({
-        name: "ticketUrl",
-        label: "Ticket link",
-        type: "url",
-        hint: "events-lab does not sell tickets. This sends people to your provider.",
-        placeholder: "https://",
-      })}
-      {textField({
-        name: "externalUrl",
-        label: "More information",
-        type: "url",
-        hint: "Your own page for this event, if it has one.",
-        placeholder: "https://",
-      })}
+      <form.Field name="ticketEnabled">
+        {(field) => (
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              name={field.name}
+              checked={field.state.value}
+              onChange={(changeEvent) =>
+                field.handleChange(changeEvent.target.checked)
+              }
+              className="size-4 accent-primary"
+            />
+            Enable ticket button
+          </label>
+        )}
+      </form.Field>
+
+      {/* The button needs somewhere to point and something to say, so both
+          follow the toggle rather than sitting there disabled. */}
+      <form.Subscribe selector={(state) => state.values.ticketEnabled}>
+        {(enabled) =>
+          enabled ? (
+            <div className="space-y-5 border-l border-border pl-5">
+              {textField({
+                name: "ticketCtaLabel",
+                label: "Button text",
+                placeholder: DEFAULT_TICKET_CTA,
+                maxLength: 40,
+              })}
+              {textField({
+                name: "ticketUrl",
+                label: "Ticket purchase URL",
+                type: "url",
+                hint: "events-lab does not sell tickets. This sends people to your provider.",
+                placeholder: "https://tickets.example.com/...",
+              })}
+            </div>
+          ) : null
+        }
+      </form.Subscribe>
     </div>
   );
+
+  const externalLink = textField({
+    name: "externalUrl",
+    label: "More information",
+    type: "url",
+    hint: "Your own page for this event, if it has one.",
+    placeholder: "https://",
+  });
 
   const tags = (
     <form.Field name="tags">
@@ -670,7 +705,7 @@ export function EventForm({
           <FormSection title="Date & time">{dateAndTime}</FormSection>
           <FormSection title="Location">{location}</FormSection>
           <FormSection title="Poster">{poster}</FormSection>
-          <FormSection title="Price">{pricing}</FormSection>
+          <FormSection title="Tickets">{tickets}</FormSection>
         </div>
 
         {/* Pinned, with a solid background so content scrolls under it. */}
@@ -734,7 +769,9 @@ export function EventForm({
 
       <FormSection title="Price">{pricing}</FormSection>
 
-      <FormSection title="Tickets & links">{links}</FormSection>
+      <FormSection title="Tickets">{tickets}</FormSection>
+
+      <FormSection title="Links">{externalLink}</FormSection>
 
       <FormSection title="Tags">{tags}</FormSection>
 

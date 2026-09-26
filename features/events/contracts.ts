@@ -186,6 +186,11 @@ export const eventDraftSchema = z
       "Price details must be 120 characters or fewer.",
     ),
     ticketUrl: optionalUrl,
+    /** The words on the ticket button. Blank falls back to "Get tickets". */
+    ticketCtaLabel: optionalText(
+      40,
+      "The button text must be 40 characters or fewer.",
+    ),
     externalUrl: optionalUrl,
 
     coverImageUrl: optionalUrl,

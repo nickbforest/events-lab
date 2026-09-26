@@ -115,6 +115,12 @@ export function publishBlockers(input: EventDraftInput): PublishBlockers {
     blockers.priceInfo = "A paid event needs price details or a ticket link.";
   }
 
+  // A labelled button with nowhere to go is worse than no button: it looks
+  // like the event is on sale and does nothing when clicked.
+  if (input.ticketCtaLabel && !input.ticketUrl) {
+    blockers.ticketUrl = "The ticket button needs a link to send people to.";
+  }
+
   return blockers;
 }
 
@@ -145,6 +151,7 @@ function toWriteRow(input: EventDraftInput, slug: string): EventWriteRow {
     is_free: input.isFree,
     price_info: input.isFree ? null : input.priceInfo,
     ticket_url: input.ticketUrl,
+    ticket_cta_label: input.ticketCtaLabel,
     external_url: input.externalUrl,
     cover_image_url: input.coverImageUrl,
   };
@@ -334,6 +341,7 @@ export function createEventsService(
           isFree: existing.is_free,
           priceInfo: existing.price_info,
           ticketUrl: existing.ticket_url,
+          ticketCtaLabel: existing.ticket_cta_label,
           externalUrl: existing.external_url,
           coverImageUrl: existing.cover_image_url,
           tags: [],

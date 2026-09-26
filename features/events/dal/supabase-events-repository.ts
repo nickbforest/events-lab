@@ -99,6 +99,7 @@ function toEventRecord(row: Tables<"events">, tags: string[]): EventRecord {
     is_free: row.is_free,
     price_info: row.price_info,
     ticket_url: row.ticket_url,
+    ticket_cta_label: row.ticket_cta_label,
     external_url: row.external_url,
     cover_image_url: row.cover_image_url,
     published_at: row.published_at,

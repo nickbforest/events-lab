@@ -615,7 +615,13 @@ a second form would be a second thing to keep in step with `eventDraftSchema`.
 
 Field values live in `event-form-values.ts`, shared by both layouts. The
 dialog shows the essential set and the page shows everything (slug, tags,
-ticket and external links) — same shape, fewer fields.
+price, external link) — same shape, fewer fields.
+
+The Tickets section is a checkbox that reveals two fields, indented behind a
+`border-l border-border pl-5` rule: the button text (placeholder `Get
+Tickets`) and the purchase URL. Unticking clears both columns on submit, so a
+disabled button never leaves a stale URL in the row. The stored label is what
+the public event page renders, falling back to "Get tickets".
 
 Inapplicable fields are absent, not disabled: `form.Subscribe` on `eventType`
 hides the venue block for an online event and the join link for an in-person

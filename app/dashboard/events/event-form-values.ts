@@ -6,6 +6,9 @@ import {
 } from "@/lib/datetime";
 import type { Category, EventType, EventWithRelations } from "@/lib/types";
 
+/** What the ticket button reads when a publisher does not change it. */
+export const DEFAULT_TICKET_CTA = "Get Tickets";
+
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   in_person: "In person",
   online: "Online",
@@ -42,6 +45,14 @@ export interface EventFormValues {
   onlineUrl: string;
   isFree: boolean;
   priceInfo: string;
+  /**
+   * Whether the event shows a ticket button. Form-only: the row stores the
+   * URL and the label, and "no button" is simply both of them empty. Holding
+   * it as a checkbox means unticking the box does not lose what was typed
+   * until the form is actually submitted.
+   */
+  ticketEnabled: boolean;
+  ticketCtaLabel: string;
   ticketUrl: string;
   externalUrl: string;
   coverImageUrl: string;
@@ -71,6 +82,8 @@ export function toFormValues(
     onlineUrl: event?.online_url ?? "",
     isFree: event?.is_free ?? true,
     priceInfo: event?.price_info ?? "",
+    ticketEnabled: Boolean(event?.ticket_url),
+    ticketCtaLabel: event?.ticket_cta_label ?? DEFAULT_TICKET_CTA,
     ticketUrl: event?.ticket_url ?? "",
     externalUrl: event?.external_url ?? "",
     coverImageUrl: event?.cover_image_url ?? "",
@@ -98,7 +111,10 @@ export function toPayload(values: EventFormValues): EventDraftValues {
     onlineUrl: values.onlineUrl,
     isFree: values.isFree,
     priceInfo: values.priceInfo,
-    ticketUrl: values.ticketUrl,
+    // Unticking the box clears both columns, so a disabled button cannot
+    // leave a stale URL behind for the next person to wonder about.
+    ticketUrl: values.ticketEnabled ? values.ticketUrl : "",
+    ticketCtaLabel: values.ticketEnabled ? values.ticketCtaLabel : "",
     externalUrl: values.externalUrl,
     coverImageUrl: values.coverImageUrl,
     tags: values.tags,

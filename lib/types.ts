@@ -70,6 +70,8 @@ export interface EventRecord {
   is_free: boolean;
   price_info: string | null;
   ticket_url: string | null;
+  /** Label for the ticket button. Null falls back to "Get tickets". */
+  ticket_cta_label: string | null;
   external_url: string | null;
 
   cover_image_url: string | null;

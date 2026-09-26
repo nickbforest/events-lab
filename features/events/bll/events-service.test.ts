@@ -65,6 +65,7 @@ function draft(overrides: Partial<EventDraftInput> = {}): EventDraftInput {
     isFree: true,
     priceInfo: null,
     ticketUrl: null,
+    ticketCtaLabel: null,
     externalUrl: null,
     coverImageUrl: null,
     tags: [],
@@ -100,6 +101,7 @@ function record(
     is_free: true,
     price_info: null,
     ticket_url: null,
+    ticket_cta_label: null,
     external_url: null,
     cover_image_url: null,
     published_at: status === "draft" ? null : "2026-09-01T10:00:00Z",
@@ -482,5 +484,30 @@ describe("getDashboardSummary", () => {
     expect(summary.publishedCount).toBe(2);
     expect(summary.draftCount).toBe(1);
     expect(summary.upcoming.map((item) => item.id)).toEqual(["upcoming"]);
+  });
+});
+
+describe("ticket button", () => {
+  it("blocks publishing a labelled button with no link", () => {
+    expect(
+      publishBlockers(draft({ ticketCtaLabel: "Get Tickets" })),
+    ).toHaveProperty("ticketUrl");
+  });
+
+  it("allows a labelled button that has a link", () => {
+    expect(
+      publishBlockers(
+        draft({
+          ticketCtaLabel: "Get Tickets",
+          ticketUrl: "https://tickets.test/x",
+        }),
+      ),
+    ).toEqual({});
+  });
+
+  it("allows a link with no label, which falls back to the default", () => {
+    expect(
+      publishBlockers(draft({ ticketUrl: "https://tickets.test/x" })),
+    ).toEqual({});
   });
 });

@@ -90,6 +90,7 @@ export type Database = {
           slug: string;
           start_at: string;
           status: Database["public"]["Enums"]["event_status"];
+          ticket_cta_label: string | null;
           ticket_url: string | null;
           timezone: string;
           title: string;
@@ -120,6 +121,7 @@ export type Database = {
           slug: string;
           start_at: string;
           status?: Database["public"]["Enums"]["event_status"];
+          ticket_cta_label?: string | null;
           ticket_url?: string | null;
           timezone: string;
           title: string;
@@ -150,6 +152,7 @@ export type Database = {
           slug?: string;
           start_at?: string;
           status?: Database["public"]["Enums"]["event_status"];
+          ticket_cta_label?: string | null;
           ticket_url?: string | null;
           timezone?: string;
           title?: string;
