@@ -4,12 +4,16 @@ import { revalidatePath } from "next/cache";
 
 import { verifySession } from "@/features/auth/queries";
 import {
-  profileMediaSchema,
-  profileUpdateSchema,
+  compiledProfileMediaSchema,
+  compiledProfileUpdateSchema,
 } from "@/features/profiles/contracts";
 import { getProfilesService } from "@/features/profiles/service";
-import { DataAccessError } from "@/lib/errors";
+import { ApplicationError, toUserMessage } from "@/lib/errors";
 import { type FormResult, firstFieldErrors } from "@/lib/forms";
+import { createLogger } from "@/lib/logging";
+import { routes } from "@/lib/routes";
+
+const log = createLogger("profiles.actions");
 
 export type ProfileField =
   | "displayName"
@@ -20,10 +24,32 @@ export type ProfileField =
   | "websiteUrl"
   | "socialLinks";
 
+/**
+ * Turns a thrown value into a form result.
+ *
+ * Every action funnels its failures through here, so the sentence a person
+ * reads comes from `USER_FACING_MESSAGES` rather than from whatever the throw
+ * site happened to say, and nothing is swallowed without a log line. A
+ * non-`ApplicationError` is a bug, not a handled outcome: it is logged and
+ * rethrown so the error boundary still sees it.
+ */
+function toFailure<TField extends string>(
+  scope: string,
+  error: unknown,
+): FormResult<TField> {
+  if (!(error instanceof ApplicationError)) {
+    log.error("Unhandled failure in a profile action.", error, { scope });
+    throw error;
+  }
+
+  log.error("Profile action failed.", error, { scope });
+  return { status: "error", message: toUserMessage(error) };
+}
+
 export async function updateProfileAction(
   input: unknown,
 ): Promise<FormResult<ProfileField>> {
-  const parsed = profileUpdateSchema.safeParse(input);
+  const parsed = compiledProfileUpdateSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -33,46 +59,45 @@ export async function updateProfileAction(
 
   const user = await verifySession();
   const service = await getProfilesService();
-  const profile = await service.updateProfile(user.id, parsed.data);
 
-  revalidatePath("/dashboard/profile");
-  revalidatePath(`/u/${profile.username}`);
-
-  return { status: "success" };
+  try {
+    const profile = await service.updateProfile(user.id, parsed.data);
+    revalidatePath(routes.dashboard.profile());
+    revalidatePath(routes.publisher(profile.username));
+    return { status: "success" };
+  } catch (error) {
+    return toFailure<ProfileField>("updateProfile", error);
+  }
 }
 
 export async function updateProfileMediaAction(
   formData: FormData,
 ): Promise<FormResult<"file">> {
-  const parsed = profileMediaSchema.safeParse({
+  const parsed = compiledProfileMediaSchema.safeParse({
     kind: formData.get("kind"),
     file: formData.get("file"),
   });
 
   if (!parsed.success) {
     const { file, kind } = firstFieldErrors<"file" | "kind">(parsed.error);
-    return kind
-      ? { status: "error", message: "Unknown image type." }
-      : { status: "error", fieldErrors: { file } };
+    // A bad `kind` is not something the person typed — it means the form and
+    // this action disagree, so it gets a form-level message, not a field one.
+    if (kind !== undefined) {
+      log.warn("Profile media upload sent an unknown kind.", { kind });
+      return { status: "error", message: "Unknown image type." };
+    }
+    return { status: "error", fieldErrors: { file } };
   }
 
   const user = await verifySession();
   const service = await getProfilesService();
 
-  let username: string;
   try {
-    ({ username } = await service.updateProfileMedia(user.id, parsed.data));
+    const { username } = await service.updateProfileMedia(user.id, parsed.data);
+    revalidatePath(routes.dashboard.profile());
+    revalidatePath(routes.publisher(username));
+    return { status: "success" };
   } catch (error) {
-    if (!(error instanceof DataAccessError)) throw error;
-    console.error(error);
-    return {
-      status: "error",
-      message: "The image could not be uploaded. Please try again.",
-    };
+    return toFailure<"file">("updateProfileMedia", error);
   }
-
-  revalidatePath("/dashboard/profile");
-  revalidatePath(`/u/${username}`);
-
-  return { status: "success" };
 }

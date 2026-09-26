@@ -189,7 +189,7 @@ deleted, not dormant.
 
 * [x] Profile schema — created in Phase 1 with the full column set; no further
   migration needed for the fields below
-* [x] Profile page — `/u/:username` renders avatar and cover
+* [x] Profile page — `/publishers/:username` renders avatar and cover
 * [x] Profile editing
 * [x] Avatar (and cover image)
 * [x] Account settings — password change and email change
@@ -226,7 +226,7 @@ before it was committed.
 ### Open follow-ups
 
 1. **Organizations scope is undocumented.** On 2026-09-03, MVP-1 moved to a
-   personal publisher model (events owned by profiles, `/u/:username`). The
+   personal publisher model (events owned by profiles, `/publishers/:username`). The
    `profiles` migration says so, but `Architecture.md`, `build-plan.md` and
    this tracker still list Phase 3 as Organizations. Decide whether Phase 3 is
    deferred, and record it in the documents before planning the next phase.
@@ -442,7 +442,7 @@ before it was committed.
 | 2026-09-11 | shadcn/ui primitives        | Keep application UI accessible and visually consistent                       |
 | 2026-09-11 | SOLID module boundaries     | Keep feature layers focused, substitutable, and independently testable        |
 | 2026-09-11 | Biome for code quality      | Use one tool for repository linting and formatting                            |
-| 2026-09-14 | Profiles table in Phase 1   | Auth without an identity row leaves the dashboard and `/u/:username` broken   |
+| 2026-09-14 | Profiles table in Phase 1   | Auth without an identity row leaves the dashboard and `/publishers/:username` broken   |
 | 2026-09-14 | Full profile columns now    | Every extra field is nullable, so one migration beats a second one in Phase 2 |
 | 2026-09-14 | Trigger creates the profile | Only mechanism that works whether or not signup returns a session             |
 | 2026-09-14 | Username chosen at signup   | It is the public URL; auto-assigning then renaming would break shared links   |

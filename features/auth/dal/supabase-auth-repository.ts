@@ -86,7 +86,9 @@ export function createSupabaseAuthRepository(
         },
       });
 
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
       if (!data.user) {
         throw new AuthProviderError(
           "UNKNOWN",
@@ -105,7 +107,9 @@ export function createSupabaseAuthRepository(
         token_hash: tokenHash,
         type,
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async exchangeAuthCode(code) {
@@ -133,7 +137,9 @@ export function createSupabaseAuthRepository(
         password,
       });
 
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
       if (!data.user) {
         throw new AuthProviderError(
           "UNKNOWN",
@@ -146,14 +152,18 @@ export function createSupabaseAuthRepository(
 
     async signOut(scope) {
       const { error } = await client.auth.signOut({ scope });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async getAuthenticatedUser() {
       const { data, error } = await client.auth.getUser();
 
       // A missing or expired session is an expected state, not a failure.
-      if (error) return null;
+      if (error) {
+        return null;
+      }
       return data.user ? toAuthUser(data.user) : null;
     },
 
@@ -161,7 +171,9 @@ export function createSupabaseAuthRepository(
       const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async resendConfirmationEmail(email, redirectTo) {
@@ -170,12 +182,16 @@ export function createSupabaseAuthRepository(
         email,
         options: { emailRedirectTo: redirectTo },
       });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async updatePassword(password) {
       const { error } = await client.auth.updateUser({ password });
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
 
     async requestEmailChange(email, redirectTo) {
@@ -183,7 +199,9 @@ export function createSupabaseAuthRepository(
         { email },
         { emailRedirectTo: redirectTo },
       );
-      if (error) fail(error);
+      if (error) {
+        fail(error);
+      }
     },
   };
 }

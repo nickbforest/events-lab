@@ -11,6 +11,14 @@ import {
 } from "@/features/profiles/contracts";
 import { firstErrorMessage } from "@/lib/forms";
 
+export interface ProfileMediaFieldProps {
+  kind: ProfileMediaKind;
+  label: string;
+  description: string;
+  currentUrl: string | null;
+  className?: string;
+}
+
 /**
  * Uploads on selection rather than on "Save profile": an image is its own
  * write, so a failed upload never blocks or discards unsaved text edits.
@@ -21,13 +29,7 @@ export function ProfileMediaField({
   description,
   currentUrl,
   className,
-}: {
-  kind: ProfileMediaKind;
-  label: string;
-  description: string;
-  currentUrl: string | null;
-  className?: string;
-}) {
+}: ProfileMediaFieldProps) {
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();

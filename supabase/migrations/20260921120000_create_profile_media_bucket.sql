@@ -1,7 +1,7 @@
 -- Profile media: avatars and cover images for public publisher pages.
 --
 -- The bucket is public because these images render for anonymous visitors on
--- /u/:username; signed URLs would expire under cached pages and next/image.
+-- /publishers/:username; signed URLs would expire under cached pages and next/image.
 -- Public only means objects are readable by URL. Writing still requires the
 -- policies below, and listing is limited to the owner's own folder so the
 -- bucket cannot be enumerated.

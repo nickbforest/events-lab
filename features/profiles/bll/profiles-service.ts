@@ -3,22 +3,27 @@ import type {
   ProfileUpdateInput,
 } from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
+import { createLogger } from "@/lib/logging";
+import { RESERVED_ROUTE_SEGMENTS } from "@/lib/routes";
 import type { Profile } from "@/lib/types";
 
+const log = createLogger("profiles.service");
+
 /**
- * Usernames become public URLs and appear alongside product surfaces, so a few
- * are held back: routes we may add later, and names that would let an account
- * pass itself off as part of events-lab.
+ * Usernames become public URLs, so a few are held back: the route segments
+ * the application already owns, plus names that would let an account pass
+ * itself off as part of events-lab.
+ *
+ * The route segments come from `lib/routes.ts` rather than being restated
+ * here — adding a top-level route and forgetting to reserve its name is how
+ * an existing account starts shadowing a page.
  */
-const RESERVED_USERNAMES = new Set([
+const RESERVED_USERNAMES = new Set<string>([
+  ...RESERVED_ROUTE_SEGMENTS,
   "about",
   "admin",
   "administrator",
-  "api",
-  "auth",
   "contact",
-  "dashboard",
-  "discover",
   "event",
   "events",
   "events-lab",
@@ -31,6 +36,7 @@ const RESERVED_USERNAMES = new Set([
   "new",
   "privacy",
   "profile",
+  "publisher",
   "root",
   "settings",
   "signup",
@@ -38,7 +44,6 @@ const RESERVED_USERNAMES = new Set([
   "support",
   "system",
   "terms",
-  "u",
   "user",
 ]);
 
@@ -66,7 +71,9 @@ export function createProfilesService(
     getProfileByUsername: (username) => repository.findByUsername(username),
 
     async isUsernameAvailable(username) {
-      if (RESERVED_USERNAMES.has(username)) return false;
+      if (RESERVED_USERNAMES.has(username)) {
+        return false;
+      }
       return !(await repository.isUsernameTaken(username));
     },
 
@@ -75,7 +82,9 @@ export function createProfilesService(
       // stored as null, so `social_links` only ever holds live links.
       const socialLinks: Record<string, string> = {};
       for (const [key, value] of Object.entries(input.socialLinks)) {
-        if (value) socialLinks[key] = value;
+        if (value) {
+          socialLinks[key] = value;
+        }
       }
 
       return repository.update(ownerId, {
@@ -103,7 +112,13 @@ export function createProfilesService(
       try {
         await repository.removeMediaExcept(ownerId, kind, stored.path);
       } catch (error) {
-        console.error("Replaced profile media could not be removed.", error);
+        // Swallowed on purpose: the new image is already live, so failing the
+        // upload over a leftover file would be worse than leaking one. The
+        // log is what makes that leak findable.
+        log.error("Replaced profile media could not be removed.", error, {
+          ownerId,
+          kind,
+        });
       }
 
       return profile;

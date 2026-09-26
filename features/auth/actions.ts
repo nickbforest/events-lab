@@ -4,16 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
-  changeEmailSchema,
-  changePasswordSchema,
-  passwordResetRequestSchema,
-  signInSchema,
-  signUpSchema,
-  updatePasswordSchema,
+  compiledChangeEmailSchema,
+  compiledChangePasswordSchema,
+  compiledPasswordResetRequestSchema,
+  compiledSignInSchema,
+  compiledSignUpSchema,
+  compiledUpdatePasswordSchema,
 } from "@/features/auth/contracts";
 import { verifySession } from "@/features/auth/queries";
 import { getAuthService } from "@/features/auth/service";
 import { type FormResult, firstFieldErrors } from "@/lib/forms";
+import { routes } from "@/lib/routes";
 
 type SignUpField = "displayName" | "username" | "email" | "password";
 type SignInField = "email" | "password";
@@ -24,7 +25,7 @@ const RATE_LIMITED_MESSAGE =
 export async function signUpAction(
   input: unknown,
 ): Promise<FormResult<SignUpField>> {
-  const parsed = signUpSchema.safeParse(input);
+  const parsed = compiledSignUpSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -62,7 +63,7 @@ export async function signUpAction(
   // Redirect throws, so it must sit outside any try/catch above it.
   redirect(
     outcome.hasSession
-      ? "/dashboard"
+      ? routes.dashboard.root()
       : `/auth/check-email?email=${encodeURIComponent(outcome.email)}`,
   );
 }
@@ -70,7 +71,7 @@ export async function signUpAction(
 export async function signInAction(
   input: unknown,
 ): Promise<FormResult<SignInField>> {
-  const parsed = signInSchema.safeParse(input);
+  const parsed = compiledSignInSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -97,7 +98,7 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(routes.dashboard.root());
 }
 
 export async function signOutAction(): Promise<void> {
@@ -105,13 +106,13 @@ export async function signOutAction(): Promise<void> {
   await service.signOut();
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(routes.home());
 }
 
 export async function requestPasswordResetAction(
   input: unknown,
 ): Promise<FormResult<"email">> {
-  const parsed = passwordResetRequestSchema.safeParse(input);
+  const parsed = compiledPasswordResetRequestSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -132,7 +133,7 @@ export async function requestPasswordResetAction(
 export async function resendConfirmationAction(
   input: unknown,
 ): Promise<FormResult<"email">> {
-  const parsed = passwordResetRequestSchema.safeParse(input);
+  const parsed = compiledPasswordResetRequestSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -151,7 +152,7 @@ export async function resendConfirmationAction(
 export async function updatePasswordAction(
   input: unknown,
 ): Promise<FormResult<"password">> {
-  const parsed = updatePasswordSchema.safeParse(input);
+  const parsed = compiledUpdatePasswordSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -170,13 +171,13 @@ export async function updatePasswordAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(routes.dashboard.root());
 }
 
 export async function changeEmailAction(
   input: unknown,
 ): Promise<FormResult<"email">> {
-  const parsed = changeEmailSchema.safeParse(input);
+  const parsed = compiledChangeEmailSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -207,14 +208,14 @@ export async function changeEmailAction(
     }
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath(routes.dashboard.settings());
   return { status: "success" };
 }
 
 export async function changePasswordAction(
   input: unknown,
 ): Promise<FormResult<"currentPassword" | "newPassword" | "confirmPassword">> {
-  const parsed = changePasswordSchema.safeParse(input);
+  const parsed = compiledChangePasswordSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -255,5 +256,5 @@ export async function changePasswordAction(
   // The service has ended every session, so the owner proves the new
   // password straight away rather than discovering a typo later.
   revalidatePath("/", "layout");
-  redirect("/auth?mode=login&notice=password-changed");
+  redirect(routes.auth.mode("login", "password-changed"));
 }

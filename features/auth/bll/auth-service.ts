@@ -13,6 +13,7 @@ import {
   type EmailConfirmationType,
 } from "@/features/auth/dal/auth-repository";
 import { ApplicationError } from "@/lib/errors";
+import { createLogger } from "@/lib/logging";
 
 /**
  * Username ownership lives in the profiles domain. Auth depends on this narrow
@@ -78,6 +79,8 @@ export type ExchangeAuthCodeOutcome =
   | { ok: true; isRecovery: boolean }
   | { ok: false };
 
+const log = createLogger("auth.service");
+
 export interface AuthService {
   signUp(input: SignUpInput): Promise<SignUpOutcome>;
   confirmEmail(
@@ -138,7 +141,9 @@ export function createAuthService(dependencies: {
           hasSession: result.hasSession,
         };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "EMAIL_TAKEN":
@@ -175,7 +180,9 @@ export function createAuthService(dependencies: {
         await authRepository.verifyEmailToken(tokenHash, type);
         return { ok: true, type };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         // An expired or already-used link is ordinary user behaviour, not a
         // fault worth surfacing as an error page.
@@ -221,7 +228,9 @@ export function createAuthService(dependencies: {
         );
         return { ok: true, user };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "INVALID_CREDENTIALS":
@@ -302,7 +311,9 @@ export function createAuthService(dependencies: {
         await authRepository.requestEmailChange(input.email, urls.confirmUrl);
         return { ok: true };
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "EMAIL_TAKEN":
@@ -333,7 +344,9 @@ export function createAuthService(dependencies: {
           input.currentPassword,
         );
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "INVALID_CREDENTIALS":
@@ -352,7 +365,9 @@ export function createAuthService(dependencies: {
       try {
         await authRepository.updatePassword(input.newPassword);
       } catch (error) {
-        if (!(error instanceof AuthProviderError)) throw error;
+        if (!(error instanceof AuthProviderError)) {
+          throw error;
+        }
 
         switch (error.reason) {
           case "WEAK_PASSWORD":
@@ -373,7 +388,10 @@ export function createAuthService(dependencies: {
       try {
         await authRepository.signOut("global");
       } catch (error) {
-        console.error("Password changed but sessions were not ended.", error);
+        // Swallowed on purpose: the password did change, so reporting a
+        // failure here would be wrong. The log is the only evidence that the
+        // other sessions outlived it.
+        log.error("Password changed but sessions were not ended.", error);
       }
 
       return { ok: true };

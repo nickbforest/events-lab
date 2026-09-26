@@ -25,7 +25,9 @@ export function firstFieldErrors<TField extends string>(
 
   for (const [field, messages] of Object.entries(fieldErrors)) {
     const message = (messages as string[] | undefined)?.[0];
-    if (message) result[field as TField] = message;
+    if (message) {
+      result[field as TField] = message;
+    }
   }
 
   return result;
@@ -40,11 +42,15 @@ export function firstErrorMessage(
   errors: readonly unknown[],
 ): string | undefined {
   for (const error of errors) {
-    if (typeof error === "string" && error.length > 0) return error;
+    if (typeof error === "string" && error.length > 0) {
+      return error;
+    }
 
     if (error !== null && typeof error === "object" && "message" in error) {
       const { message } = error as { message?: unknown };
-      if (typeof message === "string" && message.length > 0) return message;
+      if (typeof message === "string" && message.length > 0) {
+        return message;
+      }
     }
   }
 

@@ -14,6 +14,7 @@ import {
 } from "@/features/events/queries";
 import { getProfileByUsername } from "@/features/profiles/queries";
 import { publisherTypeLabel } from "@/lib/format";
+import { routes } from "@/lib/routes";
 
 // No generateStaticParams: profiles are created continuously by signup, so
 // eagerly enumerating every username at build time would mean a new account
@@ -23,11 +24,13 @@ import { publisherTypeLabel } from "@/lib/format";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/u/[username]">): Promise<Metadata> {
+}: PageProps<"/publishers/[username]">): Promise<Metadata> {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
 
-  if (!profile) return { title: "Publisher not found" };
+  if (!profile) {
+    return { title: "Publisher not found" };
+  }
 
   return {
     title: profile.display_name,
@@ -45,11 +48,13 @@ export async function generateMetadata({
 
 export default async function PublisherPage({
   params,
-}: PageProps<"/u/[username]">) {
+}: PageProps<"/publishers/[username]">) {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
 
-  if (!profile) notFound();
+  if (!profile) {
+    notFound();
+  }
 
   const [upcoming, past] = await Promise.all([
     getUpcomingEventsByUsername(username),
@@ -65,7 +70,7 @@ export default async function PublisherPage({
       <SiteHeader />
 
       <main className="flex-1">
-        {profile.cover_url && (
+        {profile.cover_url ? (
           <div className="relative aspect-[3/1] max-h-80 w-full border-b border-border bg-secondary">
             <Image
               src={profile.cover_url}
@@ -76,7 +81,7 @@ export default async function PublisherPage({
               className="object-cover"
             />
           </div>
-        )}
+        ) : null}
 
         <section className="border-b border-border px-6 py-16">
           <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-start">
@@ -98,11 +103,11 @@ export default async function PublisherPage({
                 @{profile.username}
               </p>
 
-              {profile.bio && (
+              {profile.bio ? (
                 <p className="mb-5 max-w-2xl leading-relaxed text-muted-foreground">
                   {profile.bio}
                 </p>
-              )}
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase text-muted-foreground">
                 {location && (
@@ -111,7 +116,7 @@ export default async function PublisherPage({
                     {location}
                   </span>
                 )}
-                {profile.website_url && (
+                {profile.website_url ? (
                   <a
                     href={profile.website_url}
                     target="_blank"
@@ -121,7 +126,7 @@ export default async function PublisherPage({
                     <Globe className="size-3.5" aria-hidden />
                     Website ↗
                   </a>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -166,7 +171,7 @@ export default async function PublisherPage({
                 Publishing your own events?
               </p>
               <Link
-                href="/auth?mode=signup"
+                href={routes.auth.signUp()}
                 className="font-display text-lg font-extrabold uppercase tracking-tight text-primary hover:underline"
               >
                 Claim your events-lab page →

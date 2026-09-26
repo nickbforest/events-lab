@@ -39,13 +39,15 @@ function useOpenNewEvent() {
   return open;
 }
 
+export interface NewEventProviderProps {
+  categories: readonly Category[];
+  children: ReactNode;
+}
+
 export function NewEventProvider({
   categories,
   children,
-}: {
-  categories: readonly Category[];
-  children: ReactNode;
-}) {
+}: NewEventProviderProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -55,10 +57,16 @@ export function NewEventProvider({
   // rather than the element being the source of truth.
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog) {
+      return;
+    }
 
-    if (isOpen && !dialog.open) dialog.showModal();
-    if (!isOpen && dialog.open) dialog.close();
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    }
+    if (!isOpen && dialog.open) {
+      dialog.close();
+    }
   }, [isOpen]);
 
   return (
@@ -71,32 +79,35 @@ export function NewEventProvider({
         onClose={() => setIsOpen(false)}
         // Clicking the backdrop lands on the dialog itself, never on its content.
         onClick={(event) => {
-          if (event.target === dialogRef.current) setIsOpen(false);
+          if (event.target === dialogRef.current) {
+            setIsOpen(false);
+          }
         }}
         onKeyDown={(event) => {
-          if (event.key === "Escape") setIsOpen(false);
+          if (event.key === "Escape") {
+            setIsOpen(false);
+          }
         }}
         className="m-auto max-h-[90vh] w-[min(46rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border bg-card p-0 text-foreground backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       >
-        {isOpen && (
+        {isOpen ? (
           <NewEventForm
             categories={categories}
             onClose={() => setIsOpen(false)}
           />
-        )}
+        ) : null}
       </dialog>
     </NewEventContext.Provider>
   );
 }
 
-/** A button that opens the shared dialog. Styling is passed in by the caller. */
-export function NewEventTrigger({
-  className,
-  children,
-}: {
+export interface NewEventTriggerProps {
   className?: string;
   children: ReactNode;
-}) {
+}
+
+/** A button that opens the shared dialog. Styling is passed in by the caller. */
+export function NewEventTrigger({ className, children }: NewEventTriggerProps) {
   const open = useOpenNewEvent();
 
   return (
@@ -106,13 +117,12 @@ export function NewEventTrigger({
   );
 }
 
-function NewEventForm({
-  categories,
-  onClose,
-}: {
+export interface NewEventFormProps {
   categories: readonly Category[];
   onClose: () => void;
-}) {
+}
+
+function NewEventForm({ categories, onClose }: NewEventFormProps) {
   const [ticketsEnabled, setTicketsEnabled] = useState(false);
 
   return (
@@ -290,7 +300,7 @@ function NewEventForm({
             </label>
 
             {/* The button needs somewhere to point, so the URL follows the toggle. */}
-            {ticketsEnabled && (
+            {ticketsEnabled ? (
               <Field
                 id="ticket_url"
                 label="Ticket URL"
@@ -307,7 +317,7 @@ function NewEventForm({
                   placeholder="https://"
                 />
               </Field>
-            )}
+            ) : null}
           </div>
         </FormSection>
       </form>

@@ -491,7 +491,7 @@ beside it; if a use ever shows it alone, give it an accessible name first.
 
 ### Publisher page header
 
-File: app/u/[username]/page.tsx
+File: app/publishers/[username]/page.tsx
 Last updated: 2026-09-21
 
 | Property         | Class                                              |

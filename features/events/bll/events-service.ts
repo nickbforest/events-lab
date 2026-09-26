@@ -67,7 +67,9 @@ export function createEventsService(
     async getPublishedEventBySlug(username, slug) {
       const { events, profiles, join } = await loadData();
       const owner = profiles.find((profile) => profile.username === username);
-      if (!owner) return null;
+      if (!owner) {
+        return null;
+      }
 
       const event = events.find(
         (candidate) =>
@@ -82,7 +84,9 @@ export function createEventsService(
     async getUpcomingEventsByUsername(username) {
       const { events, profiles, join } = await loadData();
       const owner = profiles.find((profile) => profile.username === username);
-      if (!owner) return [];
+      if (!owner) {
+        return [];
+      }
       const now = clock().getTime();
 
       return events
@@ -99,7 +103,9 @@ export function createEventsService(
     async getPastEventsByUsername(username) {
       const { events, profiles, join } = await loadData();
       const owner = profiles.find((profile) => profile.username === username);
-      if (!owner) return [];
+      if (!owner) {
+        return [];
+      }
       const now = clock().getTime();
 
       return events

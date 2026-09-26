@@ -94,7 +94,7 @@ follow-ups.
 Two deviations from the original plan, both agreed before implementation:
 
 1. **The `profiles` table was built here, not in Phase 2.** Authentication
-   without an identity row leaves the dashboard and `/u/:username` broken. The
+   without an identity row leaves the dashboard and `/publishers/:username` broken. The
    full column set was created in one migration because every optional field is
    nullable — Phase 2 now owns profile *editing*, not profile *schema*.
 2. **Google OAuth was dropped from this phase** for want of Google Cloud

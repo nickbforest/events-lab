@@ -15,7 +15,9 @@ export async function getProfileByUsername(
   // A malformed username is a 404, not a crash: this runs on a public route
   // parameter, so anything the constraint would reject simply has no profile.
   const parsed = usernameSchema.safeParse(username);
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    return null;
+  }
 
   return getPublicProfilesService().getProfileByUsername(parsed.data);
 }

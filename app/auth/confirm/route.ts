@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
   const codeLink = authCodeSchema.safeParse({ code: searchParams.get("code") });
   if (codeLink.success) {
     const outcome = await service.exchangeAuthCode(codeLink.data.code);
-    if (!outcome.ok) return expired;
+    if (!outcome.ok) {
+      return expired;
+    }
 
     return NextResponse.redirect(
       new URL(
@@ -40,13 +42,17 @@ export async function GET(request: NextRequest) {
     tokenHash: searchParams.get("token_hash"),
     type: searchParams.get("type"),
   });
-  if (!tokenLink.success) return expired;
+  if (!tokenLink.success) {
+    return expired;
+  }
 
   const outcome = await service.confirmEmail(
     tokenLink.data.tokenHash,
     tokenLink.data.type,
   );
-  if (!outcome.ok) return expired;
+  if (!outcome.ok) {
+    return expired;
+  }
 
   const destination = {
     recovery: "/auth/update-password",

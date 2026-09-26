@@ -7,6 +7,14 @@ export const fieldControlClass =
 export const formSubmitClass =
   "rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
 
+export interface FieldProps {
+  id: string;
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}
+
 /**
  * Label + control + optional hint, wired together by id.
  *
@@ -14,19 +22,7 @@ export const formSubmitClass =
  * associated with `aria-describedby` rather than left floating next to it, so
  * screen-reader users get the same guidance sighted users do.
  */
-export function Field({
-  id,
-  label,
-  hint,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  hint?: string;
-  error?: string;
-  children: ReactNode;
-}) {
+export function Field({ id, label, hint, error, children }: FieldProps) {
   return (
     <div>
       <label
@@ -69,7 +65,11 @@ export function fieldDescribedBy({
   hasHint?: boolean;
   hasError?: boolean;
 }): string | undefined {
-  if (hasError) return `${id}-error`;
-  if (hasHint) return `${id}-hint`;
+  if (hasError) {
+    return `${id}-error`;
+  }
+  if (hasHint) {
+    return `${id}-hint`;
+  }
   return undefined;
 }

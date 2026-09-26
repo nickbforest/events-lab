@@ -1,17 +1,16 @@
 import { cn, EVENT_STATUS_META } from "@/lib/format";
 import type { EventStatus } from "@/lib/types";
 
+export interface EventStatusBadgeProps {
+  status: EventStatus;
+  className?: string;
+}
+
 /**
  * ui-rules.md §16 — status carries a text label as well as a colour, so it
  * survives greyscale, low vision, and colour-blind viewing.
  */
-export function EventStatusBadge({
-  status,
-  className,
-}: {
-  status: EventStatus;
-  className?: string;
-}) {
+export function EventStatusBadge({ status, className }: EventStatusBadgeProps) {
   const meta = EVENT_STATUS_META[status];
 
   return (

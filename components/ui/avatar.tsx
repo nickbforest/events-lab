@@ -2,6 +2,13 @@ import Image from "next/image";
 
 import { cn } from "@/lib/format";
 
+export interface AvatarProps {
+  src: string | null;
+  name: string;
+  sizes: string;
+  className?: string;
+}
+
 /**
  * A publisher's image, or the first letter of their name when they have none.
  *
@@ -10,17 +17,7 @@ import { cn } from "@/lib/format";
  * `className` sets size and letter weight; `sizes` must match the rendered
  * width so next/image does not fetch a larger file than it shows.
  */
-export function Avatar({
-  src,
-  name,
-  sizes,
-  className,
-}: {
-  src: string | null;
-  name: string;
-  sizes: string;
-  className?: string;
-}) {
+export function Avatar({ src, name, sizes, className }: AvatarProps) {
   return (
     <span
       aria-hidden

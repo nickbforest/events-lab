@@ -14,13 +14,12 @@ import { changeEmailAction } from "@/features/auth/actions";
 import { changeEmailSchema } from "@/features/auth/contracts";
 import { firstErrorMessage } from "@/lib/forms";
 
-export function EmailForm({
-  currentEmail,
-  pendingEmail,
-}: {
+export interface EmailFormProps {
   currentEmail: string;
   pendingEmail: string | null;
-}) {
+}
+
+export function EmailForm({ currentEmail, pendingEmail }: EmailFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | undefined>();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -112,7 +111,7 @@ export function EmailForm({
         }}
       </form.Field>
 
-      {formError && <FormAlert message={formError} />}
+      {formError ? <FormAlert message={formError} /> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Not "email changed": it has not changed until the link is used. */}

@@ -48,7 +48,9 @@ export function createDiscoveryService(
         : undefined;
 
       const matchesSearch = (event: EventRecord) => {
-        if (!needle) return true;
+        if (!needle) {
+          return true;
+        }
         const owner = profiles.find((profile) => profile.id === event.owner_id);
         return [
           event.title,
@@ -70,9 +72,15 @@ export function createDiscoveryService(
             return false;
           }
           const startsAt = Date.parse(event.start_at);
-          if (startsAt < now.getTime()) return false;
-          if (until !== null && startsAt > until) return false;
-          if (!matchesSearch(event)) return false;
+          if (startsAt < now.getTime()) {
+            return false;
+          }
+          if (until !== null && startsAt > until) {
+            return false;
+          }
+          if (!matchesSearch(event)) {
+            return false;
+          }
           return !categoryId || event.category_id === categoryId;
         })
         .sort((a, b) => Date.parse(a.start_at) - Date.parse(b.start_at))

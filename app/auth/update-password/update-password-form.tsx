@@ -92,7 +92,7 @@ export function UpdatePasswordForm() {
           }}
         </form.Field>
 
-        {formError && <FormAlert message={formError} />}
+        {formError ? <FormAlert message={formError} /> : null}
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (

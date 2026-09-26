@@ -40,7 +40,11 @@ const FIELDS: {
   },
 ];
 
-export function PasswordForm({ email }: { email: string }) {
+export interface PasswordFormProps {
+  email: string;
+}
+
+export function PasswordForm({ email }: PasswordFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [serverFieldErrors, setServerFieldErrors] = useState<
     Partial<Record<PasswordField, string>>
@@ -135,7 +139,7 @@ export function PasswordForm({ email }: { email: string }) {
         ))}
       </div>
 
-      {formError && <FormAlert message={formError} />}
+      {formError ? <FormAlert message={formError} /> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="font-mono text-xs text-muted-foreground">

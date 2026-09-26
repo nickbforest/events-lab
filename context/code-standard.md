@@ -47,6 +47,28 @@ Rules:
   allow local implementation details to be inferred.
 * Do not use unsafe type assertions to bypass validation or nullability.
 
+**Component props are a named, exported interface, never an inline literal.**
+Added 2026-09-26 in review.
+
+```tsx
+// Do
+export interface AvatarProps {
+  name: string;
+  src?: string | null;
+}
+
+export function Avatar({ name, src }: AvatarProps) {}
+
+// Do not — the type cannot be referenced, extended or re-exported, and the
+// signature has to be read past to find out what the component takes.
+export function Avatar({ name, src }: { name: string; src?: string | null }) {}
+```
+
+The interface is declared immediately above the component, after any imports
+and before the component's doc comment, and is named `<Component>Props`. A
+wrapper that forwards props then has something to extend, and a test has
+something to build a fixture against.
+
 ---
 
 # 3. React
@@ -56,6 +78,34 @@ Prefer server components where appropriate.
 Use client components only when client-side behavior requires them.
 
 Do not mark entire pages `"use client"` unnecessarily.
+
+## Conditional rendering
+
+**Never render on a value that is not already a boolean.** Added 2026-09-26 in
+review; enforced by `lint/suspicious/noLeakedRender`.
+
+`{value && <Thing />}` renders the value itself when it is falsy but not
+`false`. An empty string renders as nothing visible but still produces a text
+node, and `0` renders a literal `0` on the page — a bug that reaches
+production because the happy path looks correct.
+
+```tsx
+// Do — a ternary cannot leak, and TypeScript narrows through it.
+{error ? <FormAlert message={error} /> : null}
+
+// Do — an explicit comparison is already boolean.
+{items.length > 0 ? <List items={items} /> : null}
+
+// Do — a genuine boolean is fine with &&.
+{isReady && <Content />}
+
+// Do not.
+{error && <FormAlert message={error} />}
+{items.length && <List items={items} />}
+```
+
+Prefer the ternary over `Boolean(x) &&`: `Boolean()` does not narrow, so the
+branch below it still sees the nullable type.
 
 ---
 
@@ -140,6 +190,43 @@ TypeScript, or the application's own client produced them.
 
 Use one canonical schema per contract and derive client and server types from it.
 Return field-safe validation errors to users without exposing internals.
+
+## No raw external input
+
+**A value that came from outside the process is parsed before it is read.**
+Added 2026-09-26 in review. That includes query parameters, even when the code
+only compares them to a literal:
+
+```tsx
+// Do — the schema owns the fallback, and it is the same on every screen.
+const mode = authModeSchema.parse(useSearchParams().get("mode"));
+
+// Do not — a second reader will pick a different default, and a URL that can
+// put arbitrary text on the page is where content injection starts.
+const mode = searchParams.get("mode") === "login" ? "login" : "signup";
+```
+
+Use `.catch(...)` for a value with a sensible default (a display mode, a
+notice) and `.safeParse` where the caller must handle the failure (a route
+parameter that should 404).
+
+## Compiled schemas
+
+**Schemas on a per-request path are compiled once at module scope.** Added
+2026-09-26 in review.
+
+`z.compile` (Zod 4.6) builds the validator ahead of time instead of walking
+the schema tree on every call. It returns the same `parse` / `safeParse` and
+the same issue shape, so only the cost changes.
+
+```ts
+// features/<feature>/contracts.ts
+export const compiledProfileUpdateSchema = z.compile(profileUpdateSchema);
+```
+
+Compile at module scope, never inside a handler — compiling is the expensive
+half, so compiling per call is slower than not compiling at all. Schemas that
+run once per process, such as environment parsing, stay uncompiled.
 
 ---
 
@@ -293,6 +380,44 @@ fallbacks, and shadcn/Tailwind styling.
 
 ---
 
+# 11.1 Routing
+
+Added 2026-09-26 in review.
+
+**No route is written as a string literal outside `lib/routes.ts`.** A path
+typed at a call site cannot be renamed safely, cannot be found reliably, and a
+typo in one is a broken link nobody notices until someone clicks it.
+
+```tsx
+// Do
+<Link href={routes.publisher(profile.username)}>
+redirect(routes.dashboard.root());
+
+// Do not
+<Link href={`/u/${profile.username}`}>
+redirect("/dashboard");
+```
+
+Two shapes live in that module and they are not interchangeable:
+
+* `routes.*` build a concrete href, for links and redirects.
+* `routePatterns.*` are Next.js segment patterns (`/publishers/[username]`),
+  for `revalidatePath(pattern, "page")`. Passing a concrete href where a
+  pattern is expected silently revalidates nothing — Next.js does not report
+  it.
+
+**Route segments are words, not initials.** `/publishers/:username`, not
+`/u/:username`. The segment is read by people, shared in messages and read
+aloud; a single letter says nothing about what is on the other side of it.
+`/u` was renamed in this review.
+
+**A new top-level route reserves its own name.** `RESERVED_ROUTE_SEGMENTS` in
+`lib/routes.ts` feeds the reserved-username list, because usernames occupy
+the same namespace — adding a route without reserving it lets an existing
+account shadow a page.
+
+---
+
 # 12. Dependency Rules
 
 Before installing a package:
@@ -324,7 +449,28 @@ Errors must be:
 * actionable where possible
 * logged appropriately
 
-Never silently swallow errors.
+## One place for codes, wording and logging
+
+Restructured 2026-09-26 in review.
+
+* **Codes** are the `ApplicationErrorCode` union in `lib/errors.ts`. A feature
+  does not invent its own string.
+* **Wording** shown to a person comes from `USER_FACING_MESSAGES`, via
+  `toUserMessage(error)`. A message written at the throw site is invisible to
+  translation and drifts from what a sibling path says about the same failure.
+  The one exception is `VALIDATION_FAILED`, whose message is written for a
+  specific field.
+* **Logging** goes through `createLogger(scope)` in `lib/logging.ts`. Never
+  call `console.*` directly; `lint/suspicious/noConsole` enforces it, and the
+  logger module is the single opt-out.
+* **Boundaries translate, layers throw.** The BLL and DAL throw
+  `ApplicationError`; the Server Action converts it to a `FormResult` and logs
+  it. A value that is not an `ApplicationError` is a bug: log it and rethrow
+  so the error boundary still sees it.
+
+Never silently swallow errors. Where a failure genuinely must not surface —
+cleanup after a write that already succeeded — the `catch` logs and says in a
+comment why surfacing it would be worse. An empty `catch {}` is never correct.
 
 Never expose:
 
@@ -412,6 +558,18 @@ Test layer boundaries:
 * UI tests cover TanStack Form, Query, Table, and Charts behavior that users rely on.
 
 A feature is not complete because the UI appears to work.
+
+## Fixtures, not literals
+
+Added 2026-09-26 in review. Identifiers, usernames, paths and URLs that more
+than one assertion needs live in a colocated `test-fixtures.ts`, not retyped
+per assertion — a literal repeated across a file is the same hazard in a test
+as in production code, because a change updates some copies and leaves the
+rest asserting the old world.
+
+Host names come from that fixture module's `TEST_ENV`, which reads an
+environment variable with a `.invalid` fallback, so no test hard-codes a real
+domain and none can reach one.
 
 ---
 

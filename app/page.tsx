@@ -2,6 +2,7 @@ import { BarChart3, Globe, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { routes } from "@/lib/routes";
 
 const FEATURES = [
   {
@@ -76,13 +77,13 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
-                  href="/auth?mode=signup"
+                  href={routes.auth.signUp()}
                   className="rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
                 >
                   Start publishing free
                 </Link>
                 <Link
-                  href="/discover"
+                  href={routes.discover()}
                   className="rounded-md border border-border px-8 py-4 text-lg font-medium transition-colors hover:bg-white/5"
                 >
                   Browse events
@@ -166,7 +167,7 @@ export default function LandingPage() {
               event and start sharing the link.
             </p>
             <Link
-              href="/auth?mode=signup"
+              href={routes.auth.signUp()}
               className="inline-block rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
             >
               Create your page →

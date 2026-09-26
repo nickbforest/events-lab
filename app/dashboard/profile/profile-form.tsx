@@ -49,7 +49,11 @@ const SOCIAL_LABELS: Record<
   },
 };
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export interface ProfileFormProps {
+  profile: Profile;
+}
+
+export function ProfileForm({ profile }: ProfileFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [serverFieldErrors, setServerFieldErrors] = useState<
@@ -401,11 +405,11 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </div>
       </FormSection>
 
-      {formError && (
+      {formError ? (
         <div className="mb-5">
           <FormAlert message={formError} />
         </div>
-      )}
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
         {/* Advisory, not an error — announced politely rather than as an alert. */}

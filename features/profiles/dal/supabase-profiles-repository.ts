@@ -168,7 +168,9 @@ export function createSupabaseProfilesRepository(
           (path) => path !== keepPath && path.startsWith(`${ownerId}/${kind}-`),
         );
 
-      if (stale.length === 0) return;
+      if (stale.length === 0) {
+        return;
+      }
 
       const { error: removeError } = await bucket.remove(stale);
       if (removeError) {

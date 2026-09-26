@@ -91,9 +91,13 @@ export function createAnalyticsService(
 
       for (const row of owned) {
         const day = dayStart(Date.parse(row.occurred_at));
-        if (day < from || day > end) continue;
+        if (day < from || day > end) {
+          continue;
+        }
         const bucket = buckets.get(dayKey(day));
-        if (!bucket) continue;
+        if (!bucket) {
+          continue;
+        }
 
         if (row.metric === "page_view") {
           bucket.visits += 1;

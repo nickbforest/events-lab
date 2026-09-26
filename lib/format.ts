@@ -40,7 +40,9 @@ export function formatEventTimeRange(
   timeZone: string,
 ) {
   const start = partsInZone(startIso, timeZone).time;
-  if (!endIso) return start;
+  if (!endIso) {
+    return start;
+  }
   return `${start} — ${partsInZone(endIso, timeZone).time}`;
 }
 
@@ -115,6 +117,8 @@ export const EVENT_STATUS_META: Record<
 };
 
 export function priceLabel(isFree: boolean, priceInfo: string | null) {
-  if (isFree) return "Free";
+  if (isFree) {
+    return "Free";
+  }
   return priceInfo?.trim() || "Paid";
 }

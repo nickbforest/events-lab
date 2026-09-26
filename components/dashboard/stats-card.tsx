@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
 
+export interface StatsCardProps {
+  label: string;
+  value: number | string;
+  icon?: ReactNode;
+  accent?: boolean;
+}
+
 /**
  * A headline metric. Per the dataviz form heuristic a single number is a stat
  * tile, not a chart — the trend beside it is what gets plotted.
@@ -13,23 +20,18 @@ export function StatsCard({
   value,
   icon,
   accent = false,
-}: {
-  label: string;
-  value: number | string;
-  icon?: ReactNode;
-  accent?: boolean;
-}) {
+}: StatsCardProps) {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {label}
         </div>
-        {icon && (
+        {icon ? (
           <div className="shrink-0 text-muted-foreground" aria-hidden>
             {icon}
           </div>
-        )}
+        ) : null}
       </div>
       <div
         className={cn(
@@ -43,8 +45,12 @@ export function StatsCard({
   );
 }
 
+export interface StatsCardRowProps {
+  children: ReactNode;
+}
+
 /** Groups stat tiles into one bordered panel split by hairline dividers. */
-export function StatsCardRow({ children }: { children: ReactNode }) {
+export function StatsCardRow({ children }: StatsCardRowProps) {
   return (
     <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card/30 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
       {children}

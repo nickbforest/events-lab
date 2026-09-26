@@ -4,6 +4,23 @@ import { Upload } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/format";
 
+export interface ImageUploaderProps {
+  id: string;
+  label: string;
+  /** Format and size limit, stated inside the frame. */
+  hint?: string;
+  /** What the image is used for, stated below the frame. */
+  description?: string;
+  accept?: string;
+  /** Constrains the frame — a square target should not stretch the form. */
+  className?: string;
+  /** The image currently stored, or a local preview of one being uploaded. */
+  previewUrl?: string | null;
+  onSelect?: (file: File) => void;
+  busy?: boolean;
+  error?: string;
+}
+
 /**
  * Cover/avatar upload target.
  *
@@ -23,22 +40,7 @@ export function ImageUploader({
   onSelect,
   busy = false,
   error,
-}: {
-  id: string;
-  label: string;
-  /** Format and size limit, stated inside the frame. */
-  hint?: string;
-  /** What the image is used for, stated below the frame. */
-  description?: string;
-  accept?: string;
-  /** Constrains the frame — a square target should not stretch the form. */
-  className?: string;
-  /** The image currently stored, or a local preview of one being uploaded. */
-  previewUrl?: string | null;
-  onSelect?: (file: File) => void;
-  busy?: boolean;
-  error?: string;
-}) {
+}: ImageUploaderProps) {
   const message = error ?? description;
 
   return (
@@ -55,7 +57,7 @@ export function ImageUploader({
           className,
         )}
       >
-        {previewUrl && (
+        {previewUrl ? (
           <>
             <Image
               src={previewUrl}
@@ -68,7 +70,7 @@ export function ImageUploader({
             />
             <span aria-hidden className="absolute inset-0 bg-black/40" />
           </>
-        )}
+        ) : null}
         <Upload className="relative size-5 text-muted-foreground" aria-hidden />
         <span className="relative font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {busy
@@ -92,11 +94,13 @@ export function ImageUploader({
             const file = event.target.files?.[0];
             // Reset so choosing the same file again still fires a change.
             event.target.value = "";
-            if (file) onSelect?.(file);
+            if (file) {
+              onSelect?.(file);
+            }
           }}
         />
       </label>
-      {message && (
+      {message ? (
         <p
           id={`${id}-message`}
           className={cn(
@@ -106,7 +110,7 @@ export function ImageUploader({
         >
           {message}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

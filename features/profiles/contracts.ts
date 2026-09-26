@@ -140,3 +140,20 @@ export const profileMediaSchema = z.object({
 
 export type ProfileMediaKind = z.infer<typeof profileMediaKindSchema>;
 export type ProfileMediaInput = z.infer<typeof profileMediaSchema>;
+
+/**
+ * Compiled parsers for the schemas a request hits on every submit.
+ *
+ * `z.compile` (Zod 4.6) builds the validator once instead of walking the
+ * schema tree on each `safeParse`. The result exposes the same `parse` /
+ * `safeParse` and the same issue shape, so call sites do not change — only
+ * the cost does.
+ *
+ * Compile at module scope, never per call: compiling is the expensive half,
+ * and doing it inside a handler is slower than not compiling at all. Schemas
+ * that run once per process (environment parsing) are deliberately left
+ * uncompiled.
+ */
+export const compiledProfileUpdateSchema = z.compile(profileUpdateSchema);
+export const compiledProfileMediaSchema = z.compile(profileMediaSchema);
+export const compiledUsernameSchema = z.compile(usernameSchema);

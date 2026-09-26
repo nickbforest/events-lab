@@ -2,23 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ProfileUpdateInput } from "@/features/profiles/contracts";
 import type { ProfilesRepository } from "@/features/profiles/dal/profiles-repository";
-import type { Profile } from "@/lib/types";
-
 import { createProfilesService } from "./profiles-service";
-
-const storedProfile: Profile = {
-  id: "owner-1",
-  username: "nickb",
-  display_name: "Nick B",
-  publisher_type: "artist",
-  bio: null,
-  avatar_url: null,
-  cover_url: null,
-  website_url: null,
-  city: null,
-  country_code: null,
-  social_links: {},
-};
+import {
+  AVATAR_PATH,
+  AVATAR_URL,
+  emptySocialLinks,
+  OWNER_DISPLAY_NAME,
+  OWNER_ID,
+  PROFILE_TWITTER_URL,
+  storedProfile,
+} from "./test-fixtures";
 
 function createRepository(
   overrides: Partial<ProfilesRepository> = {},
@@ -29,8 +22,8 @@ function createRepository(
     isUsernameTaken: vi.fn(async () => false),
     update: vi.fn(async () => storedProfile),
     uploadMedia: vi.fn(async () => ({
-      path: "owner-1/avatar-new.png",
-      publicUrl: "https://cdn.example/owner-1/avatar-new.png",
+      path: AVATAR_PATH,
+      publicUrl: AVATAR_URL,
     })),
     setMediaUrl: vi.fn(async () => storedProfile),
     removeMediaExcept: vi.fn(async () => undefined),
@@ -39,21 +32,13 @@ function createRepository(
 }
 
 const updateInput: ProfileUpdateInput = {
-  displayName: "Nick B",
+  displayName: OWNER_DISPLAY_NAME,
   publisherType: "artist",
   bio: null,
   city: null,
   countryCode: null,
   websiteUrl: null,
-  socialLinks: {
-    twitter: "https://twitter.com/nickb",
-    instagram: null,
-    facebook: null,
-    youtube: null,
-    soundcloud: null,
-    spotify: null,
-    apple_music: null,
-  },
+  socialLinks: { ...emptySocialLinks, twitter: PROFILE_TWITTER_URL },
 };
 
 describe("isUsernameAvailable", () => {
@@ -86,11 +71,11 @@ describe("updateProfile", () => {
     const repository = createRepository();
     const service = createProfilesService(repository);
 
-    await service.updateProfile("owner-1", updateInput);
+    await service.updateProfile(OWNER_ID, updateInput);
 
     expect(repository.update).toHaveBeenCalledWith(
-      "owner-1",
-      expect.objectContaining({ display_name: "Nick B" }),
+      OWNER_ID,
+      expect.objectContaining({ display_name: OWNER_DISPLAY_NAME }),
     );
   });
 
@@ -98,11 +83,11 @@ describe("updateProfile", () => {
     const repository = createRepository();
     const service = createProfilesService(repository);
 
-    await service.updateProfile("owner-1", updateInput);
+    await service.updateProfile(OWNER_ID, updateInput);
 
     const [, patch] = vi.mocked(repository.update).mock.calls[0];
     expect(patch.social_links).toEqual({
-      twitter: "https://twitter.com/nickb",
+      twitter: PROFILE_TWITTER_URL,
     });
   });
 
@@ -110,7 +95,7 @@ describe("updateProfile", () => {
     const repository = createRepository();
     const service = createProfilesService(repository);
 
-    await service.updateProfile("owner-1", updateInput);
+    await service.updateProfile(OWNER_ID, updateInput);
 
     const [, patch] = vi.mocked(repository.update).mock.calls[0];
     expect(patch).not.toHaveProperty("username");
@@ -126,8 +111,8 @@ describe("updateProfileMedia", () => {
       uploadMedia: vi.fn(async () => {
         calls.push("upload");
         return {
-          path: "owner-1/avatar-new.png",
-          publicUrl: "https://cdn.example/owner-1/avatar-new.png",
+          path: AVATAR_PATH,
+          publicUrl: AVATAR_URL,
         };
       }),
       setMediaUrl: vi.fn(async () => {
@@ -139,21 +124,21 @@ describe("updateProfileMedia", () => {
       }),
     });
 
-    await createProfilesService(repository).updateProfileMedia("owner-1", {
+    await createProfilesService(repository).updateProfileMedia(OWNER_ID, {
       kind: "avatar",
       file,
     });
 
     expect(calls).toEqual(["upload", "setUrl", "cleanup"]);
     expect(repository.setMediaUrl).toHaveBeenCalledWith(
-      "owner-1",
+      OWNER_ID,
       "avatar",
-      "https://cdn.example/owner-1/avatar-new.png",
+      AVATAR_URL,
     );
     expect(repository.removeMediaExcept).toHaveBeenCalledWith(
-      "owner-1",
+      OWNER_ID,
       "avatar",
-      "owner-1/avatar-new.png",
+      AVATAR_PATH,
     );
   });
 
@@ -165,7 +150,7 @@ describe("updateProfileMedia", () => {
     });
 
     await expect(
-      createProfilesService(repository).updateProfileMedia("owner-1", {
+      createProfilesService(repository).updateProfileMedia(OWNER_ID, {
         kind: "cover",
         file,
       }),
@@ -184,7 +169,7 @@ describe("updateProfileMedia", () => {
     });
 
     await expect(
-      createProfilesService(repository).updateProfileMedia("owner-1", {
+      createProfilesService(repository).updateProfileMedia(OWNER_ID, {
         kind: "avatar",
         file,
       }),

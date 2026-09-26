@@ -6,6 +6,11 @@ import {
 } from "@/features/analytics/contracts";
 import { cn } from "@/lib/format";
 
+export interface RangeTabsProps {
+  active: AnalyticsRange;
+  basePath?: string;
+}
+
 /**
  * Time-range selector for the overview.
  *
@@ -13,13 +18,7 @@ import { cn } from "@/lib/format";
  * series, so it belongs in the URL — which also makes a range shareable and
  * survivable across a refresh, and keeps the page a Server Component.
  */
-export function RangeTabs({
-  active,
-  basePath = "/dashboard",
-}: {
-  active: AnalyticsRange;
-  basePath?: string;
-}) {
+export function RangeTabs({ active, basePath = "/dashboard" }: RangeTabsProps) {
   return (
     <nav
       aria-label="Time range"

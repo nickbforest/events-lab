@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 
+import { authModeSchema } from "@/features/auth/contracts";
+
 import { LoginForm } from "./login-form";
 import { SignupForm } from "./signup-form";
 
@@ -12,8 +14,9 @@ import { SignupForm } from "./signup-form";
  * between those links actually switches the form.
  */
 export function AuthForm() {
-  const searchParams = useSearchParams();
-  const mode = searchParams.get("mode") === "login" ? "login" : "signup";
+  // Parsed, not compared: the value comes from the URL, and the schema is
+  // the one place that decides what a missing or unknown mode falls back to.
+  const mode = authModeSchema.parse(useSearchParams().get("mode"));
 
   return mode === "login" ? <LoginForm /> : <SignupForm />;
 }
