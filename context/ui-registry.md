@@ -740,6 +740,12 @@ A real `<button role="switch">` with `aria-checked`, never a styled checkbox
 or a div. The role is what makes a screen reader say "switch, on", and the
 button gives keyboard reach plus Space and Enter for free.
 
+**The button wraps the state label as well as the track.** The text beside a
+toggle is the obvious thing to aim at — leaving it outside the control gives
+a dead zone that shows an arrow and does nothing on click. Track and label
+are one target, and the label brightens on `group-hover` so the whole control
+reacts together.
+
 The state is always spelled out in text beside the track (ui-rules.md §16):
 lime-or-not is invisible in greyscale and to a colour-blind viewer. The label
 carries the real state where there is one — an events row shows "Published",

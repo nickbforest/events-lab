@@ -386,5 +386,13 @@ The rule lives once in `app/globals.css` under `@layer base`, covering
 wrapping one, and `summary`. Disabled controls are excluded so they keep the
 default arrow; a component wanting `not-allowed` still sets it itself.
 
-Do not add `cursor-pointer` per component. If something clickable is missing
-the cursor, the base rule needs another selector.
+Do not sprinkle `cursor-pointer` per component. If something clickable is
+missing the cursor, the base rule needs another selector.
+
+Two exceptions, both about the shape of the target rather than the cursor:
+
+- A compound control states it explicitly, because the cursor is part of
+  what tells you the whole thing is one button (see `Switch`).
+- A control's visible label belongs **inside** its `<button>`, not beside it.
+  Text next to a toggle is the obvious thing to aim at; leaving it outside
+  makes a dead zone that shows an arrow and does nothing when clicked.
