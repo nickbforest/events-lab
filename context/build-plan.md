@@ -221,6 +221,12 @@ Deviations from the original plan, each agreed before implementation:
 5. **Ticket button label.** `events.ticket_cta_label` was added so the public
    button reads what the publisher chose, not a fixed "Get tickets".
 
+UI polish after completion (2026-09-26) — list rows, publish toggle, upload
+feedback, image replace/remove, select heights, public-page and footer
+cleanup, logo → Overview, previews in a new tab — is recorded in
+`progress-tracker.md` under "Phase 4 post-completion refinements". None of it
+changes the plan; it is not yet browser-verified.
+
 Implement:
 
 * [x] Event database model
@@ -387,7 +393,7 @@ Implement only required notifications:
 * [ ] Tablet review
 * [ ] Desktop review
 * [ ] Accessibility review
-* [ ] Loading states
+* [ ] Loading states — upload feedback done 2026-09-26; the rest open
 * [ ] Error states
 * [ ] Empty states
 

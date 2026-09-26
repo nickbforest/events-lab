@@ -14,8 +14,8 @@
 
 # Current Project Status
 
-**Current phase:** Phase 4 complete on `feat/phase-4-events`, branched from
-the still-unmerged `feat/phase-2-profiles` (PR #6). Phase 3 Organizations is
+**Current phase:** Phase 4 complete on `feat/phase-4-events`, on top of
+`main` (PR #6, Phase 2, is merged). Phase 3 Organizations is
 deferred post-MVP. Next is Phase 5 — Location & Media.
 
 **Phase numbering:** `build-plan.md` and this tracker were reconciled on
@@ -410,10 +410,12 @@ using the screens.
 | Selects | New `SelectControl` in `components/forms/field.tsx`; every dashboard select (publisher type, category, event type, time zone) is now the same 42px height as the text inputs. |
 | Public page | Removed the "Publishing your own events? Claim your events-lab page" box from `/publishers/:username`. |
 | Footer | `SiteFooter` is now the wordmark only; the Discover, Start publishing and "Prototype" items are gone. |
+| Logo | New `WordmarkLink`. In the dashboard the logo goes to Overview, never the landing page; on the public header it goes home. On the page it already points at, it reloads. Sidebar nav hrefs now come from `lib/routes.ts`. |
+| Sidebar page link | `events-lab/:username` at the foot of the sidebar opens the preview in a new tab, like every other preview link. |
 
-Validation for the last five rows: `biome check` clean, `tsc` clean,
-`vitest` 10 files / 123 tests, `next build` passed. Not yet checked in the
-browser.
+Validation for the rows from Uploads down: `biome check` clean, `tsc`
+clean, `vitest` 10 files / 123 tests, `next build` passed. Not yet checked
+in the browser.
 
 ---
 
@@ -592,4 +594,5 @@ coordinates, showing it on a map, and answering "near me".
 | 2026-09-26 | Country typed, stored as ISO code | Free text is faster than a 250-row select; resolving to a code keeps discovery filters from splitting one country three ways |
 | 2026-09-26 | OpenStreetMap link before Mapbox | A plain hyperlink needs no key or SDK, so it does not introduce a second map provider |
 | 2026-09-26 | Indeterminate upload progress | Server Actions report no byte progress; a fake percentage would claim what the app cannot measure |
+| 2026-09-26 | Dashboard logo leads to Overview | A signed-in publisher has no use for the public landing page mid-task |
 | 2026-09-26 | Profile media is removable | Clearing the column first, then deleting files, mirrors the replace order: a failure never leaves a broken image referenced |
