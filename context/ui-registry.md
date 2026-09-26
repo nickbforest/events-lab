@@ -237,7 +237,7 @@ Nav items pair a `size-4` lucide icon with a `gap-3` label; the active item is
 marked with `aria-current="page"` and `bg-white/5`. Order is fixed: Overview,
 Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
 `border-t` footer holding the public preview link (`font-mono text-xs`,
-`ExternalLink` at `size-3`) and Sign out.
+`ExternalLink` at `size-3`) and Sign out. The preview link opens `routes.publisherPreview` in a new tab (`target="_blank" rel="noopener noreferrer"`, with an `sr-only` ", opens in a new tab"), like every preview link in the dashboard.
 Sign out is always last and uses the same idle-nav-item treatment rather than
 a destructive color — it is a navigation action, not a dangerous one.
 

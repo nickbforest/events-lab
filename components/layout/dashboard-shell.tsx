@@ -88,13 +88,18 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
           </nav>
 
           <div className="space-y-1 border-t border-border pt-6">
-            <Link
-              href={routes.publisher(username)}
+            {/* A new tab, like every other preview link: the publisher keeps
+                their place in the dashboard. */}
+            <a
+              href={routes.publisherPreview(username)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
             >
               <ExternalLink className="size-3" aria-hidden />
               events-lab/{username}
-            </Link>
+              <span className="sr-only">, opens in a new tab</span>
+            </a>
             {/* A form, not a click handler: signing out clears httpOnly
                 cookies, which only the server can do. */}
             <form action={signOutAction}>
