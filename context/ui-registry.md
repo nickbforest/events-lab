@@ -677,6 +677,73 @@ input removes the last one. The input disables itself at the limit rather than
 silently dropping what is typed. Each chip's remove button carries an
 `sr-only` label naming the tag it removes.
 
+### EventCard
+
+File: components/events/event-card.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/30`                                        |
+| Border           | `border border-border`; location rail `border-l-2 border-primary` |
+| Border radius    | `rounded-lg`; poster `rounded`; ticket button `rounded-md` |
+| Text — primary   | title `font-display text-2xl font-extrabold uppercase tracking-tight md:text-3xl`; day `text-4xl md:text-5xl` |
+| Text — secondary | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
+| Spacing          | card `p-6`, `gap-6 md:gap-8`; blocks `mb-5`         |
+| Hover state      | `hover:border-primary/50`, title `group-hover:text-primary` |
+| Shadow           | none                                                |
+| Accent usage     | category kicker, location rail and pin, map link, ticket button |
+
+**Pattern notes:**
+Carries everything needed to decide without opening the event: category, day
+and month, poster, title, summary, location, description and the way in.
+
+**The card is not wrapped in an anchor.** The ticket and map links inside it
+would be nested anchors — invalid markup that browsers resolve by breaking
+one of them. The title's `<Link>` stretches over the card with
+`after:absolute after:inset-0`, and the inner links sit above it on
+`relative z-10`. Any future card with a control inside it does the same.
+
+The date rail is a horizontal strip on mobile and a column from `md`, so the
+poster sits beside the date on a phone rather than pushing the title down.
+
+The description is `line-clamp-4`: a listing where one event runs three
+screens tall has stopped being a listing. The event page has the whole text.
+
+The ticket button uses `event.ticket_cta_label`, falling back to "Get
+tickets", and is hidden entirely for a cancelled event — sending someone to
+buy a ticket for an event that is off is worse than showing nothing.
+
+### EventRowActions
+
+File: app/dashboard/events/event-row-actions.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | transparent; hover `hover:bg-white/5`, destructive `hover:bg-destructive/10` |
+| Border           | none at rest; confirm buttons `border border-border` / `border-destructive/40` |
+| Border radius    | `rounded-md`                                        |
+| Text — primary   | icons only, `size-4`                                |
+| Text — secondary | confirm prompt `font-mono text-xs uppercase text-muted-foreground` |
+| Spacing          | buttons `size-8`, row `gap-1`; confirm row `gap-2`  |
+| Hover state      | `hover:text-foreground`; destructive `hover:text-destructive` |
+| Shadow           | none                                                |
+| Accent usage     | none — a row of actions is not a call to action     |
+
+**Pattern notes:**
+Three controls per row: publish/unpublish (an eye that flips to a struck-out
+eye), edit, delete. Only the toggle is inline — cancel and postpone change
+what a ticket holder sees, so they stay on the edit page rather than sitting
+one stray click away in a list.
+
+Delete confirms in place: the icons are replaced by "Delete? Yes / No" in the
+same cell. No `confirm()`, no modal for a decision this small.
+
+Every control carries an `sr-only` label naming the event. A column of
+identical icons is unusable otherwise, and `title` alone is not announced
+reliably.
+
 ### EventLifecycle
 
 File: app/dashboard/events/[id]/edit/event-lifecycle.tsx

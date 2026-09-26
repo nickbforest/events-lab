@@ -1,4 +1,4 @@
-import { CalendarPlus, Eye, Pencil, Plus } from "lucide-react";
+import { CalendarPlus, Eye, Plus } from "lucide-react";
 import Link from "next/link";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
@@ -9,6 +9,7 @@ import { formatEventDate, isoDateTime } from "@/lib/format";
 import { routes } from "@/lib/routes";
 
 import { NewEventProvider, NewEventTrigger } from "./event-create-dialog";
+import { EventRowActions } from "./event-row-actions";
 
 export default async function DashboardEventsPage() {
   const profile = await getCurrentProfile();
@@ -100,14 +101,11 @@ export default async function DashboardEventsPage() {
                           <EventStatusBadge status={event.status} />
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <Link
-                            href={routes.dashboard.editEvent(event.id)}
-                            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-muted-foreground transition-colors hover:text-primary"
-                          >
-                            <Pencil className="size-3" aria-hidden />
-                            Edit
-                            <span className="sr-only"> {event.title}</span>
-                          </Link>
+                          <EventRowActions
+                            eventId={event.id}
+                            title={event.title}
+                            status={event.status}
+                          />
                         </td>
                       </tr>
                     );
