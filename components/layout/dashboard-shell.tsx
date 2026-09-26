@@ -11,21 +11,32 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { WordmarkLink } from "@/components/layout/wordmark-link";
 import { signOutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/format";
 import { routes } from "@/lib/routes";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview", Icon: LayoutDashboard, exact: true },
   {
-    href: "/dashboard/events",
+    href: routes.dashboard.root(),
+    label: "Overview",
+    Icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    href: routes.dashboard.events(),
     label: "Events",
     Icon: CalendarDays,
     exact: false,
   },
-  { href: "/dashboard/profile", label: "Profile", Icon: User, exact: false },
   {
-    href: "/dashboard/settings",
+    href: routes.dashboard.profile(),
+    label: "Profile",
+    Icon: User,
+    exact: false,
+  },
+  {
+    href: routes.dashboard.settings(),
     label: "Settings",
     Icon: Settings,
     exact: false,
@@ -44,12 +55,12 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="border-b border-border bg-card/40 md:fixed md:inset-y-0 md:left-0 md:w-64 md:border-b-0 md:border-r">
         <div className="flex h-full flex-col p-6">
-          <Link
-            href="/"
-            className="mb-10 block font-display text-xl font-extrabold uppercase tracking-tighter"
-          >
-            events<span className="text-primary">-</span>lab
-          </Link>
+          {/* Inside the dashboard the logo means "back to Overview", never the
+              public landing page a signed-in publisher has no use for. */}
+          <WordmarkLink
+            href={routes.dashboard.root()}
+            className="mb-10 block"
+          />
 
           <nav aria-label="Dashboard" className="flex flex-1 flex-col gap-1">
             {NAV_ITEMS.map(({ href, label, Icon, exact }) => {

@@ -180,6 +180,13 @@ The public header carries exactly two actions — a ghost `Log in` and a solid
 app navigation: Discover is reached from the landing page, and the dashboard
 is reached from its own sidebar once signed in. Do not add nav links here.
 
+The wordmark is `WordmarkLink` (`components/layout/wordmark-link.tsx`, added
+2026-09-26), shared with the dashboard sidebar. It takes the destination:
+`routes.home()` here, `routes.dashboard.root()` (Overview) in the dashboard.
+From another page it is a client-side `<Link>`; on the page it already points
+at it renders a plain `<a>`, so clicking it reloads the page. Never hand-roll
+the wordmark as a link again.
+
 ### SiteFooter
 
 File: components/layout/site-footer.tsx
@@ -221,6 +228,11 @@ Last updated: 2026-09-03
 | Accent usage     | wordmark hyphen; preview link `hover:text-primary`  |
 
 **Pattern notes:**
+The sidebar wordmark leads to Overview, never to the public landing page —
+inside the dashboard, "click the logo" means "back to the start of the
+dashboard". It uses `WordmarkLink` (see `SiteHeader`). Nav items take their
+hrefs from `routes.dashboard.*`.
+
 Nav items pair a `size-4` lucide icon with a `gap-3` label; the active item is
 marked with `aria-current="page"` and `bg-white/5`. Order is fixed: Overview,
 Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
