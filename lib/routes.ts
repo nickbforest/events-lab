@@ -65,6 +65,7 @@ export const routes = {
     root: () => "/dashboard",
     events: () => "/dashboard/events",
     newEvent: () => "/dashboard/events/new",
+    editEvent: (eventId: string) => `/dashboard/events/${eventId}/edit`,
     profile: () => "/dashboard/profile",
     settings: () => "/dashboard/settings",
   },

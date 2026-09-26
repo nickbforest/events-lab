@@ -232,6 +232,15 @@ Codex must not introduce an ORM merely because it is commonly used.
 
 # 6. User Architecture
 
+> **MVP-1 amendment — 2026-09-26.** Sections 6–9 describe the target
+> architecture. MVP-1 does not build the organizations layer: a profile is the
+> publisher, classified by `publisher_type`, and events are owned by
+> `profiles.id`. A venue, band or business registers as a profile like anyone
+> else. The §7 type taxonomy survives as that enum; the §8 organization roles
+> and the §9 organization page do not exist yet. This costs shared publisher
+> accounts and multi-publisher users, and nothing else. See
+> `context/build-plan.md` Phase 3 and `context/progress-tracker.md` Phase 3.
+
 The primary relationship is:
 
 ```text
@@ -255,6 +264,9 @@ A user may:
 ---
 
 # 7. Organization Architecture
+
+> **MVP-1:** deferred — see the §6 amendment. The type list below is
+> implemented as the `public.publisher_type` enum on `profiles`.
 
 Organizations represent entities that publish events.
 
@@ -386,6 +398,14 @@ Do not store relational data in JSON when a proper relational model is appropria
 ---
 
 # 11. Event Status
+
+> **Implemented 2026-09-26 without `COMPLETED`.** The `event_status` enum is
+> `draft | published | cancelled | postponed | archived`. Whether an event has
+> finished is a fact about `end_at`, not an author's intent: storing it needs a
+> scheduled job, and until that job runs the row contradicts its own date.
+> Past-ness is derived in queries (`hasFinished` in the events service). The
+> `events_rls` test asserts the enum has no `completed` value, so restoring it
+> has to be a deliberate change.
 
 MVP statuses:
 

@@ -14,6 +14,165 @@ export type Database = {
   };
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string;
+          label: string;
+          slug: string;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          label: string;
+          slug: string;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          label?: string;
+          slug?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      event_tags: {
+        Row: {
+          event_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          event_id: string;
+          tag_id: string;
+        };
+        Update: {
+          event_id?: string;
+          tag_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_tags_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          address: string | null;
+          category_id: string;
+          city: string | null;
+          country_code: string | null;
+          cover_image_url: string | null;
+          created_at: string;
+          description: string | null;
+          end_at: string | null;
+          event_type: Database["public"]["Enums"]["event_type"];
+          external_url: string | null;
+          id: string;
+          is_free: boolean;
+          latitude: number | null;
+          longitude: number | null;
+          online_url: string | null;
+          owner_id: string;
+          price_info: string | null;
+          published_at: string | null;
+          search_vector: unknown;
+          short_description: string | null;
+          slug: string;
+          start_at: string;
+          status: Database["public"]["Enums"]["event_status"];
+          ticket_url: string | null;
+          timezone: string;
+          title: string;
+          updated_at: string;
+          venue_name: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          category_id: string;
+          city?: string | null;
+          country_code?: string | null;
+          cover_image_url?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_at?: string | null;
+          event_type?: Database["public"]["Enums"]["event_type"];
+          external_url?: string | null;
+          id?: string;
+          is_free?: boolean;
+          latitude?: number | null;
+          longitude?: number | null;
+          online_url?: string | null;
+          owner_id: string;
+          price_info?: string | null;
+          published_at?: string | null;
+          search_vector?: unknown;
+          short_description?: string | null;
+          slug: string;
+          start_at: string;
+          status?: Database["public"]["Enums"]["event_status"];
+          ticket_url?: string | null;
+          timezone: string;
+          title: string;
+          updated_at?: string;
+          venue_name?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          category_id?: string;
+          city?: string | null;
+          country_code?: string | null;
+          cover_image_url?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_at?: string | null;
+          event_type?: Database["public"]["Enums"]["event_type"];
+          external_url?: string | null;
+          id?: string;
+          is_free?: boolean;
+          latitude?: number | null;
+          longitude?: number | null;
+          online_url?: string | null;
+          owner_id?: string;
+          price_info?: string | null;
+          published_at?: string | null;
+          search_vector?: unknown;
+          short_description?: string | null;
+          slug?: string;
+          start_at?: string;
+          status?: Database["public"]["Enums"]["event_status"];
+          ticket_url?: string | null;
+          timezone?: string;
+          title?: string;
+          updated_at?: string;
+          venue_name?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "events_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -62,6 +221,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      tags: {
+        Row: {
+          created_at: string;
+          id: string;
+          label: string;
+          slug: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          label: string;
+          slug: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          label?: string;
+          slug?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -70,6 +250,13 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      event_status:
+        | "draft"
+        | "published"
+        | "cancelled"
+        | "postponed"
+        | "archived";
+      event_type: "in_person" | "online" | "hybrid";
       publisher_type:
         | "artist"
         | "band"
@@ -215,6 +402,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      event_status: [
+        "draft",
+        "published",
+        "cancelled",
+        "postponed",
+        "archived",
+      ],
+      event_type: ["in_person", "online", "hybrid"],
       publisher_type: [
         "artist",
         "band",

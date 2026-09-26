@@ -14,15 +14,20 @@
 
 # Current Project Status
 
-**Current phase:** Phase 2 complete. Next phase to be confirmed; see Phase 2
-follow-up 1 on the organizations scope.
+**Current phase:** Phase 4 complete on `feat/phase-4-events`, branched from
+the still-unmerged `feat/phase-2-profiles` (PR #6). Phase 3 Organizations is
+deferred post-MVP. Next is Phase 5 — Location & Media.
 
-**Overall MVP:** Authentication and profiles are real, including profile
-editing, avatar and cover uploads to Supabase Storage, and account settings.
-Events, discovery and analytics remain mock-backed until their own phases
-replace those adapters.
+**Phase numbering:** `build-plan.md` and this tracker were reconciled on
+2026-09-26 and now use the same numbers. Both were edited; neither is a
+stale copy.
 
-**Last updated:** 2026-09-21
+**Overall MVP:** Authentication, profiles and events are real. A publisher can
+create an event, upload a cover, publish it and see it at `/u/:username/:slug`.
+Discovery and analytics remain mock-backed until their own phases replace
+those adapters.
+
+**Last updated:** 2026-09-26
 
 ---
 
@@ -225,11 +230,10 @@ before it was committed.
 
 ### Open follow-ups
 
-1. **Organizations scope is undocumented.** On 2026-09-03, MVP-1 moved to a
-   personal publisher model (events owned by profiles, `/publishers/:username`). The
-   `profiles` migration says so, but `Architecture.md`, `build-plan.md` and
-   this tracker still list Phase 3 as Organizations. Decide whether Phase 3 is
-   deferred, and record it in the documents before planning the next phase.
+1. ~~**Organizations scope is undocumented.**~~ **Resolved 2026-09-26.** The
+   2026-09-03 personal publisher model is confirmed for MVP-1 and Phase 3 is
+   deferred post-MVP. See the Phase 3 section and the decision log for the
+   reasoning and the two capabilities it costs.
 2. **Custom SMTP is needed before launch.** Supabase's built-in email sends
    only a few emails an hour, and on this plan email templates cannot be
    edited without custom SMTP. This belongs with Phase 9's email-provider
@@ -251,9 +255,40 @@ before it was committed.
    loose `usernameSchema`, and the events screens restate the submit-button
    classes. Both belong to the Phase 4 events rebuild.
 
+8. **Publisher-neutral wording is not done.** The profile and settings copy
+   still assumes a person ("Display name", "Your avatar"). With one profile
+   serving people and venues alike it should read "Publisher name", "Logo or
+   photo" and so on. UI copy only — no schema change.
+
+9. **`publisher_type` is not asked at signup.** It silently defaults to
+   `other`. A single select on the signup form is the whole "person or
+   organization?" question under this model.
+
+10. **Open: `/u/:username` or `/p/:username`?** `u` means user, but the page
+    now represents venues and bands too. Changing the prefix is cheap today
+    and breaks every shared link after launch. Undecided.
+
 ---
 
-# Phase 3 — Organizations
+# Phase 3 — Organizations — DEFERRED POST-MVP (2026-09-26)
+
+MVP-1 publishes through profiles, not organizations. A profile already carries
+`publisher_type` (venue, business, theater, band, cinema, church …), so a bar's
+page and a person's page are the same row shape. An `organizations` table would
+restate that shape and add `organization_members`, an invite flow, four roles
+and membership-aware RLS on every event query.
+
+**What the deferral costs, exactly:**
+
+1. Two people cannot manage one publisher — a venue's staff share one login.
+2. One person cannot run two publishers — they need a second account.
+
+**Retrofit cost if that changes:** one organization per profile as a backfill,
+`events.organization_id`, and a rewrite of every events RLS policy. Bounded,
+but it grows once events exist. Revisit before launch if either capability
+above becomes a requirement.
+
+Deferred items:
 
 * [ ] Organization schema
 * [ ] Organization types
@@ -274,44 +309,95 @@ before it was committed.
 
 # Phase 4 — Events
 
-* [ ] Event schema
-* [ ] Event statuses
-* [ ] Event validation
-* [ ] Event creation
-* [ ] Event editing
-* [ ] Drafts
-* [ ] Publishing
-* [ ] Cancellation
-* [ ] Postponement
-* [ ] Completion/archive
-* [ ] Slugs
-* [ ] Event types
-* [ ] Categories
-* [ ] Tags
-* [ ] Free/paid
-* [ ] Online/in-person/hybrid
-* [ ] Date/time
-* [ ] Timezones
-* [ ] Recurrence
+* [x] Event schema
+* [x] Event statuses
+* [x] Event validation
+* [x] Event creation
+* [x] Event editing
+* [x] Drafts
+* [x] Publishing
+* [x] Cancellation
+* [x] Postponement
+* [x] Archive — and **no** completion status; see the decision below
+* [x] Slugs
+* [x] Event types
+* [x] Categories
+* [x] Tags
+* [x] Free/paid
+* [x] Online/in-person/hybrid
+* [x] Date/time
+* [x] Timezones
+* [x] Cover image — pulled forward from Phase 5
+* [ ] Recurrence — deferred, not cancelled
+
+## Phase 4 completion record — 2026-09-26
+
+Branch `feat/phase-4-events`, off the unmerged `feat/phase-2-profiles`, so its
+PR stacks on PR #6 and must merge after it. Built from an `/architect`
+blueprint confirmed before any code was written.
+
+| Area | What was built |
+| --- | --- |
+| Schema | `20260926120000_create_events.sql`: `event_type` and `event_status` enums, `categories` (seeded with 8), `tags`, `events`, `event_tags`. Six indexes including a partial index for public upcoming lists and a GIN index on a generated `search_vector` that stays unused until discovery. |
+| Constraints | Structural only — end after start, coordinate ranges, two-letter country, per-owner slug uniqueness, and a public status requiring `published_at`. Publish-readiness is a BLL rule, because a draft is allowed to be incomplete and a CHECK would refuse to save one. |
+| RLS | Drafts and archived events are owner-only; published, cancelled and postponed are public. Cancelled stays visible on purpose — a ticket holder needs to see it was called off, not a 404. `event_tags` follows its event. `categories` has a read policy and no write policy, so the list can only change by migration. |
+| Storage | `20260926120500_create_event_media_bucket.sql`: `event-media`, 5MB, PNG/JPEG/WebP, owner-folder policies matching `profile-media`. The path carries no event id because the cover uploads before the row exists. |
+| Contracts | `eventDraftSchema` is permissive by design. `timezoneSchema` validates against the runtime's IANA list, which Postgres cannot do in a CHECK. Tags are entered free-form and canonicalised to a slug, so "Live Music" and "live-music" converge. The loose duplicate `usernameSchema` in events contracts was deleted in favour of the profiles one. |
+| BLL | Slug generation with collision suffixes, publish-readiness as plain predicates, status transitions, and `hasFinished` deriving past-ness from `end_at`. |
+| DAL | `supabase-events-repository.ts`. Filtering moved into SQL — the interface no longer exposes "list everything", which is what made the in-memory version load every row. |
+| Dates | `lib/datetime.ts` converts between `datetime-local` readings and instants for a named zone using `Intl`, resolved in two passes so a daylight-saving boundary lands correctly. `date-fns` v4 needs the separate `@date-fns/tz` package for this; 60 lines beat a dependency. |
+| UI | One `EventForm` serves create and edit. Inapplicable fields are absent rather than disabled. New `/dashboard/events/[id]/edit` with an `EventLifecycle` panel for publish, postpone, cancel, unpublish and a two-step delete. |
+| Removed | `InMemoryEventsRepository` and `NewEventDialog`. The dialog was a second, non-functional copy of the create form; its triggers now link to the real page. |
+
+### Validation results
+
+| Check | Result |
+| --- | --- |
+| `biome check .` | Passed across 119 files. |
+| `tsc --noEmit` | Passed. |
+| `vitest run` | Passed 8 files, 107 tests (77 at the end of Phase 2). |
+| `next build` | Passed; 18 routes. |
+| RLS and Storage | `events_rls.test.sql` (22 assertions) and `event_media_storage.test.sql` (9) added. pgTAP still needs Docker, so they were not run as a suite. Their equivalents were run against the hosted project in rolled-back transactions: 12 structural checks, 6 constraint probes, 12 RLS probes, 6 storage probes. All held, and no probe rows remained. |
+| Security advisors | Only the pre-existing "leaked password protection disabled" warning. |
+| Performance advisors | Three "unused index" notices, expected on an empty table. `events_search_idx` is deliberately unused until discovery. |
+| In browser | **Not yet done.** Every check above is automated or database-level; nobody has created an event through the UI. |
+
+### Open follow-ups
+
+1. **Nothing has been exercised in the browser.** Create, publish, edit,
+   cover upload, cancel, delete and the public page are all unverified by a
+   human. That is the first task of the next session.
+2. **Discovery and analytics are still mock-backed** and now inconsistent with
+   reality: `/discover` reads `lib/mock-data.ts`, where `EVENTS` is empty, so
+   it shows nothing while real events exist. Phase 7 replaces that adapter.
+3. **Recurrence is deferred.** See `build-plan.md` Phase 4.
+4. **No pagination anywhere.** Owner and public lists are unbounded. Fine at
+   current volumes, and Phase 7 introduces pagination properly.
+5. **`search_vector` is written but never read.** Intentional; Phase 7 uses it.
+6. **Categories are fixed at the seeded eight.** Changing them needs a
+   migration, which is the point, but there is no admin surface for it.
 
 ---
 
 # Phase 5 — Location & Media
 
-* [ ] Venue
-* [ ] Address
-* [ ] City
-* [ ] Country
-* [ ] Coordinates
+* [x] Venue — column and form field, Phase 4
+* [x] Address — column and form field, Phase 4
+* [x] City — column and form field, Phase 4
+* [x] Country — column and form field, Phase 4
+* [x] Coordinates — columns exist, nullable and not yet populated
 * [ ] Mapbox
 * [ ] Geocoding
 * [ ] Browser geolocation
-* [ ] Cover image
+* [x] Cover image — built in Phase 4, `event-media` bucket
 * [ ] Gallery
 * [ ] Image ordering
-* [ ] Organization logo
 * [x] User avatar — built in Phase 2
-* [ ] Storage policies — `profile-media` done in Phase 2; event media pending
+* [x] Storage policies — `profile-media` Phase 2, `event-media` Phase 4
+* ~~Organization logo~~ — Phase 3 is deferred post-MVP
+
+What remains here is the map layer: turning the address a publisher types into
+coordinates, showing it on a map, and answering "near me".
 
 ---
 
@@ -455,3 +541,11 @@ before it was committed.
 | 2026-09-21 | Fresh object name per upload | CDN and browser caching would otherwise keep serving a replaced image        |
 | 2026-09-21 | Password change ends all sessions | Passwords are often changed because someone else may know them          |
 | 2026-09-21 | Accept PKCE `code` auth links | Default templates cannot be edited without custom SMTP on this plan         |
+| 2026-09-26 | Personal publisher model confirmed | A venue's profile needs the same columns as a person's; `organizations` would duplicate the shape and add members, invites, roles and membership-aware RLS |
+| 2026-09-26 | Phase 3 Organizations deferred post-MVP | Costs only shared publisher accounts and multi-publisher users, neither of which MVP-1 needs |
+| 2026-09-26 | Publisher-neutral UI wording | One profile serves people and venues alike, so the copy must not assume a person |
+| 2026-09-26 | No `completed` event status | Completion is a fact about `end_at`; storing it needs a job and contradicts the date until it runs |
+| 2026-09-26 | Normalized `tags` + `event_tags` | Architecture §18 requires reusable tags; an array column cannot give a canonical list |
+| 2026-09-26 | Publish rules live in the BLL | A draft may be incomplete, so readiness cannot be a CHECK or a stricter parse of the same payload |
+| 2026-09-26 | Slug unique per owner, locked when public | Two venues may both run a "jazz night"; once public the slug is a live URL with no redirect history |
+| 2026-09-26 | Filtering pushed into the DAL interface | A repository that can only "list everything" makes in-memory filtering the path of least resistance |

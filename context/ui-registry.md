@@ -336,7 +336,7 @@ descriptive label and the `View as table` disclosure with all plotted values.
 ### Field / FormSection
 
 File: components/forms/field.tsx, components/forms/form-section.tsx
-Last updated: 2026-09-14
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -365,7 +365,10 @@ an error is present. Never surface an error through colour alone.
 
 Sections are grouped by `FormSection`, whose lime mono heading over a hairline
 rule is the only section marker used in dashboard forms. Two-column field grids
-are `sm:grid-cols-2` with `gap-5`.
+are `sm:grid-cols-2` with `gap-5`. Its optional `description` (added
+2026-09-26) sits under the rule as `text-sm text-muted-foreground` — use it
+when the heading alone does not say what the section is for, and keep it to
+one line.
 
 `formSubmitClass` (same file, added 2026-09-21) is the single source for a
 dashboard form's lime submit button: `rounded-md bg-primary px-6 py-3 text-sm
@@ -549,38 +552,99 @@ submission with a closing `border-t` footer. Password fields autocomplete as
 `current-password` / `new-password` next to a hidden `username` input, so
 password managers file the change under the right account.
 
-### NewEventDialog
+### EventForm
 
-File: components/events/new-event-dialog.tsx
-Last updated: 2026-09-09
+File: app/dashboard/events/event-form.tsx
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card`; backdrop `backdrop:bg-black/70 backdrop:backdrop-blur-sm` |
-| Border           | `border border-border`; header `border-b`, footer `border-t` |
-| Border radius    | `rounded-lg`                                        |
-| Text — primary   | header `font-display text-sm font-extrabold uppercase tracking-tight` |
-| Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
-| Spacing          | header/footer `px-6 py-4`, body `px-6 pt-6`         |
-| Hover state      | close button `hover:bg-white/5 hover:text-foreground` |
-| Shadow           | none — the backdrop does the separating             |
-| Accent usage     | the submit button only                              |
+| Background       | inherits the page; controls `bg-card` via `fieldControlClass` |
+| Border           | section rule `border-b border-border` (from `FormSection`) |
+| Border radius    | controls and buttons `rounded-md`                   |
+| Text — primary   | section heading `font-mono text-xs uppercase tracking-widest text-primary` |
+| Text — secondary | section description `text-sm text-muted-foreground` |
+| Spacing          | sections `mb-10`; fields `space-y-5`; paired fields `gap-5 sm:grid-cols-2` |
+| Hover state      | submit `hover:brightness-110`; secondary `hover:bg-white/5` |
+| Shadow           | none                                                |
+| Accent usage     | section headings and the one primary submit         |
 
 **Pattern notes:**
-Built on the native `<dialog>` with `showModal()`, never a hand-rolled overlay
-— focus trapping, Escape, `inert` background and top-layer stacking all come
-from the platform, and those are exactly what custom modals get wrong. Sizing
-is `max-h-[90vh] w-[min(46rem,calc(100vw-2rem))]`, and the panel is a flex
-column: fixed header, `overflow-y-auto` body, footer pinned with a solid
-`bg-card` so content scrolls under it rather than through it. Backdrop clicks
-are detected by comparing `event.target` to the dialog element itself.
+One form serves create and edit — the mode is the presence of an `event`, not
+a second component. Two submit buttons share the form and differ only in a
+`publishIntent` flag set on click; do not build a second `<form>` for
+publishing.
 
-Multiple triggers share one dialog through `NewEventProvider` — never mount a
-second copy per button, or the field ids duplicate. `NewEventTrigger` takes
-its classes from the caller so a trigger can be a primary button in a header
-and the CTA inside an `EmptyState` (via its `actionSlot`) without either one
-restating the dialog. Form content reuses `FormSection`, `Field` and
-`ImageUploader` exactly as a full-page form would.
+Fields that do not apply are absent rather than disabled: `form.Subscribe` on
+`eventType` hides the venue block for an online event and the join link for an
+in-person one, and on `isFree` hides price details. A disabled control a
+publisher cannot explain is worse than one that is not there.
+
+Dates are held as `datetime-local` readings plus a separate zone, and resolved
+at submit through `lib/datetime`. Never store or compare a wall-clock string
+as if it were an instant.
+
+Server field errors are held beside TanStack's own and cleared when that field
+is edited, matching the account forms. The slug field appears only when
+editing, and is `disabled` once the event is public.
+
+### TagInput
+
+File: app/dashboard/events/event-form.tsx (Tags section)
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | input `bg-card` via `fieldControlClass`; chips transparent |
+| Border           | chips `border border-border`                        |
+| Border radius    | chips `rounded-full`; input `rounded-md`            |
+| Text — primary   | chip label `font-mono text-xs uppercase`            |
+| Text — secondary | chips `text-muted-foreground`                       |
+| Spacing          | input-to-chips `space-y-3`; chip row `gap-2`; chip `px-3 py-1` |
+| Hover state      | remove button `hover:text-destructive`              |
+| Shadow           | none                                                |
+| Accent usage     | none — tags are metadata, not a call to action      |
+
+**Pattern notes:**
+The chip shape is the same `rounded-full border border-border px-3 py-1
+font-mono text-xs uppercase text-muted-foreground` the public event page uses
+to display tags, so entry and display read as one thing.
+
+Enter, a comma, or blurring the field commits a tag; Backspace on an empty
+input removes the last one. The input disables itself at the limit rather than
+silently dropping what is typed. Each chip's remove button carries an
+`sr-only` label naming the tag it removes.
+
+### EventLifecycle
+
+File: app/dashboard/events/[id]/edit/event-lifecycle.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card/40`                                        |
+| Border           | `border border-border`; destructive `border-destructive/40` |
+| Border radius    | `rounded-lg`; buttons `rounded-md`                  |
+| Text — primary   | heading `font-mono text-xs uppercase tracking-widest text-primary` |
+| Text — secondary | explanation `text-sm text-muted-foreground`         |
+| Spacing          | panel `p-5`, `space-y-4`; button row `gap-3`        |
+| Hover state      | default `hover:bg-white/5`; destructive `hover:bg-destructive/10` |
+| Shadow           | none                                                |
+| Accent usage     | the one forward action (Publish / Back on)          |
+
+**Pattern notes:**
+The same `bg-card/40` bordered panel as the dashboard `Panel`, used here for a
+set of actions rather than content. Available transitions come from a lookup
+keyed by status, not a chain of conditions, so the UI can never offer a change
+the service would refuse.
+
+Exactly one action per state is primary. Destructive actions are outlined in
+`border-destructive/40` and never filled — a filled red button next to a
+filled lime one reads as a pair of equals.
+
+Delete is two-step in place: the button becomes "Delete permanently" beside
+"Keep it", with an explanation of what delete costs over unpublish. No
+`confirm()`, and no modal for a decision this small.
 
 ### DiscoverFilters
 
