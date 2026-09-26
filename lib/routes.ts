@@ -64,7 +64,8 @@ export const routes = {
   dashboard: {
     root: () => "/dashboard",
     events: () => "/dashboard/events",
-    newEvent: () => "/dashboard/events/new",
+    // No standalone create page: events are created in a modal over the
+    // events list, so there is one create path rather than two.
     editEvent: (eventId: string) => `/dashboard/events/${eventId}/edit`,
     profile: () => "/dashboard/profile",
     settings: () => "/dashboard/settings",

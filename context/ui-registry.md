@@ -552,6 +552,43 @@ submission with a closing `border-t` footer. Password fields autocomplete as
 `current-password` / `new-password` next to a hidden `username` input, so
 password managers file the change under the right account.
 
+### NewEventDialog
+
+File: app/dashboard/events/event-create-dialog.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card`; backdrop `backdrop:bg-black/70 backdrop:backdrop-blur-sm` |
+| Border           | `border border-border`; header `border-b`, footer `border-t` |
+| Border radius    | `rounded-lg`                                        |
+| Text — primary   | header `font-display text-sm font-extrabold uppercase tracking-tight` |
+| Text — secondary | `text-muted-foreground`                             |
+| Spacing          | header/footer `px-6 py-4`, body `px-6 pt-6`         |
+| Hover state      | close button `hover:bg-white/5 hover:text-foreground` |
+| Shadow           | none — the backdrop does the separating             |
+| Accent usage     | the single primary submit in the footer             |
+
+**Pattern notes:**
+Creating an event is always a modal over the events list; there is no
+standalone create page, so there is one create path rather than two.
+
+Built on the native `<dialog>` with `showModal()`, never a hand-rolled overlay
+— focus trapping, Escape, `inert` background and top-layer stacking all come
+from the platform. Sizing is `max-h-[90vh] w-[min(46rem,calc(100vw-2rem))]`,
+and the panel is a flex column: fixed header, `min-h-0 flex-1 overflow-y-auto`
+body, footer pinned with a solid `bg-card` so content scrolls under it rather
+than through it. Backdrop clicks are detected by comparing `event.target` to
+the dialog element.
+
+The form is mounted only while the dialog is open, so it resets between
+creations instead of keeping the last event's half-typed values.
+
+Multiple triggers share one dialog through `NewEventProvider` — never mount a
+second copy per button, or every field id on the page duplicates.
+`NewEventTrigger` takes its classes from the caller, so the same dialog opens
+from a header button and from an `EmptyState` `actionSlot`.
+
 ### EventForm
 
 File: app/dashboard/events/event-form.tsx
@@ -559,8 +596,8 @@ Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | inherits the page; controls `bg-card` via `fieldControlClass` |
-| Border           | section rule `border-b border-border` (from `FormSection`) |
+| Background       | inherits; controls `bg-card` via `fieldControlClass` |
+| Border           | section rule `border-b border-border`; dialog footer `border-t` |
 | Border radius    | controls and buttons `rounded-md`                   |
 | Text — primary   | section heading `font-mono text-xs uppercase tracking-widest text-primary` |
 | Text — secondary | section description `text-sm text-muted-foreground` |
@@ -570,27 +607,38 @@ Last updated: 2026-09-26
 | Accent usage     | section headings and the one primary submit         |
 
 **Pattern notes:**
-One form serves create and edit — the mode is the presence of an `event`, not
-a second component. Two submit buttons share the form and differ only in a
-`publishIntent` flag set on click; do not build a second `<form>` for
-publishing.
+One component serves four cases: create and edit, page and dialog. `layout`
+picks the chrome — `page` lays sections down the page with descriptions,
+`dialog` renders a scrolling body plus a pinned footer for the dialog shell to
+host. The values, the payload and the Server Actions are identical either way;
+a second form would be a second thing to keep in step with `eventDraftSchema`.
 
-Fields that do not apply are absent rather than disabled: `form.Subscribe` on
-`eventType` hides the venue block for an online event and the join link for an
-in-person one, and on `isFree` hides price details. A disabled control a
-publisher cannot explain is worse than one that is not there.
+Field values live in `event-form-values.ts`, shared by both layouts. The
+dialog shows the essential set and the page shows everything (slug, tags,
+ticket and external links) — same shape, fewer fields.
 
-Dates are held as `datetime-local` readings plus a separate zone, and resolved
-at submit through `lib/datetime`. Never store or compare a wall-clock string
-as if it were an instant.
+Inapplicable fields are absent, not disabled: `form.Subscribe` on `eventType`
+hides the venue block for an online event and the join link for an in-person
+one, and on `isFree` hides price details. Those two conditionals are load
+bearing — publish-readiness requires a join link for an online event and a
+price or ticket link for a paid one, so hiding the field would make the event
+unpublishable with no way to fix it.
 
-Server field errors are held beside TanStack's own and cleared when that field
-is edited, matching the account forms. The slug field appears only when
-editing, and is `disabled` once the event is public.
+Repeated text inputs come from a local `textField({ ... })` **function call**,
+never a `<TextField />` element. A component declared inside another component
+is a new type on every render, so React remounts the input and the field loses
+focus after every keystroke.
+
+Country is a `<select>` of full names from `lib/countries.ts` that stores the
+ISO alpha-2 code the column constrains. Nobody should have to type "GE".
+
+Dates are held as `datetime-local` readings plus a separate zone and resolved
+at submit through `lib/datetime`. Never compare a wall-clock string as if it
+were an instant.
 
 ### TagInput
 
-File: app/dashboard/events/event-form.tsx (Tags section)
+File: app/dashboard/events/event-form.tsx (Tags section, page layout only)
 Last updated: 2026-09-26
 
 | Property         | Class                                              |
