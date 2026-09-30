@@ -38,7 +38,7 @@ function useUsernameAvailability(rawUsername: string) {
     queryKey: queryKeys.profiles.usernameAvailability(username),
     enabled: username.length > 0,
     queryFn: async () => {
-      const { data } = await apiClient.get("/auth/username-available", {
+      const { data } = await apiClient.get(routes.api.usernameAvailable(), {
         params: { username },
       });
       return availabilityResponseSchema.parse(data);
@@ -162,7 +162,7 @@ export function SignupForm() {
               <Field
                 id={field.name}
                 label="Username"
-                hint="This becomes your public address: events-lab/your-name"
+                hint="Your public page will be at /publishers/your-name. It cannot be changed later."
                 error={error}
               >
                 <input

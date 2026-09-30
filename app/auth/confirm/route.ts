@@ -4,7 +4,15 @@ import {
   authCodeSchema,
   emailConfirmationSchema,
 } from "@/features/auth/contracts";
+import {
+  RECOVERY_COOKIE,
+  recoveryCookieOptions,
+} from "@/features/auth/recovery-marker";
 import { getAuthService } from "@/features/auth/service";
+import { createLogger } from "@/lib/logging";
+import { routes } from "@/lib/routes";
+
+const log = createLogger("auth.confirm");
 
 /**
  * Landing point for every emailed auth link; exchanging the link here sets the
@@ -15,27 +23,27 @@ import { getAuthService } from "@/features/auth/service";
  * templates can instead send `token_hash` + `type`, which also works when the
  * link is opened on another device. Both are accepted so the templates can
  * change later without touching this route.
+ *
+ * A password-reset link also leaves the recovery marker, the only thing that
+ * lets `/auth/update-password` set a password without the current one.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const expired = NextResponse.redirect(
-    new URL("/auth/link-expired", request.url),
-  );
+  const to = (path: string) =>
+    NextResponse.redirect(new URL(path, request.url));
   const service = await getAuthService();
 
   const codeLink = authCodeSchema.safeParse({ code: searchParams.get("code") });
   if (codeLink.success) {
     const outcome = await service.exchangeAuthCode(codeLink.data.code);
     if (!outcome.ok) {
-      return expired;
+      log.info("Email link was expired or reused.", { shape: "code" });
+      return to(routes.auth.linkExpired());
     }
 
-    return NextResponse.redirect(
-      new URL(
-        outcome.isRecovery ? "/auth/update-password" : "/dashboard",
-        request.url,
-      ),
-    );
+    return outcome.isRecovery
+      ? toRecovery(to(routes.auth.updatePassword()), outcome.userId)
+      : to(routes.dashboard.root());
   }
 
   const tokenLink = emailConfirmationSchema.safeParse({
@@ -43,7 +51,7 @@ export async function GET(request: NextRequest) {
     type: searchParams.get("type"),
   });
   if (!tokenLink.success) {
-    return expired;
+    return to(routes.auth.linkExpired());
   }
 
   const outcome = await service.confirmEmail(
@@ -51,14 +59,24 @@ export async function GET(request: NextRequest) {
     tokenLink.data.type,
   );
   if (!outcome.ok) {
-    return expired;
+    log.info("Email link was expired or reused.", {
+      shape: "token_hash",
+      type: tokenLink.data.type,
+    });
+    return to(routes.auth.linkExpired());
   }
 
-  const destination = {
-    recovery: "/auth/update-password",
-    email_change: "/dashboard/settings",
-    signup: "/dashboard",
-  }[outcome.type];
+  switch (outcome.type) {
+    case "recovery":
+      return toRecovery(to(routes.auth.updatePassword()), outcome.userId);
+    case "email_change":
+      return to(routes.dashboard.settings());
+    case "signup":
+      return to(routes.dashboard.root());
+  }
+}
 
-  return NextResponse.redirect(new URL(destination, request.url));
+function toRecovery(response: NextResponse, userId: string): NextResponse {
+  response.cookies.set(RECOVERY_COOKIE, userId, recoveryCookieOptions);
+  return response;
 }

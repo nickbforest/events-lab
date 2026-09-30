@@ -36,8 +36,11 @@ function createRepository(
       },
       hasSession: true,
     })),
-    verifyEmailToken: vi.fn(async () => {}),
-    exchangeAuthCode: vi.fn(async () => ({ isRecovery: false })),
+    verifyEmailToken: vi.fn(async () => ({ userId: "user-1" })),
+    exchangeAuthCode: vi.fn(async () => ({
+      isRecovery: false,
+      userId: "user-1",
+    })),
     signInWithPassword: vi.fn(async () => ACTOR),
     signOut: vi.fn(async () => {}),
     getAuthenticatedUser: vi.fn(async () => null),
@@ -220,6 +223,7 @@ describe("confirmEmail", () => {
     await expect(service.confirmEmail("hash", "recovery")).resolves.toEqual({
       ok: true,
       type: "recovery",
+      userId: "user-1",
     });
   });
 });
@@ -228,13 +232,17 @@ describe("exchangeAuthCode", () => {
   it("reports a password-reset link so the caller can send the user to set one", async () => {
     const { service } = createService(
       createRepository({
-        exchangeAuthCode: vi.fn(async () => ({ isRecovery: true })),
+        exchangeAuthCode: vi.fn(async () => ({
+          isRecovery: true,
+          userId: "user-1",
+        })),
       }),
     );
 
     await expect(service.exchangeAuthCode("code")).resolves.toEqual({
       ok: true,
       isRecovery: true,
+      userId: "user-1",
     });
   });
 
@@ -408,5 +416,82 @@ describe("changePassword", () => {
       ok: false,
       reason: "SAME_PASSWORD",
     });
+  });
+});
+
+describe("updatePassword (finishing a reset)", () => {
+  const INPUT = { password: "brandnew99" };
+
+  it("sets the password when the reset link was opened for this account", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(
+      service.updatePassword(ACTOR, INPUT, ACTOR.id),
+    ).resolves.toEqual({ ok: true });
+    expect(repository.updatePassword).toHaveBeenCalledWith("brandnew99");
+  });
+
+  it("refuses an ordinary session with no reset link behind it", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(service.updatePassword(ACTOR, INPUT, null)).resolves.toEqual({
+      ok: false,
+      reason: "RECOVERY_REQUIRED",
+    });
+    expect(repository.updatePassword).not.toHaveBeenCalled();
+  });
+
+  it("refuses a reset link that was opened for a different account", async () => {
+    const repository = createRepository();
+    const { service } = createService(repository);
+
+    await expect(
+      service.updatePassword(ACTOR, INPUT, "someone-else"),
+    ).resolves.toEqual({ ok: false, reason: "RECOVERY_REQUIRED" });
+    expect(repository.updatePassword).not.toHaveBeenCalled();
+  });
+
+  it("reports reusing the current password instead of crashing", async () => {
+    const { service } = createService(
+      createRepository({
+        updatePassword: vi.fn(async () => {
+          throw new AuthProviderError("SAME_PASSWORD", "same");
+        }),
+      }),
+    );
+
+    await expect(
+      service.updatePassword(ACTOR, INPUT, ACTOR.id),
+    ).resolves.toEqual({ ok: false, reason: "SAME_PASSWORD" });
+  });
+
+  it("escalates an unexpected provider failure as an application error", async () => {
+    const { service } = createService(
+      createRepository({
+        updatePassword: vi.fn(async () => {
+          throw new AuthProviderError("UNKNOWN", "503");
+        }),
+      }),
+    );
+
+    await expect(
+      service.updatePassword(ACTOR, INPUT, ACTOR.id),
+    ).rejects.toBeInstanceOf(ApplicationError);
+  });
+});
+
+describe("signOut", () => {
+  it("reports a provider failure as an application error", async () => {
+    const { service } = createService(
+      createRepository({
+        signOut: vi.fn(async () => {
+          throw new AuthProviderError("UNKNOWN", "network");
+        }),
+      }),
+    );
+
+    await expect(service.signOut()).rejects.toBeInstanceOf(ApplicationError);
   });
 });

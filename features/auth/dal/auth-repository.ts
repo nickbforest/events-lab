@@ -2,7 +2,7 @@
 export interface AuthUser {
   id: string;
   email: string | null;
-  /** Drives the verification prompt; gates publishing from Phase 5 onward. */
+  /** Whether the address has been confirmed. Not read by any rule yet. */
   emailVerified: boolean;
   /** The address an email change is waiting to be confirmed for, if any. */
   pendingEmail: string | null;
@@ -60,16 +60,18 @@ export type EmailConfirmationType = "signup" | "recovery" | "email_change";
 
 export interface AuthRepository {
   signUp(command: SignUpCommand): Promise<SignUpResult>;
-  /** Exchanges an emailed token for a session. */
+  /** Exchanges an emailed token for a session; returns whose session it is. */
   verifyEmailToken(
     tokenHash: string,
     type: EmailConfirmationType,
-  ): Promise<void>;
+  ): Promise<{ userId: string }>;
   /**
    * Exchanges the `code` that Supabase's default email links carry. Works only
    * in the browser that requested the email, which holds the PKCE verifier.
    */
-  exchangeAuthCode(code: string): Promise<{ isRecovery: boolean }>;
+  exchangeAuthCode(
+    code: string,
+  ): Promise<{ isRecovery: boolean; userId: string }>;
   signInWithPassword(email: string, password: string): Promise<AuthUser>;
   /** `global` ends every session for the user, not only this browser's. */
   signOut(scope: "local" | "global"): Promise<void>;
