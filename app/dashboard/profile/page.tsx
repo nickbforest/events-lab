@@ -14,7 +14,7 @@ export default async function DashboardProfilePage() {
         <DashboardHeader
           kicker="Public page"
           title="Profile"
-          description={`events-lab/${profile.username}`}
+          description={routes.publisher(profile.username)}
           actions={
             <a
               href={routes.publisherPreview(profile.username)}

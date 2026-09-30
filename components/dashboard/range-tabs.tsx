@@ -5,6 +5,7 @@ import {
   type AnalyticsRange,
 } from "@/features/analytics/contracts";
 import { cn } from "@/lib/format";
+import { routes } from "@/lib/routes";
 
 export interface RangeTabsProps {
   active: AnalyticsRange;
@@ -18,7 +19,10 @@ export interface RangeTabsProps {
  * series, so it belongs in the URL — which also makes a range shareable and
  * survivable across a refresh, and keeps the page a Server Component.
  */
-export function RangeTabs({ active, basePath = "/dashboard" }: RangeTabsProps) {
+export function RangeTabs({
+  active,
+  basePath = routes.dashboard.root(),
+}: RangeTabsProps) {
   return (
     <nav
       aria-label="Time range"
