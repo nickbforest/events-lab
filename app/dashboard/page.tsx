@@ -10,6 +10,7 @@ import {
   getAnalyticsOverview,
   parseAnalyticsRange,
 } from "@/features/analytics/queries";
+import { isPublicStatus } from "@/features/events/bll/events-service";
 import { getDashboardSummary } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
 import { formatEventDate, isoDateTime } from "@/lib/format";
@@ -30,7 +31,7 @@ export default async function DashboardOverviewPage({
     <div className="px-6 py-10 md:px-10">
       <div className="mx-auto max-w-5xl">
         <DashboardHeader
-          kicker="System_status: Active"
+          kicker="Dashboard"
           title="Overview"
           description={profile.display_name}
           actions={<RangeTabs active={range} />}
@@ -67,7 +68,7 @@ export default async function DashboardOverviewPage({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Panel
             title="Upcoming events"
-            action={{ href: "/dashboard/events", label: "All" }}
+            action={{ href: routes.dashboard.events(), label: "All" }}
           >
             {upcoming.length > 0 ? (
               <ul className="divide-y divide-border">
@@ -102,19 +103,27 @@ export default async function DashboardOverviewPage({
           <Panel title="Most viewed">
             {analytics.mostViewed.length > 0 ? (
               <ul className="divide-y divide-border">
-                {analytics.mostViewed.map(({ event, views }) => (
+                {analytics.mostViewed.map((entry) => (
                   <li
-                    key={event.id}
+                    key={entry.eventId}
                     className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                   >
-                    <Link
-                      href={routes.event(event.owner.username, event.slug)}
-                      className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight transition-colors hover:text-primary"
-                    >
-                      {event.title}
-                    </Link>
+                    {/* Views outlive publication: an unpublished event keeps
+                        its history but has no public page to link to. */}
+                    {isPublicStatus(entry.status) ? (
+                      <Link
+                        href={routes.event(profile.username, entry.slug)}
+                        className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight transition-colors hover:text-primary"
+                      >
+                        {entry.title}
+                      </Link>
+                    ) : (
+                      <span className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight text-muted-foreground">
+                        {entry.title}
+                      </span>
+                    )}
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {views} views
+                      {entry.views} {entry.views === 1 ? "view" : "views"}
                     </span>
                   </li>
                 ))}

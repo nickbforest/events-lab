@@ -2,8 +2,10 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { TicketLink } from "@/components/analytics/ticket-link";
 import { countryName } from "@/lib/countries";
 import {
+  DEFAULT_TICKET_LABEL,
   eventTypeLabel,
   formatEventDate,
   formatEventTimeRange,
@@ -12,7 +14,6 @@ import {
 import { mapSearchUrl } from "@/lib/maps";
 import { routes } from "@/lib/routes";
 import type { EventWithRelations } from "@/lib/types";
-
 import { EventStatusBadge } from "./event-status-badge";
 
 export interface EventCardProps {
@@ -46,7 +47,7 @@ export function EventCard({ event }: EventCardProps) {
 
   const cityLine = [event.city, country].filter(Boolean).join(", ");
   const hasLocation = Boolean(event.venue_name ?? event.address ?? cityLine);
-  const ticketLabel = event.ticket_cta_label ?? "Get tickets";
+  const ticketLabel = event.ticket_cta_label ?? DEFAULT_TICKET_LABEL;
   const isCancelled = event.status === "cancelled";
 
   return (
@@ -154,10 +155,10 @@ export function EventCard({ event }: EventCardProps) {
         ) : null}
 
         {!isCancelled && event.ticket_url ? (
-          <a
+          <TicketLink
             href={event.ticket_url}
-            target="_blank"
-            rel="noopener noreferrer"
+            username={event.owner.username}
+            eventId={event.id}
             className="relative z-10 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
           >
             {ticketLabel}
@@ -166,7 +167,7 @@ export function EventCard({ event }: EventCardProps) {
               {" "}
               for {event.title}, opens in a new tab
             </span>
-          </a>
+          </TicketLink>
         ) : null}
       </div>
     </article>

@@ -10,6 +10,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TicketLink } from "@/components/analytics/ticket-link";
+import { TrackView } from "@/components/analytics/track-view";
 import { EventCard } from "@/components/events/event-card";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -19,7 +21,9 @@ import {
   getPublishedEventBySlug,
   getRelatedEvents,
 } from "@/features/events/queries";
+import { countryName } from "@/lib/countries";
 import {
+  DEFAULT_TICKET_LABEL,
   eventTypeLabel,
   formatEventDate,
   formatEventTimeRange,
@@ -51,7 +55,38 @@ export async function generateMetadata({
   };
 }
 
-/** schema.org Event markup — Architecture.md §31 requires structured data. */
+/**
+ * Where the event happens, for schema.org. In person is a `Place` (named by
+ * the venue, or the city when there is no venue), online a `VirtualLocation`,
+ * hybrid both — search engines read the array as "either".
+ */
+function jsonLdLocation(event: EventWithRelations) {
+  const place = {
+    "@type": "Place",
+    name: event.venue_name ?? event.city ?? undefined,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: event.address ?? undefined,
+      addressLocality: event.city ?? undefined,
+      addressCountry: event.country_code ?? undefined,
+    },
+  };
+  const virtual = {
+    "@type": "VirtualLocation",
+    url: event.online_url ?? undefined,
+  };
+
+  switch (event.event_type) {
+    case "in_person":
+      return place;
+    case "online":
+      return virtual;
+    case "hybrid":
+      return [place, virtual];
+  }
+}
+
+/** schema.org Event markup — search engines show it as a rich result. */
 function eventJsonLd(event: EventWithRelations) {
   return {
     "@context": "https://schema.org",
@@ -73,18 +108,7 @@ function eventJsonLd(event: EventWithRelations) {
           ? "https://schema.org/MixedEventAttendanceMode"
           : "https://schema.org/OfflineEventAttendanceMode",
     image: event.cover_image_url ? [event.cover_image_url] : undefined,
-    location: event.venue_name
-      ? {
-          "@type": "Place",
-          name: event.venue_name,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: event.address ?? undefined,
-            addressLocality: event.city ?? undefined,
-            addressCountry: event.country_code ?? undefined,
-          },
-        }
-      : { "@type": "VirtualLocation", url: event.online_url ?? undefined },
+    location: jsonLdLocation(event),
     organizer: {
       "@type": "Organization",
       name: event.owner.display_name,
@@ -125,6 +149,14 @@ export default async function EventPage({
   const related = await getRelatedEvents(event);
   const date = formatEventDate(event.start_at, event.timezone);
   const isCancelled = event.status === "cancelled";
+  const cityLine = [event.city, countryName(event.country_code)]
+    .filter(Boolean)
+    .join(", ");
+  // Publishing an in-person event needs only a city, so a venue name is not
+  // what decides whether there is a place to show.
+  const hasPlace =
+    event.event_type !== "online" &&
+    Boolean(event.venue_name || event.address || cityLine);
   const structuredData = JSON.stringify(eventJsonLd(event)).replace(
     /</g,
     "\\u003c",
@@ -133,6 +165,7 @@ export default async function EventPage({
   return (
     <>
       <script type="application/ld+json">{structuredData}</script>
+      <TrackView username={event.owner.username} eventId={event.id} />
       <SiteHeader />
 
       <main className="flex-1">
@@ -265,22 +298,29 @@ export default async function EventPage({
                 </span>
               </InfoRow>
 
-              {event.venue_name ? (
+              {hasPlace ? (
                 <InfoRow
                   icon={<MapPin className="size-4" aria-hidden />}
                   label="Location"
                 >
-                  {event.venue_name}
+                  {event.venue_name ? (
+                    <span className="block">{event.venue_name}</span>
+                  ) : null}
                   {event.address ? (
                     <span className="block text-xs font-normal text-muted-foreground">
                       {event.address}
                     </span>
                   ) : null}
-                  <span className="block text-xs font-normal text-muted-foreground">
-                    {[event.city, event.country_code]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </span>
+                  {cityLine ? (
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      {cityLine}
+                    </span>
+                  ) : null}
+                  {event.event_type === "hybrid" ? (
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      Also online
+                    </span>
+                  ) : null}
                 </InfoRow>
               ) : (
                 <InfoRow
@@ -299,18 +339,18 @@ export default async function EventPage({
               </InfoRow>
             </div>
 
-            {!isCancelled && event.ticket_url && (
-              <a
+            {!isCancelled && event.ticket_url ? (
+              <TicketLink
                 href={event.ticket_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                username={event.owner.username}
+                eventId={event.id}
                 className="block w-full rounded-md bg-primary px-6 py-4 text-center font-medium text-primary-foreground transition-all hover:brightness-110"
               >
-                {event.ticket_cta_label ?? "Get tickets"} ↗
-              </a>
-            )}
+                {event.ticket_cta_label ?? DEFAULT_TICKET_LABEL} ↗
+              </TicketLink>
+            ) : null}
 
-            {!isCancelled && !event.ticket_url && event.online_url && (
+            {!isCancelled && !event.ticket_url && event.online_url ? (
               <a
                 href={event.online_url}
                 target="_blank"
@@ -319,7 +359,7 @@ export default async function EventPage({
               >
                 Join online ↗
               </a>
-            )}
+            ) : null}
           </aside>
         </article>
 
