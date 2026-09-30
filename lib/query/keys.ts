@@ -3,11 +3,6 @@ export const queryKeys = {
     all: ["analytics"] as const,
     overview: (range: string) => ["analytics", "overview", range] as const,
   },
-  discovery: {
-    all: ["discovery"] as const,
-    events: (filters: Readonly<Record<string, unknown>>) =>
-      ["discovery", "events", filters] as const,
-  },
   events: {
     all: ["events"] as const,
     detail: (username: string, slug: string) =>

@@ -24,8 +24,9 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // Server Components cannot write cookies. Phase 1 adds the
-            // Next.js proxy that refreshes sessions before rendering.
+            // Server Components cannot write cookies. That is safe to ignore:
+            // proxy.ts refreshes the session before rendering and persists
+            // the rotated cookies itself.
           }
         },
       },

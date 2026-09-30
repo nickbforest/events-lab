@@ -16,10 +16,13 @@ const log = createLogger("profiles.service");
  * itself off as part of events-lab.
  *
  * The route segments come from `lib/routes.ts` rather than being restated
- * here — adding a top-level route and forgetting to reserve its name is how
- * an existing account starts shadowing a page.
+ * here, so adding a top-level route and reserving its name is one change.
+ *
+ * The `handle_new_user` trigger enforces the same list for sign-ups that
+ * bypass the application (latest `*_harden_profiles.sql` migration). A test
+ * compares the two and fails when they drift — change both together.
  */
-const RESERVED_USERNAMES = new Set<string>([
+export const RESERVED_USERNAMES: ReadonlySet<string> = new Set<string>([
   ...RESERVED_ROUTE_SEGMENTS,
   "about",
   "admin",

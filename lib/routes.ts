@@ -14,10 +14,9 @@
  *   silently revalidates nothing.
  */
 
-/** Everything a signed-out visitor can reach. */
+/** Everything a signed-out visitor can reach outside publisher pages. */
 const PUBLIC = {
   home: "/",
-  discover: "/discover",
 } as const;
 
 /**
@@ -39,7 +38,6 @@ export type AuthNotice = (typeof AUTH_NOTICES)[number];
 /** Reasons `/auth/confirm` sends someone onward. */
 export const routes = {
   home: () => PUBLIC.home,
-  discover: () => PUBLIC.discover,
 
   /** A publisher's public page. */
   publisher: (username: string) => `/${PUBLISHERS_SEGMENT}/${username}`,
@@ -81,9 +79,13 @@ export const routes = {
     settings: () => "/dashboard/settings",
   },
 
+  /**
+   * Route Handlers, as paths relative to `apiClient`'s `/api` base URL —
+   * Axios prefixes the base, so these never repeat it.
+   */
   api: {
-    usernameAvailable: (username: string) =>
-      `/api/auth/username-available?username=${encodeURIComponent(username)}`,
+    usernameAvailable: () => "/auth/username-available",
+    analytics: () => "/analytics",
   },
 } as const;
 
@@ -107,6 +109,7 @@ export const RESERVED_ROUTE_SEGMENTS: readonly string[] = [
   "api",
   "auth",
   "dashboard",
+  // No page yet: discovery is post-MVP, and the name is held for it.
   "discover",
   PUBLISHERS_SEGMENT,
 ];
