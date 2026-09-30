@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import type {
   EventsRepository,
@@ -19,6 +20,14 @@ import type {
 } from "@/lib/types";
 
 const MEDIA_BUCKET = "event-media";
+
+/**
+ * `social_links` is jsonb, typed `Json`. Parsed rather than cast, as in the
+ * profiles adapter, so a hand-edited row cannot reach the UI malformed.
+ */
+const socialLinksSchema = z
+  .record(z.string(), z.string())
+  .catch({} as Record<string, string>);
 
 const EXTENSION_BY_MIME: Record<string, string> = {
   "image/png": "png",
@@ -64,10 +73,7 @@ function toProfile(row: Tables<"profiles">): Profile {
     website_url: row.website_url,
     city: row.city,
     country_code: row.country_code,
-    social_links:
-      row.social_links && typeof row.social_links === "object"
-        ? (row.social_links as Record<string, string>)
-        : {},
+    social_links: socialLinksSchema.parse(row.social_links),
   };
 }
 
@@ -468,6 +474,18 @@ export function createSupabaseEventsRepository(
 
       const { data } = client.storage.from(MEDIA_BUCKET).getPublicUrl(path);
       return data.publicUrl;
+    },
+
+    isOwnedCoverUrl(ownerId, url) {
+      const { data } = client.storage
+        .from(MEDIA_BUCKET)
+        .getPublicUrl(`${ownerId}/`);
+      const ownFolder = data.publicUrl;
+      const rest = url.slice(ownFolder.length);
+
+      // One object directly inside the owner's folder: no sub-paths, no
+      // traversal, no query string pointing somewhere else.
+      return url.startsWith(ownFolder) && /^[A-Za-z0-9._-]+$/.test(rest);
     },
 
     async removeCoverImage(url) {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { usernameSchema } from "@/features/profiles/contracts";
 import { countryCodeFromInput } from "@/lib/countries";
 import { Constants } from "@/lib/supabase/database.types";
+import { optionalHttpUrlSchema } from "@/lib/urls";
 
 export const eventRouteParamsSchema = z.object({
   username: usernameSchema,
@@ -61,16 +62,7 @@ function optionalText(max: number, error: string) {
     .transform((value) => (value === "" ? null : value));
 }
 
-const optionalUrl = z
-  .string()
-  .trim()
-  .pipe(
-    z.union([
-      z.literal(""),
-      z.url({ error: "Enter a full URL, including https://" }),
-    ]),
-  )
-  .transform((value) => (value === "" ? null : value));
+const optionalUrl = optionalHttpUrlSchema;
 
 /**
  * A country, typed by hand.
@@ -235,6 +227,40 @@ export const eventTransitionSchema = z.enum([
 
 export type EventTransition = z.infer<typeof eventTransitionSchema>;
 
+type EventStatusValue = z.infer<typeof eventStatusSchema>;
+
+/**
+ * Every status change the product allows, keyed by the current status.
+ *
+ * The single source for both sides: the events service refuses anything not
+ * listed here, and the editor's lifecycle panel offers exactly these. A
+ * change that is only hidden in the UI is not a rule — a crafted request
+ * would still make it.
+ *
+ * Deliberately absent: going back to `draft` once public (the page has been
+ * seen), and `cancelled → published` (a cancellation is only undone by
+ * unpublishing and publishing again, which is a visible, deliberate act).
+ */
+export const EVENT_TRANSITIONS: Readonly<
+  Record<EventStatusValue, readonly EventTransition[]>
+> = {
+  draft: ["published"],
+  published: ["postponed", "cancelled", "archived"],
+  postponed: ["published", "cancelled", "archived"],
+  cancelled: ["archived"],
+  archived: ["published"],
+};
+
+/** Statuses a visitor can see. Mirrors the events select policy. */
+export const PUBLIC_EVENT_STATUSES: readonly EventStatusValue[] = [
+  "published",
+  "cancelled",
+  "postponed",
+];
+
+/** Whether a create request should publish immediately. */
+export const publishFlagSchema = z.boolean();
+
 /** Mirrors the `event-media` bucket's own limits, which are the authority. */
 export const EVENT_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
 export const EVENT_MEDIA_MIME_TYPES = [
@@ -264,3 +290,4 @@ export const compiledEventDraftSchema = z.compile(eventDraftSchema);
 export const compiledEventMediaSchema = z.compile(eventMediaSchema);
 export const compiledEventIdSchema = z.compile(eventIdSchema);
 export const compiledEventTransitionSchema = z.compile(eventTransitionSchema);
+export const compiledPublishFlagSchema = z.compile(publishFlagSchema);

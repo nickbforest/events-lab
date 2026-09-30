@@ -10,6 +10,8 @@ export interface SwitchProps {
   /** The word shown next to the track, which usually changes with state. */
   stateLabel?: string;
   disabled?: boolean;
+  /** Tooltip; use it to say why a disabled switch cannot be changed. */
+  title?: string;
   className?: string;
 }
 
@@ -35,6 +37,7 @@ export function Switch({
   label,
   stateLabel,
   disabled = false,
+  title,
   className,
 }: SwitchProps) {
   return (
@@ -44,6 +47,7 @@ export function Switch({
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
+      title={title}
       onClick={() => onChange(!checked)}
       className={cn(
         "group inline-flex cursor-pointer items-center gap-3 rounded-md",

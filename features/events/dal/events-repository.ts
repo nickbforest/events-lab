@@ -100,4 +100,11 @@ export interface EventsRepository {
 
   /** Ignores an object that is already gone; removal is best-effort cleanup. */
   removeCoverImage(url: string): Promise<void>;
+
+  /**
+   * Whether `url` is an object this owner uploaded to the event media bucket.
+   * The storage layout is this layer's knowledge, so the check lives here and
+   * the decision to refuse lives in the service.
+   */
+  isOwnedCoverUrl(ownerId: string, url: string): boolean;
 }

@@ -8,9 +8,17 @@ import {
   deleteEventAction,
   transitionEventAction,
 } from "@/features/events/actions";
-import type { EventTransition } from "@/features/events/contracts";
+import {
+  EVENT_TRANSITIONS,
+  type EventTransition,
+} from "@/features/events/contracts";
+import { USER_FACING_MESSAGES } from "@/lib/errors";
+import type { FormResult } from "@/lib/forms";
+import { createLogger } from "@/lib/logging";
 import { routes } from "@/lib/routes";
 import type { EventStatus } from "@/lib/types";
+
+const log = createLogger("events.lifecycle");
 
 const buttonClass =
   "rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60";
@@ -21,49 +29,62 @@ const primaryClass =
 const dangerClass =
   "rounded-md border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60";
 
-/**
- * Which transitions make sense from where. Kept as data rather than a chain of
- * conditions so the set a publisher sees is obvious at a glance — and so the
- * UI cannot offer one the service will refuse.
- */
-const AVAILABLE: Record<
-  EventStatus,
-  { to: EventTransition; label: string; tone: "primary" | "default" }[]
-> = {
-  draft: [{ to: "published", label: "Publish", tone: "primary" }],
-  published: [
-    { to: "postponed", label: "Postpone", tone: "default" },
-    { to: "cancelled", label: "Cancel event", tone: "default" },
-    { to: "archived", label: "Unpublish", tone: "default" },
-  ],
-  postponed: [
-    { to: "published", label: "Back on", tone: "primary" },
-    { to: "cancelled", label: "Cancel event", tone: "default" },
-  ],
-  cancelled: [{ to: "archived", label: "Unpublish", tone: "default" }],
-  archived: [{ to: "published", label: "Publish again", tone: "primary" }],
-};
+/** The words for a move, which depend on where the event is coming from. */
+function transitionLabel(from: EventStatus, to: EventTransition): string {
+  switch (to) {
+    case "published":
+      return from === "draft"
+        ? "Publish"
+        : from === "postponed"
+          ? "Back on"
+          : "Publish again";
+    case "postponed":
+      return "Postpone";
+    case "cancelled":
+      return "Cancel event";
+    case "archived":
+      return "Unpublish";
+    case "draft":
+      return "Back to draft";
+  }
+}
 
 export interface EventLifecycleProps {
   eventId: string;
   status: EventStatus;
 }
 
+/**
+ * Status changes for one event. The buttons come from `EVENT_TRANSITIONS`,
+ * the same table the events service enforces, so the panel can only offer a
+ * change the server will accept.
+ */
 export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  function run(action: () => Promise<{ status: string; message?: string }>) {
+  function run(
+    label: string,
+    action: () => Promise<FormResult>,
+    onSuccess: () => void,
+  ) {
     setError(null);
     startTransition(async () => {
-      const result = await action();
-      if (result.status === "error") {
-        setError(result.message ?? "That change could not be saved.");
-        return;
+      try {
+        const result = await action();
+        if (result.status === "error") {
+          setError(result.message ?? USER_FACING_MESSAGES.UNEXPECTED);
+          return;
+        }
+        onSuccess();
+      } catch (thrown) {
+        log.error(`${label} failed before a result came back.`, thrown, {
+          eventId,
+        });
+        setError(USER_FACING_MESSAGES.UNEXPECTED);
       }
-      router.refresh();
     });
   }
 
@@ -85,15 +106,21 @@ export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
       {error ? <FormAlert message={error} /> : null}
 
       <div className="flex flex-wrap gap-3">
-        {AVAILABLE[status].map((option) => (
+        {EVENT_TRANSITIONS[status].map((to) => (
           <button
-            key={option.to}
+            key={to}
             type="button"
-            className={option.tone === "primary" ? primaryClass : buttonClass}
+            className={to === "published" ? primaryClass : buttonClass}
             disabled={pending}
-            onClick={() => run(() => transitionEventAction(eventId, option.to))}
+            onClick={() =>
+              run(
+                "Status change",
+                () => transitionEventAction(eventId, to),
+                () => router.refresh(),
+              )
+            }
           >
-            {option.label}
+            {transitionLabel(status, to)}
           </button>
         ))}
 
@@ -104,13 +131,14 @@ export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
               className={dangerClass}
               disabled={pending}
               onClick={() =>
-                startTransition(async () => {
-                  await deleteEventAction(eventId);
-                  router.push(routes.dashboard.events());
-                })
+                run(
+                  "Delete",
+                  () => deleteEventAction(eventId),
+                  () => router.push(routes.dashboard.events()),
+                )
               }
             >
-              Delete permanently
+              {pending ? "Deleting…" : "Delete permanently"}
             </button>
             <button
               type="button"

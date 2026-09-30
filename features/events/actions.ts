@@ -8,10 +8,11 @@ import {
   compiledEventIdSchema,
   compiledEventMediaSchema,
   compiledEventTransitionSchema,
+  compiledPublishFlagSchema,
 } from "@/features/events/contracts";
 import { getEventsService } from "@/features/events/service";
 import { getCurrentProfile } from "@/features/profiles/queries";
-import { ApplicationError, toUserMessage } from "@/lib/errors";
+import { actionFailure } from "@/lib/action-errors";
 import { type FormResult, firstFieldErrors } from "@/lib/forms";
 import { createLogger } from "@/lib/logging";
 import { routes } from "@/lib/routes";
@@ -38,13 +39,14 @@ export type EventField =
   | "isFree"
   | "priceInfo"
   | "ticketUrl"
+  | "ticketCtaLabel"
   | "externalUrl"
   | "coverImageUrl"
   | "tags";
 
 export type SaveEventResult = FormResult<EventField> & { eventId?: string };
 
-async function revalidateFor(username: string, slug?: string): Promise<void> {
+function revalidateFor(username: string, slug?: string): void {
   revalidatePath(routes.dashboard.root());
   revalidatePath(routes.dashboard.events());
   revalidatePath(routes.publisher(username));
@@ -53,24 +55,16 @@ async function revalidateFor(username: string, slug?: string): Promise<void> {
   }
 }
 
-/**
- * Publish-readiness failures arrive as an ApplicationError carrying the first
- * blocking message, which belongs on the form rather than in a crash.
- */
-function toFormError(scope: string, error: unknown): SaveEventResult {
-  if (!(error instanceof ApplicationError)) {
-    log.error("Unhandled failure in an event action.", error, { scope });
-    throw error;
-  }
-
-  log.error("Event action failed.", error, { scope });
-  return { status: "error", message: toUserMessage(error) };
-}
-
 export async function createEventAction(
   input: unknown,
-  publish = false,
+  publish: unknown = false,
 ): Promise<SaveEventResult> {
+  const publishFlag = compiledPublishFlagSchema.safeParse(publish);
+  if (!publishFlag.success) {
+    log.warn("createEvent received a non-boolean publish flag.");
+    return { status: "error", message: "Unknown save option." };
+  }
+
   const parsed = compiledEventDraftSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -83,11 +77,17 @@ export async function createEventAction(
   const service = await getEventsService();
 
   try {
-    const event = await service.createEvent(profile.id, parsed.data, publish);
-    await revalidateFor(profile.username, event.slug);
+    const event = await service.createEvent(
+      profile.id,
+      parsed.data,
+      publishFlag.data,
+    );
+    revalidateFor(profile.username, event.slug);
     return { status: "success", eventId: event.id };
   } catch (error) {
-    return toFormError("createEvent", error);
+    return actionFailure<EventField>(log, "createEvent", error, {
+      ownerId: profile.id,
+    });
   }
 }
 
@@ -113,10 +113,12 @@ export async function updateEventAction(
 
   try {
     const event = await service.updateEvent(id.data, profile.id, parsed.data);
-    await revalidateFor(profile.username, event.slug);
+    revalidateFor(profile.username, event.slug);
     return { status: "success", eventId: event.id };
   } catch (error) {
-    return toFormError("updateEvent", error);
+    return actionFailure<EventField>(log, "updateEvent", error, {
+      eventId: id.data,
+    });
   }
 }
 
@@ -140,10 +142,13 @@ export async function transitionEventAction(
       profile.id,
       transition.data,
     );
-    await revalidateFor(profile.username, event.slug);
+    revalidateFor(profile.username, event.slug);
     return { status: "success" };
   } catch (error) {
-    return toFormError("transitionEvent", error) as FormResult;
+    return actionFailure(log, "transitionEvent", error, {
+      eventId: id.data,
+      to: transition.data,
+    });
   }
 }
 
@@ -156,10 +161,13 @@ export async function deleteEventAction(eventId: unknown): Promise<FormResult> {
   const profile = await getCurrentProfile();
   const service = await getEventsService();
 
-  await service.deleteEvent(id.data, profile.id);
-  await revalidateFor(profile.username);
-
-  return { status: "success" };
+  try {
+    await service.deleteEvent(id.data, profile.id);
+    revalidateFor(profile.username);
+    return { status: "success" };
+  } catch (error) {
+    return actionFailure(log, "deleteEvent", error, { eventId: id.data });
+  }
 }
 
 export type UploadCoverResult =
@@ -184,7 +192,11 @@ export async function uploadEventCoverAction(
 
   const user = await verifySession();
   const service = await getEventsService();
-  const url = await service.uploadCoverImage(user.id, parsed.data.file);
 
-  return { status: "success", url };
+  try {
+    const url = await service.uploadCoverImage(user.id, parsed.data.file);
+    return { status: "success", url };
+  } catch (error) {
+    return actionFailure(log, "uploadEventCover", error, { ownerId: user.id });
+  }
 }

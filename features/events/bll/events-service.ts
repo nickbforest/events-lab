@@ -1,18 +1,23 @@
-import type {
-  EventDraftInput,
-  EventTransition,
+import {
+  EVENT_TRANSITIONS,
+  type EventDraftInput,
+  type EventTransition,
+  PUBLIC_EVENT_STATUSES,
 } from "@/features/events/contracts";
 import type {
   EventsRepository,
   EventWriteRow,
 } from "@/features/events/dal/events-repository";
 import { ApplicationError } from "@/lib/errors";
+import { createLogger } from "@/lib/logging";
 import type {
   Category,
   EventRecord,
   EventStatus,
   EventWithRelations,
 } from "@/lib/types";
+
+const log = createLogger("events.service");
 
 export interface DashboardSummary {
   upcoming: EventWithRelations[];
@@ -64,12 +69,21 @@ export interface EventsService {
 type Clock = () => Date;
 
 /**
- * Whether an event has finished. Derived rather than stored: Architecture §11
- * lists a `completed` status, but completion is a fact about the clock, and a
- * stored copy needs a scheduled job and contradicts the date until it runs.
+ * Whether an event has finished. Derived rather than stored: completion is a
+ * fact about the clock, and a stored copy needs a scheduled job and
+ * contradicts the date until it runs.
  */
 export function hasFinished(event: EventRecord, now: Date): boolean {
   return Date.parse(event.end_at ?? event.start_at) < now.getTime();
+}
+
+export function isPublicStatus(status: EventStatus): boolean {
+  return PUBLIC_EVENT_STATUSES.includes(status);
+}
+
+/** Whether `to` is a status change the product allows from `from`. */
+export function canTransition(from: EventStatus, to: EventTransition): boolean {
+  return EVENT_TRANSITIONS[from].includes(to);
 }
 
 /**
@@ -124,11 +138,34 @@ export function publishBlockers(input: EventDraftInput): PublishBlockers {
   return blockers;
 }
 
-const PUBLIC_STATUSES: readonly EventStatus[] = [
-  "published",
-  "cancelled",
-  "postponed",
-];
+/** The stored row, read back as the draft contract the rules are written for. */
+function toDraftInput(event: EventRecord): EventDraftInput {
+  return {
+    title: event.title,
+    slug: event.slug,
+    shortDescription: event.short_description,
+    description: event.description,
+    categoryId: event.category_id,
+    eventType: event.event_type,
+    startAt: event.start_at,
+    endAt: event.end_at,
+    timezone: event.timezone,
+    venueName: event.venue_name,
+    address: event.address,
+    city: event.city,
+    countryCode: event.country_code,
+    latitude: event.latitude,
+    longitude: event.longitude,
+    onlineUrl: event.online_url,
+    isFree: event.is_free,
+    priceInfo: event.price_info,
+    ticketUrl: event.ticket_url,
+    ticketCtaLabel: event.ticket_cta_label,
+    externalUrl: event.external_url,
+    coverImageUrl: event.cover_image_url,
+    tags: [],
+  };
+}
 
 function toWriteRow(input: EventDraftInput, slug: string): EventWriteRow {
   return {
@@ -156,6 +193,14 @@ function toWriteRow(input: EventDraftInput, slug: string): EventWriteRow {
     cover_image_url: input.coverImageUrl,
   };
 }
+
+const STATUS_WORDS: Record<EventStatus, string> = {
+  draft: "a draft",
+  published: "a published event",
+  postponed: "a postponed event",
+  cancelled: "a cancelled event",
+  archived: "an unpublished event",
+};
 
 export function createEventsService(
   repository: EventsRepository,
@@ -196,6 +241,28 @@ export function createEventsService(
     }
   }
 
+  /**
+   * A cover URL arrives in the payload, so it is user input. Only an object
+   * this owner uploaded may be written: anything else could point the page
+   * at another publisher's file or at an arbitrary host.
+   */
+  function requireOwnCover(
+    ownerId: string,
+    url: string | null,
+    alreadyStored: string | null = null,
+  ): void {
+    if (
+      url &&
+      url !== alreadyStored &&
+      !repository.isOwnedCoverUrl(ownerId, url)
+    ) {
+      throw new ApplicationError(
+        "VALIDATION_FAILED",
+        "That image could not be used. Upload it again.",
+      );
+    }
+  }
+
   async function loadOwned(
     id: string,
     ownerId: string,
@@ -207,6 +274,22 @@ export function createEventsService(
       throw new ApplicationError("NOT_FOUND", "Event not found.");
     }
     return event;
+  }
+
+  /**
+   * Cleanup after a write that already succeeded. A failure here costs an
+   * orphaned file, never a broken page, so it is logged rather than thrown —
+   * failing the save over it would be worse.
+   */
+  async function removeCoverQuietly(
+    url: string,
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await repository.removeCoverImage(url);
+    } catch (error) {
+      log.error("Replaced event cover could not be removed.", error, context);
+    }
   }
 
   return {
@@ -260,6 +343,7 @@ export function createEventsService(
       if (publish) {
         requirePublishable(input);
       }
+      requireOwnCover(ownerId, input.coverImageUrl);
 
       const slug = await resolveSlug(ownerId, input.slug, input.title);
       const now = clock().toISOString();
@@ -279,23 +363,39 @@ export function createEventsService(
       } catch (cause) {
         // The event is not yet visible to anyone else, so removing it is
         // cheaper than leaving a half-saved row the publisher did not ask for.
-        await repository.deleteEvent(event.id, ownerId).catch(() => undefined);
+        try {
+          await repository.deleteEvent(event.id, ownerId);
+        } catch (rollbackError) {
+          log.error(
+            "Event saved without its tags could not be rolled back.",
+            rollbackError,
+            { eventId: event.id, ownerId },
+          );
+        }
         throw cause;
       }
 
+      log.info("Event created.", {
+        eventId: event.id,
+        ownerId,
+        status: event.status,
+      });
       return event;
     },
 
     async updateEvent(id, ownerId, input) {
       const existing = await loadOwned(id, ownerId);
+      requireOwnCover(ownerId, input.coverImageUrl, existing.cover_image_url);
 
-      // A published slug is a public URL and MVP-1 keeps no redirect history,
-      // so it is fixed once the event has been seen.
-      const slug = PUBLIC_STATUSES.includes(existing.status)
-        ? existing.slug
-        : await resolveSlug(ownerId, input.slug, input.title, id);
+      // Once an event has been public its slug is a URL someone may have
+      // shared, and the MVP keeps no redirect history — so it stays fixed
+      // even after the event is unpublished.
+      const slug =
+        existing.published_at !== null
+          ? existing.slug
+          : await resolveSlug(ownerId, input.slug, input.title, id);
 
-      if (PUBLIC_STATUSES.includes(existing.status)) {
+      if (isPublicStatus(existing.status)) {
         requirePublishable(input);
       }
 
@@ -311,69 +411,59 @@ export function createEventsService(
       // deleting first would cost a live page a working image.
       const replaced = existing.cover_image_url;
       if (replaced && replaced !== input.coverImageUrl) {
-        await repository.removeCoverImage(replaced).catch(() => undefined);
+        await removeCoverQuietly(replaced, { eventId: id, ownerId });
       }
 
+      log.info("Event updated.", { eventId: id, ownerId });
       return event;
     },
 
     async transitionEvent(id, ownerId, to) {
       const existing = await loadOwned(id, ownerId);
 
-      if (to === "published" && existing.status === "draft") {
-        requirePublishable({
-          title: existing.title,
-          slug: existing.slug,
-          shortDescription: existing.short_description,
-          description: existing.description,
-          categoryId: existing.category_id,
-          eventType: existing.event_type,
-          startAt: existing.start_at,
-          endAt: existing.end_at,
-          timezone: existing.timezone,
-          venueName: existing.venue_name,
-          address: existing.address,
-          city: existing.city,
-          countryCode: existing.country_code,
-          latitude: existing.latitude,
-          longitude: existing.longitude,
-          onlineUrl: existing.online_url,
-          isFree: existing.is_free,
-          priceInfo: existing.price_info,
-          ticketUrl: existing.ticket_url,
-          ticketCtaLabel: existing.ticket_cta_label,
-          externalUrl: existing.external_url,
-          coverImageUrl: existing.cover_image_url,
-          tags: [],
-        });
-      }
-
-      if (to === "draft" && PUBLIC_STATUSES.includes(existing.status)) {
+      if (!canTransition(existing.status, to)) {
         throw new ApplicationError(
           "VALIDATION_FAILED",
-          "A public event cannot go back to draft. Archive it instead.",
+          `That change is not available for ${STATUS_WORDS[existing.status]}.`,
         );
       }
 
-      return repository.updateEvent(id, ownerId, {
+      // Every way into public view passes the same readiness rules — a draft
+      // being published and an unpublished event coming back alike, since
+      // either may have been edited while nobody could see it.
+      if (isPublicStatus(to) && !isPublicStatus(existing.status)) {
+        requirePublishable(toDraftInput(existing));
+      }
+
+      const event = await repository.updateEvent(id, ownerId, {
         status: to,
         // Set once, the first time the event goes public. Un-postponing keeps
         // the original date so "published on" stays truthful.
         published_at:
-          to !== "draft" && to !== "archived" && !existing.published_at
+          isPublicStatus(to) && !existing.published_at
             ? clock().toISOString()
             : existing.published_at,
       });
+
+      log.info("Event status changed.", {
+        eventId: id,
+        ownerId,
+        from: existing.status,
+        to,
+      });
+      return event;
     },
 
     async deleteEvent(id, ownerId) {
       const existing = await loadOwned(id, ownerId);
       await repository.deleteEvent(id, ownerId);
       if (existing.cover_image_url) {
-        await repository
-          .removeCoverImage(existing.cover_image_url)
-          .catch(() => undefined);
+        await removeCoverQuietly(existing.cover_image_url, {
+          eventId: id,
+          ownerId,
+        });
       }
+      log.info("Event deleted.", { eventId: id, ownerId });
     },
 
     uploadCoverImage: (ownerId, file) =>
