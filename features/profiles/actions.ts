@@ -9,7 +9,7 @@ import {
   compiledProfileUpdateSchema,
 } from "@/features/profiles/contracts";
 import { getProfilesService } from "@/features/profiles/service";
-import { ApplicationError, toUserMessage } from "@/lib/errors";
+import { actionFailure } from "@/lib/action-errors";
 import { type FormResult, firstFieldErrors } from "@/lib/forms";
 import { createLogger } from "@/lib/logging";
 import { routes } from "@/lib/routes";
@@ -24,28 +24,6 @@ export type ProfileField =
   | "countryCode"
   | "websiteUrl"
   | "socialLinks";
-
-/**
- * Turns a thrown value into a form result.
- *
- * Every action funnels its failures through here, so the sentence a person
- * reads comes from `USER_FACING_MESSAGES` rather than from whatever the throw
- * site happened to say, and nothing is swallowed without a log line. A
- * non-`ApplicationError` is a bug, not a handled outcome: it is logged and
- * rethrown so the error boundary still sees it.
- */
-function toFailure<TField extends string>(
-  scope: string,
-  error: unknown,
-): FormResult<TField> {
-  if (!(error instanceof ApplicationError)) {
-    log.error("Unhandled failure in a profile action.", error, { scope });
-    throw error;
-  }
-
-  log.error("Profile action failed.", error, { scope });
-  return { status: "error", message: toUserMessage(error) };
-}
 
 export async function updateProfileAction(
   input: unknown,
@@ -67,7 +45,7 @@ export async function updateProfileAction(
     revalidatePath(routes.publisher(profile.username));
     return { status: "success" };
   } catch (error) {
-    return toFailure<ProfileField>("updateProfile", error);
+    return actionFailure<ProfileField>(log, "updateProfile", error);
   }
 }
 
@@ -99,7 +77,7 @@ export async function updateProfileMediaAction(
     revalidatePath(routes.publisher(username));
     return { status: "success" };
   } catch (error) {
-    return toFailure<"file">("updateProfileMedia", error);
+    return actionFailure<"file">(log, "updateProfileMedia", error);
   }
 }
 
@@ -121,6 +99,6 @@ export async function removeProfileMediaAction(
     revalidatePath(routes.publisher(username));
     return { status: "success" };
   } catch (error) {
-    return toFailure<"file">("removeProfileMedia", error);
+    return actionFailure<"file">(log, "removeProfileMedia", error);
   }
 }

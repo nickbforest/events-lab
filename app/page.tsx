@@ -1,4 +1,4 @@
-import { BarChart3, Globe, Sparkles, Zap } from "lucide-react";
+import { Globe, Share2, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -8,7 +8,7 @@ const FEATURES = [
   {
     Icon: Globe,
     title: "Your own public page",
-    body: "Every publisher gets events-lab/yourname — a shareable, SEO-ready home for your upcoming schedule.",
+    body: "Every publisher gets a page of their own at events-lab/publishers/yourname — a shareable home for your upcoming schedule.",
   },
   {
     Icon: Zap,
@@ -16,9 +16,9 @@ const FEATURES = [
     body: "Keep the ticketing provider you already use. events-lab is the front door; the click goes to your URL.",
   },
   {
-    Icon: BarChart3,
-    title: "Built for discovery",
-    body: "Search, categories, cities and dates. People find your event without needing to follow you first.",
+    Icon: Share2,
+    title: "Made to be shared",
+    body: "Every event page carries its own preview image and event details, so a link looks right in a message, a post or a search result.",
   },
   {
     Icon: Sparkles,
@@ -83,10 +83,10 @@ export default function LandingPage() {
                   Start publishing free
                 </Link>
                 <Link
-                  href={routes.discover()}
+                  href={routes.auth.signIn()}
                   className="rounded-md border border-border px-8 py-4 text-lg font-medium transition-colors hover:bg-white/5"
                 >
-                  Browse events
+                  Log in
                 </Link>
               </div>
             </div>

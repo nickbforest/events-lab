@@ -1,1274 +1,740 @@
 # events-lab — Architecture
 
-## 1. Purpose
+The architectural source of truth. It describes the **implemented MVP baseline**
+first and the post-MVP target last (§25). Where the two differ, the code and
+the first 24 sections win.
 
-events-lab is a modern SaaS platform for creating, managing, publishing, discovering, and promoting upcoming events.
-
-The platform is intended for:
-
-* Music artists
-* Bands
-* Theaters
-* Cinemas
-* Sports teams
-* Event organizers
-* Schools
-* Universities
-* Conference organizers
-* Churches
-* Communities
-* Venues
-* Local businesses
-* Other organizations and individuals
-
-The core product concept is:
-
-> Create an event → publish it → make it discoverable → share it.
-
-This document is the architectural source of truth for the project.
-
-Any significant architectural change must be explicitly approved before implementation.
+Last reconciled with the code: **2026-09-30** (hardening pass after the
+2026-09-26 MVP baseline audit). Any
+significant architectural change must be explicitly approved before
+implementation.
 
 ---
 
-# 2. Core Architecture Decision
+# 1. Product
 
-## 2.1 Architectural style
+events-lab is a free publishing tool for anyone who runs events — artists,
+bands, venues, theaters, cinemas, sports clubs, schools, churches, communities,
+conference organizers, local businesses.
 
-events-lab will use a:
+> Create an event → publish it → share its public link.
 
-> **Modular Monolith**
+A **publisher** signs up, gets a public page at `/publishers/:username`, and
+publishes events at `/publishers/:username/:slug`. Tickets are sold elsewhere;
+events-lab links out to the publisher's provider.
 
-for the MVP.
+---
 
-We explicitly do NOT use microservices for the MVP.
+# 2. MVP scope
 
-The application should have clear internal domain boundaries while remaining one deployable application.
+## In the MVP (implemented)
 
-Initial domains:
+* Email/password accounts with email confirmation, password reset, email and
+  password change.
+* One public publisher page per account: name, publisher type, city, country,
+  bio, website, social links, avatar, cover image.
+* Events: create (dialog), edit (dialog or full editor), draft, publish,
+  postpone, cancel, unpublish (archive), delete; cover image; category; tags;
+  in-person / online / hybrid; free / paid; ticket button with custom label;
+  timezone-aware dates; per-publisher slugs.
+* Public event page with Open Graph metadata, schema.org `Event` JSON-LD and
+  related events. Public publisher page with upcoming and past events.
+* Dashboard: overview with real analytics (visits, ticket clicks, daily
+  trend, most viewed), events list, profile, settings.
+* Error, not-found and loading screens in the design system.
+
+## In the MVP but not finished
+
+See `build-plan.md` §B–§D: production email, auth settings and deployment
+(C2, its own PR), and a signed-in browser pass.
+
+## Intentionally outside the MVP
+
+Discovery (`/discover`, search and filters — removed 2026-09-30),
+organizations and team accounts, roles beyond "owner", moderation and admin,
+notifications, recurrence, galleries, maps / geocoding / "near me", Google
+OAuth, native ticketing and payments, following, comments, reviews, account
+deletion. See §25.
+
+---
+
+# 3. Architectural style
+
+A **modular monolith**: one Next.js application deployed as one unit, with
+explicit feature boundaries. No microservices. A service is extracted only when
+real scale or operational requirements justify it.
+
+Implemented feature modules (`features/<name>/`):
+
+| Feature | Backing | Responsibility |
+| --- | --- | --- |
+| `auth` | Supabase Auth | Sign-up, sign-in, sessions, email links, password and email change |
+| `profiles` | `profiles` table, `profile-media` bucket | Publisher identity, username policy, profile media |
+| `events` | `events`, `categories`, `tags`, `event_tags`, `event-media` | Event CRUD, lifecycle, slugs, publish readiness, public reads |
+| `analytics` | `analytics_hits`, `record_analytics_hit`, `analytics_daily`, `analytics_top_events` | Recording page views and ticket clicks; the overview's numbers |
+
+---
+
+# 4. Technology stack
+
+Versions are pinned in `package.json`.
+
+| Concern | Choice |
+| --- | --- |
+| Framework | Next.js 16.3 (App Router, React Server Components, Server Actions, Proxy) |
+| UI runtime | React 19.2 |
+| Language | TypeScript 5, strict mode |
+| Package manager | pnpm 12.3.4; Node.js ≥ 22.12 |
+| Styling | Tailwind CSS 4, design tokens in `app/globals.css` |
+| UI primitives | Hand-written in `components/` following `ui-registry.md`; `components.json` is configured for shadcn/ui but no generated primitive is in use yet |
+| Icons | lucide-react |
+| Forms | TanStack Form 1.x with shared Zod schemas |
+| Client server state | TanStack Query 5 (username availability) |
+| Charts | TanStack Charts 0.18.0 (pinned; pre-1.0), behind `TrendChart` |
+| Tables | TanStack Table 9 is installed but **not used yet** (see `build-plan.md` M11) |
+| HTTP | Axios, `lib/http/client.ts`, browser → Route Handler only |
+| Validation | Zod 4.6 (`z.compile` for per-request schemas) |
+| Backend platform | Supabase: PostgreSQL 17, Auth, Storage, RLS (`@supabase/ssr`, `@supabase/supabase-js`) |
+| Lint / format | Biome 2.5 (sole tool; also enforces import boundaries) |
+| Unit tests | Vitest 5 (node environment) |
+| Database tests | pgTAP in `supabase/tests/database` (written, not yet executed as a suite) |
+| CI | GitHub Actions: frozen install, Biome, typecheck, Vitest, build |
+| Hosting (planned) | Vercel for Next.js, Supabase for backend — not deployed yet |
+
+Not in the stack yet: Mapbox (selected for the map phase), Playwright (selected
+for E2E), a transactional email provider.
+
+---
+
+# 5. Supabase
+
+Supabase is the integrated backend — database, auth, storage and RLS — not
+only a database host. Hosted project: `wjuuiwgayyydvacjzixa` (PostgreSQL 17).
+
+## 5.1 Clients (`lib/supabase/`)
+
+| File | Runtime | Use |
+| --- | --- | --- |
+| `client.ts` | Browser | Exists; not used by features today |
+| `server.ts` | Server, request-scoped, cookie-aware | Every authenticated read and write |
+| `proxy.ts` | Proxy | Session refresh and rotated-cookie persistence |
+| `public.ts` | Server, cookie-free, anonymous | Public pages and reads without a request context; sees only rows with a public select policy |
+
+There is **no privileged (service-role) client**, and none may be added
+without approval. A secret key never uses a `NEXT_PUBLIC_` prefix, is never
+logged, bundled or committed. Normal operations use the request-scoped client
+so RLS stays effective.
+
+Client factories are infrastructure. Feature code reaches them only through
+its DAL; Biome import rules block UI, Server Actions and BLL modules from
+importing `@/lib/supabase` or `@supabase/*`.
+
+## 5.2 Environment
+
+Validated with Zod in `lib/env/client.ts` (`lib/env/server.ts` re-exports it
+behind `server-only`). Documented in `.env.example`.
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL; also the allowed `next/image` host |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable (anon) key |
+| `NEXT_PUBLIC_SITE_URL` | Origin for auth email links; must be on the Supabase redirect allow-list |
+| `NEXT_PUBLIC_LOG_LEVEL` | Optional logger threshold |
+| `TEST_MEDIA_HOST`, `TEST_EXTERNAL_HOST` | Optional test-fixture hosts (default to `.invalid`) |
+
+## 5.3 Migrations and types
+
+Schema changes are SQL migrations in `supabase/migrations`. Migrations are
+history: never edit an applied one. Generated types live in
+`lib/supabase/database.types.ts` (`pnpm db:types` needs the local stack; with
+no Docker, types are generated from the hosted project through the connector).
+
+Local file versions match the hosted history (aligned 2026-09-30), so
+`supabase db push` works. When a migration is applied through the connector,
+it gets the apply time as its version: rename the local file to that version
+(check with `list_migrations`).
+
+
+## 5.4 ORM
+
+No Prisma or Drizzle. Supabase SQL migrations, generated types and the typed
+Supabase client are sufficient. An ORM needs a demonstrated need and approval.
+
+---
+
+# 6. Publisher model
+
+**A profile is the publisher.** There is no organizations layer in the MVP.
+
+* `profiles.id` = `auth.users.id`; one profile per account.
+* `profiles.publisher_type` classifies it (artist, band, theater, cinema,
+  sports_team, event_organizer, school, university, conference_organizer,
+  church, community, venue, business, other). It is a classification, **not a
+  security role**.
+* Events are owned by a profile: `events.owner_id → profiles.id`.
+* A venue, band or business registers as a profile like a person does.
+
+What this costs, exactly: two people cannot manage one publisher (staff share
+a login), and one person cannot run two publishers (they need a second
+account). Retrofitting organizations later means one organization per profile
+as a backfill, an `events.organization_id` column, and a rewrite of every
+events RLS policy. Revisit before launch if either capability becomes a
+requirement.
+
+**Roles.** The MVP has exactly one: an authenticated owner acting on their own
+rows. There are no system roles (moderator, admin) and no organization roles.
+
+---
+
+# 7. Data model
+
+All tables are in `public`, all have RLS enabled.
+
+## 7.1 Enums
+
+| Enum | Values |
+| --- | --- |
+| `publisher_type` | see §6 |
+| `analytics_metric` | `page_view`, `ticket_click` |
+| `event_type` | `in_person`, `online`, `hybrid` |
+| `event_status` | `draft`, `published`, `cancelled`, `postponed`, `archived` — deliberately **no `completed`** (§9) |
+
+## 7.2 Tables
+
+**`profiles`** — `id` (PK, FK `auth.users`, cascade), `username` (unique,
+`^[a-z0-9_](-?[a-z0-9_])*$`, 3–32), `display_name` (1–80), `publisher_type`
+(default `other`), `bio`, `avatar_url`, `cover_url`, `website_url`, `city`,
+`country_code` (`^[A-Z]{2}$`), `social_links` jsonb (map of platform → URL),
+`created_at`, `updated_at` (trigger).
+
+**`categories`** — `id`, `slug` (unique), `label`, `sort_order`. Seeded with
+eight (concert, theater, cinema, sports, conference, festival, exhibition,
+community). No write policy: the list changes by migration only.
+
+**`tags`** — `id`, `slug` (unique, canonical identity), `label` (first spelling
+used), `created_at`. Any signed-in user may insert; never updated or deleted by
+the app.
+
+**`events`** — `id`, `owner_id` (FK profiles, cascade), `slug` (unique per
+owner, `^[a-z0-9]+(-[a-z0-9]+)*$`, 3–160), `title` (3–160),
+`short_description` (≤280), `description` (≤10000), `category_id` (FK,
+restrict), `event_type`, `status`, `start_at` (not null), `end_at` (> start),
+`timezone` (IANA, validated by Zod), `venue_name`, `address`, `city`,
+`country_code`, `latitude`, `longitude` (range-checked, not yet populated),
+`online_url`, `is_free`, `price_info`, `ticket_url`, `ticket_cta_label`
+(1–40), `external_url`, `cover_image_url`, `published_at`, `created_at`,
+`updated_at` (trigger), `search_vector` (generated, weighted: title A,
+summary/city B, venue C, description D; not read yet).
+
+Constraint `events_public_status_has_published_at`: a public status requires
+`published_at`. All other CHECKs are structural; publish readiness is a BLL
+rule because a draft may be incomplete.
+
+**`event_tags`** — `(event_id, tag_id)` PK, both cascade.
+
+**`analytics_hits`** — `id` (identity), `owner_id` (FK profiles, cascade),
+`event_id` (FK events, cascade, null for the publisher page), `metric`
+(`analytics_metric`: `page_view`, `ticket_click`; a click requires an event),
+`occurred_at`. One row per hit; no IP, user agent or visitor id.
+
+## 7.3 Indexes
+
+`events_owner_status_idx (owner_id, status)`, partial
+`events_public_start_at_idx (start_at)` for public rows,
+`events_category_idx`, GIN `events_search_idx (search_vector)` (unread until
+discovery returns), `event_tags_tag_idx (tag_id)`,
+`analytics_hits_owner_time_idx (owner_id, occurred_at)`, partial
+`analytics_hits_event_idx (event_id)`.
+
+## 7.4 Functions and triggers
+
+* `handle_new_user` (security definer) creates the profile from signup
+  metadata (`username`, `display_name`). A failure aborts the auth user insert,
+  so an account without a profile cannot exist.
+* `set_updated_at` on `profiles` and `events`.
+* `EXECUTE` on both is revoked from `public`, `anon`, `authenticated`.
+* `record_analytics_hit(metric, username, event_id)` — **security definer**,
+  executable by `anon` and `authenticated`: the only way to write a hit. It
+  looks the target up itself (the event must be public and belong to that
+  username) and returns false, writing nothing, otherwise. Supabase's
+  advisor flags it as a public definer function; that is intended.
+* `analytics_daily(owner, from, to)` and `analytics_top_events(owner, from,
+  to, limit)` — security **invoker**, `authenticated` only, so RLS limits
+  them to the caller's own rows. Aggregation happens here, never in the app.
+* `handle_new_user` also refuses reserved usernames (`check_violation`), so a
+  sign-up that bypasses the app cannot take one. The list is kept equal to
+  `RESERVED_USERNAMES` by a Vitest test.
+
+## 7.5 Storage
+
+| Bucket | Public read | Limit | Types | Path |
+| --- | --- | --- | --- | --- |
+| `profile-media` | yes | 5 MB | PNG, JPEG, WebP | `{user_id}/{avatar\|cover}-{uuid}.{ext}` |
+| `event-media` | yes | 5 MB | PNG, JPEG, WebP | `{user_id}/{uuid}.{ext}` (no event id: the cover uploads before the row exists) |
+
+Owner-folder policies on both: insert, select (list) and delete only where the
+first path segment is `auth.uid()`. Public buckets mean readable by URL, not
+listable. Every upload gets a fresh object name so CDN caches never serve a
+replaced image.
+
+---
+
+# 8. Row Level Security
+
+| Table | Select | Insert | Update | Delete |
+| --- | --- | --- | --- | --- |
+| `profiles` | everyone | none (trigger only) | owner | none (cascade from `auth.users`) |
+| `categories` | everyone | none | none | none |
+| `tags` | everyone | authenticated | none | none |
+| `events` | public statuses with `published_at` (published, cancelled, postponed), or owner | owner | owner | owner |
+| `event_tags` | follows its event | event owner | none | event owner |
+| `analytics_hits` | owner | none (only `record_analytics_hit`) | none | none (cascade) |
+
+Cancelled and postponed events stay public on purpose: a ticket holder must see
+that the event is off, not a 404. Archiving is how a publisher takes a page
+down.
+
+**RLS checks rows, not columns.** Where a rule must hold even against an
+owner calling PostgREST directly, it needs a grant or trigger as well:
+`username` is excluded from the owners' column-level `UPDATE` grant and
+reserved names are refused by the signup trigger (both from the I5
+migration). "Slug is fixed once public" and publish readiness remain BLL-only
+and can be bypassed only on the owner's own rows — accepted for the MVP.
+Never disable RLS to make a feature easier.
+
+---
+
+# 9. Event lifecycle
+
+Status holds the publisher's intent. Whether an event has **finished** is
+derived from `end_at ?? start_at` (`hasFinished` in the events service), never
+stored, because a stored copy needs a scheduled job and contradicts the date
+until it runs. The `events_rls` test asserts the enum has no `completed`.
+
+Allowed transitions — `EVENT_TRANSITIONS` in `features/events/contracts.ts`,
+the single table the service enforces and the editor renders:
 
 ```text
-Authentication
-Users / Profiles
-Organizations
-Organization Memberships
-Events
-Venues / Locations
-Categories
-Tags
-Discovery / Search
-Media
-Moderation
-Administration
-Notifications
+draft      → published (Publish)
+published  → postponed | cancelled | archived (Unpublish)
+postponed  → published (Back on) | cancelled | archived
+cancelled  → archived
+archived   → published (Publish again)
 ```
 
-This allows events-lab to scale without introducing distributed-system complexity prematurely.
+No public event returns to `draft`, and a cancellation is undone only by
+unpublishing and publishing again. The events list toggle covers draft,
+published and archived rows only (on = `published`, off = `archived`);
+cancelled and postponed rows are changed on the edit page.
 
-Future services may be extracted only when real scale or operational requirements justify them.
+Service rules: any move not in the table is refused (`VALIDATION_FAILED`);
+publish readiness is checked on every move from a non-public status into a
+public one and on every edit of a public event; `published_at` is set once,
+the first time the event goes public.
 
----
+Publish readiness (`publishBlockers`): online/hybrid needs a join link;
+in-person/hybrid needs a city; paid needs price details or a ticket link; a
+ticket label needs a ticket URL.
 
-# 3. Technology Stack
-
-## Frontend
-
-* Next.js
-* React
-* TypeScript in strict mode
-
-## Package manager
-
-* pnpm
-
-## UI
-
-* Tailwind CSS
-* shadcn/ui
-* Lucide Icons
-* TanStack Table (`@tanstack/react-table`) for data-table state and behavior
-* TanStack Charts (`@tanstack/charts`) for data visualization
-
-## Backend / Application Layer
-
-* Next.js server-side architecture
-* Server Components where appropriate
-* Server Actions where appropriate
-* Route Handlers for explicit API endpoints/integrations
-* Business Logic Layer (BLL) per domain
-* Data Access Layer (DAL) per domain
-
-## Backend Platform
-
-* Supabase (`@supabase/supabase-js` and `@supabase/ssr`)
-
-## Database
-
-* PostgreSQL managed by Supabase
-
-## Authentication
-
-* Supabase Auth
-
-## Authorization
-
-* PostgreSQL Row Level Security (RLS)
-* Server-side authorization
-* Application permission checks
-
-## Storage
-
-* Supabase Storage
-
-## Validation
-
-* Zod (`zod`)
-
-## Forms
-
-* TanStack Form (`@tanstack/react-form`)
-
-## Client server state
-
-* TanStack Query (`@tanstack/react-query`)
-
-## HTTP client
-
-* Axios (`axios`)
-
-## Maps / Geolocation
-
-* Mapbox
-
-## Testing
-
-* Vitest
-* Playwright
-
-## Code Quality
-
-* TypeScript
-* Biome for linting and formatting
-
-## Source Control
-
-* Git
-* GitHub
-
-## Deployment
-
-* Vercel for the Next.js application
-* Supabase for backend infrastructure
+Slugs derive from the title, are suffixed on collision (`-2` … `-50`) per
+owner, and are fixed once the event has **ever** been public
+(`published_at` set) — unpublishing does not free it, since the URL may have
+been shared.
 
 ---
 
-# 4. Why Supabase
+# 10. Date and time
 
-Supabase is the selected backend platform for events-lab.
+Events store `start_at`/`end_at` as `timestamptz` and `timezone` as an IANA
+identifier. Never store a formatted display string.
 
-Supabase provides:
-
-* PostgreSQL
-* Authentication
-* Storage
-* Row Level Security
-* database migrations
-* generated database types
-* realtime capabilities if required later
-* managed infrastructure
-
-This significantly reduces MVP infrastructure complexity.
-
-The project should use Supabase as an integrated backend platform rather than treating it only as a database provider.
-
-## 4.1 Supabase connection contract
-
-Use `@supabase/supabase-js` with `@supabase/ssr` for the Next.js connection.
-Client factories live in `lib/supabase` and must be separated by runtime:
-
-```text
-lib/supabase/client.ts   browser client
-lib/supabase/server.ts   cookie-aware, request-scoped server client
-lib/supabase/admin.ts    optional privileged server-only client
-```
-
-The public connection contract uses:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-```
-
-Any Supabase secret/service-role key is server-only, must never use a `NEXT_PUBLIC_`
-prefix, and may be imported only by an explicitly approved privileged DAL adapter.
-Normal user and organization operations must use the authenticated request-scoped
-client so PostgreSQL RLS remains effective.
-
-Zod must validate required environment variables when the application starts. Do
-not commit `.env.local` or real credentials; document required names in
-`.env.example` when the connection is implemented.
-
-The client factories are infrastructure only. Feature code reaches them through
-the DAL and must not create ad hoc Supabase clients.
+`lib/datetime.ts` converts `datetime-local` wall-clock readings to instants
+for a named zone with `Intl` (two-pass offset resolution for DST), and back.
+The create dialog reads times in the browser's zone without showing it; the
+full editor exposes a zone picker (`COMMON_TIME_ZONES`, with the saved zone
+kept if it is outside the list). Display formats events in the **event's**
+zone, not the viewer's (`lib/format.ts`).
 
 ---
 
-# 5. ORM Decision
+# 11. Location
 
-Do NOT introduce Prisma or Drizzle by default.
+Venue, address, city and country are real columns. The event form takes a
+country name (datalist) and stores the ISO alpha-2 code via
+`countryCodeFromInput` (`lib/countries.ts`, names from `Intl.DisplayNames`).
+Coordinates exist but are never populated; the form currently submits them as
+empty on every save.
 
-For MVP use:
-
-* Supabase PostgreSQL
-* Supabase migrations
-* Supabase-generated TypeScript database types
-* Supabase client/server libraries
-
-An ORM may be introduced later only when there is a demonstrated architectural need.
-
-Codex must not introduce an ORM merely because it is commonly used.
+Until the map phase, the event card links to OpenStreetMap as a plain
+hyperlink (`lib/maps.ts`) — no key, no SDK. Mapbox remains the selected map
+provider; do not introduce another one.
 
 ---
 
-# 6. User Architecture
+# 12. Tickets and payments
 
-> **MVP-1 amendment — 2026-09-26.** Sections 6–9 describe the target
-> architecture. MVP-1 does not build the organizations layer: a profile is the
-> publisher, classified by `publisher_type`, and events are owned by
-> `profiles.id`. A venue, band or business registers as a profile like anyone
-> else. The §7 type taxonomy survives as that enum; the §8 organization roles
-> and the §9 organization page do not exist yet. This costs shared publisher
-> accounts and multi-publisher users, and nothing else. See
-> `context/build-plan.md` Phase 3 and `context/progress-tracker.md` Phase 3.
+No native ticketing or payments in the MVP. An event carries `is_free`,
+`price_info`, `ticket_url`, `ticket_cta_label` (button text, default "Get
+tickets") and `external_url`. The ticket button is hidden for cancelled
+events. An online event without a ticket URL shows "Join online".
 
-The primary relationship is:
-
-```text
-User
-  ↓
-Profile
-  ↓
-Organizations
-  ↓
-Events
-```
-
-A user may:
-
-* have one profile
-* create multiple organizations
-* belong to multiple organizations
-* manage multiple events
-* have different permissions in different organizations
+Monetization (featured events, pro plans, ticketing fees) is post-MVP and
+needs approval. Publishing is free.
 
 ---
 
-# 7. Organization Architecture
+# 13. Media
 
-> **MVP-1:** deferred — see the §6 amendment. The type list below is
-> implemented as the `public.publisher_type` enum on `profiles`.
+Uploads go through Server Actions → BLL → DAL → Storage (the action body
+limit is raised to `6mb` in `next.config.ts` for 5 MB files).
 
-Organizations represent entities that publish events.
+* **Profile avatar and cover** upload immediately on selection. Order:
+  upload → repoint the row → delete the replaced files, so a failure leaves an
+  orphan, never a broken image. Removal clears the column first, then deletes
+  the files.
+* **Event cover** uploads on selection and returns a URL the form holds; the
+  row is written on Save, and Save deletes the file the row no longer points
+  at. The service accepts only a URL inside the owner's own `event-media`
+  folder (the DAL knows the layout, the BLL refuses). A cover uploaded and
+  then abandoned is orphaned (`build-plan.md` M1).
+* Progress is an **indeterminate** bar: Server Actions report no byte
+  progress. A real percentage needs signed-URL direct-to-Storage uploads.
+* `next/image` serves only `…/storage/v1/object/public/**` on the Supabase host.
 
-Organization types may include:
-
-```text
-ARTIST
-BAND
-THEATER
-CINEMA
-SPORTS_TEAM
-EVENT_ORGANIZER
-SCHOOL
-UNIVERSITY
-CONFERENCE_ORGANIZER
-CHURCH
-COMMUNITY
-VENUE
-BUSINESS
-OTHER
-```
-
-Organization type is a classification.
-
-It is NOT a security role.
+Not built: galleries, reordering, image optimization beyond `next/image`.
 
 ---
 
-# 8. Roles
+# 14. Authentication
 
-## System roles
-
-```text
-USER
-MODERATOR
-ADMIN
-SUPER_ADMIN
-```
-
-## Organization roles
-
-```text
-OWNER
-ADMIN
-EDITOR
-VIEWER
-```
-
-Permissions must be derived from roles and enforced server-side.
-
-Client-side UI restrictions are not a security boundary.
-
----
-
-# 9. Organization Public Pages
-
-Organizations have public pages.
-
-A public organization page may contain:
-
-* logo
-* name
-* organization type
-* description
-* website
-* social links
-* location
-* upcoming events
-* past events where appropriate
-
-The MVP does NOT include following organizations.
-
-Organization pages are primarily informational and provide context around the organization's events.
-
----
-
-# 10. Event Architecture
-
-The Event entity is the core domain object.
-
-An Event should support:
-
-```text
-id
-organization_id
-title
-slug
-short_description
-description
-
-cover_image
-gallery
-
-event_type
-category
-tags
-
-start_at
-end_at
-timezone
-
-venue
-address
-city
-country
-latitude
-longitude
-
-location_type
-price_type
-ticket_url
-external_url
-
-social_links
-
-recurrence
-
-status
-
-published_at
-created_at
-updated_at
-```
-
-The exact database normalization should be determined during schema design.
-
-Do not store relational data in JSON when a proper relational model is appropriate.
-
----
-
-# 11. Event Status
-
-> **Implemented 2026-09-26 without `COMPLETED`.** The `event_status` enum is
-> `draft | published | cancelled | postponed | archived`. Whether an event has
-> finished is a fact about `end_at`, not an author's intent: storing it needs a
-> scheduled job, and until that job runs the row contradicts its own date.
-> Past-ness is derived in queries (`hasFinished` in the events service). The
-> `events_rls` test asserts the enum has no `completed` value, so restoring it
-> has to be a deliberate change.
-
-MVP statuses:
-
-```text
-DRAFT
-PUBLISHED
-CANCELLED
-POSTPONED
-COMPLETED
-ARCHIVED
-```
-
-Event lifecycle must be explicit.
-
-Example:
-
-```text
-DRAFT
-  ↓
-PUBLISHED
-  ↓
-COMPLETED
-```
-
-or:
-
-```text
-PUBLISHED
-  ↓
-POSTPONED
-  ↓
-PUBLISHED
-```
-
-or:
-
-```text
-PUBLISHED
-  ↓
-CANCELLED
-```
-
----
-
-# 12. Event Visibility
-
-The MVP supports public events and drafts.
-
-Public event pages are accessible without authentication when the event is published.
-
-The architecture may support unlisted/private events later.
-
----
-
-# 13. Event Recurrence
-
-MVP supports controlled recurring events.
-
-Initial recurrence requirements:
-
-* Daily
-* Weekly
-* Selected weekdays
-* Monthly
-* End date
-
-Avoid building a highly complex recurrence engine.
-
-The data model must leave room for future expansion.
-
----
-
-# 14. Event Location
-
-Events support:
-
-* venue
-* address
-* city
-* country
-* latitude
-* longitude
-* online/in-person/hybrid
-
-Mapbox is the selected map/geolocation provider.
-
-Users may manually select locations.
-
-The browser may also request geolocation for:
-
-> Events near me
-
-Browser geolocation must never be the only method of choosing a location.
-
-> **Implemented so far (2026-09-26).** Venue, address, city and country are
-> real columns. Country is typed by hand, with suggestions, and resolved to
-> the ISO alpha-2 code the column stores (`lib/countries.ts`). Coordinates
-> stay null until the map layer. Until then the listing card links to
-> OpenStreetMap as a plain hyperlink — no key or SDK, so Mapbox remains the
-> only map provider.
-
----
-
-# 15. Geographic Search
-
-events-lab should support:
-
-* city search
-* country search
-* distance from user
-* nearby events
-
-Latitude and longitude must be stored for events with physical locations.
-
-Use PostgreSQL geospatial capabilities/PostGIS where justified.
-
-Do not introduce a separate geospatial service for MVP.
-
----
-
-# 16. Date and Time
-
-Events must support timezone-aware dates.
-
-Store:
-
-```text
-start_at
-end_at
-timezone
-```
-
-Timezone should use IANA timezone identifiers.
-
-Example:
-
-```text
-Asia/Tbilisi
-America/New_York
-Europe/London
-```
-
-Never store an event's time only as a formatted display string.
-
-> **Implemented 2026-09-26.** The create dialog reads times in the browser's
-> own zone and stores it; the full editor exposes the zone for an event held
-> elsewhere. Conversion lives in `lib/datetime.ts`.
-
----
-
-# 17. Event Types
-
-The MVP should support at minimum:
-
-```text
-IN_PERSON
-ONLINE
-HYBRID
-```
-
-This is separate from the event category.
-
----
-
-# 18. Categories and Tags
-
-Categories provide structured classification.
-
-Tags provide flexible classification.
-
-Example:
-
-```text
-Category:
-Concert
-
-Tags:
-jazz
-live-music
-tbilisi
-weekend
-```
-
-Categories should be centrally managed.
-
-Tags should be reusable.
-
----
-
-# 19. Discovery
-
-events-lab discovery must support:
-
-* Search
-* Categories
-* Tags
-* Location
-* City
-* Country
-* Date
-* Date range
-* Event type
-* Organizer
-* Free/paid
-* Online/in-person/hybrid
-* Distance
-* Featured events
-* Trending events
-* Sorting
-* Pagination
-
----
-
-# 20. Search Strategy
-
-MVP search will use PostgreSQL.
-
-Start with:
-
-* PostgreSQL indexes
-* PostgreSQL full-text search where appropriate
-* structured filtering
-
-Do NOT add:
-
-* Elasticsearch
-* OpenSearch
-* Algolia
-* Meilisearch
-* Typesense
-
-unless actual requirements justify them.
-
-The application search API should be abstracted enough that a dedicated search provider can be added later without rewriting the entire UI.
-
----
-
-# 21. Tickets
-
-Native ticket sales are NOT part of MVP.
-
-Events may contain:
-
-```text
-is_free
-ticket_url
-ticket_cta_label
-price_information
-external_url
-```
-
-> **`ticket_cta_label` added 2026-09-26.** The button text is the
-> publisher's, since "Get tickets" is wrong for a free workshop. A labelled
-> button with no `ticket_url` blocks publishing.
-
-The primary flow is:
-
-```text
-events-lab
-   ↓
-Event page
-   ↓
-Get tickets
-   ↓
-External ticket provider
-```
-
----
-
-# 22. Payments
-
-No native payments in MVP.
-
-Future architecture may support:
-
-* ticket checkout
-* Stripe
-* orders
-* refunds
-* QR tickets
-* organizer payouts
-* transaction fees
-
-Do not implement these until explicitly approved.
-
----
-
-# 23. Business Model
-
-MVP should prioritize adoption.
-
-Initial model:
-
-> Free event publishing.
-
-Potential future monetization:
-
-* Featured events
-* Promoted events
-* Organizer Pro
-* Business plans
-* Advanced analytics
-* Native ticketing fees
-
-Subscription/billing infrastructure is not required for MVP.
-
----
-
-# 24. Authentication
-
-Use Supabase Auth.
-
-MVP:
-
-* Email/password
-* Google OAuth
-* Email verification
-* Password reset
-* Secure sessions
-
-Future:
-
-* Apple
-* Passkeys
-* Additional OAuth providers
-* Phone authentication
-
-Authentication must be enforced server-side.
-
-## 24.1 Implemented contract (Phase 1, 2026-09-14)
+Supabase Auth, email and password. Google OAuth is deferred (no Google Cloud
+credentials); it was removed from the UI rather than left non-functional.
 
 **Session transport.** Next.js 16 renamed Middleware to **Proxy**. `proxy.ts`
-at the repository root refreshes the Supabase session and writes rotated auth
-cookies, because Server Components cannot set cookies. It also performs an
-optimistic redirect away from `/dashboard`.
+refreshes the Supabase session on every non-asset request, persists rotated
+cookies, redirects signed-out users away from `/dashboard` to
+`/auth?mode=login`, and redirects signed-in users away from `/auth` and
+`/auth/check-email`.
 
-**The proxy is not the authorization boundary.** It runs on prefetches and only
-reads cookie state. The boundary is `verifySession()` in
-`features/auth/queries.ts`, memoised with React `cache()` and called next to the
-data. Do not move this check into a layout: Next.js layouts do not re-render on
-client-side navigation and do not prevent nested segments or Server Actions from
-running.
+**The proxy is not the authorization boundary.** `verifySession()` in
+`features/auth/queries.ts` (React `cache()`, validated with `getUser()`) runs
+next to the data in every protected page and Server Action. Never move the
+check into a layout: layouts do not re-render on client navigation and do not
+stop nested segments or actions from running.
 
-**Profile creation is a database trigger.** `handle_new_user` creates the
-`profiles` row from signup metadata. This is a deliberate, documented exception
-to "business rules live in the BLL": when email confirmation is enabled, signup
-returns no session, so the application has no authenticated context in which to
-insert the row. The trigger makes an auth user without a profile impossible.
-Username *uniqueness and format* are database constraints for the same reason;
-*reserved names* remain BLL policy. Trigger functions must have `EXECUTE`
-revoked from `anon` and `authenticated`, since `public` is an exposed schema.
+**Signup.** Username and display name travel as signup metadata; the
+`handle_new_user` trigger creates the profile (a documented exception to
+"business rules live in the BLL": with confirmation on, signup returns no
+session, so the app has no context to insert the row). Username format and
+uniqueness are database constraints; reserved names are BLL policy
+(`RESERVED_ROUTE_SEGMENTS` + a fixed list). Live availability:
+`GET /api/auth/username-available` (Axios + TanStack Query).
 
-**Email verification is environment-split.** Production requires confirmation
-(`mailer_autoconfirm = false`). Local development may disable it for iteration
-speed. Client code must therefore handle both outcomes of sign-up — a session,
-or no session and a "check your email" screen — rather than assuming either.
+**Email confirmation is environment-split.** Hosted requires it
+(`mailer_autoconfirm = false`); local config disables it. Sign-up handles both
+outcomes: a session → `/dashboard`, none → `/auth/check-email`.
 
-**Public reads use a cookie-free client.** `lib/supabase/public.ts` provides an
-anonymous client for static generation and public pages, where `cookies()` is
-unavailable. It is strictly less privileged than the request-scoped client and
-sees only rows with a public select policy. It is not a privileged client and
-must never be given the service-role key.
+**Email links.** `/auth/confirm` accepts both the PKCE `code` that Supabase's
+default templates send (works only in the requesting browser) and
+`token_hash` + `type` (works anywhere, once templates are editable with custom
+SMTP). Recovery links go to `/auth/update-password`, email-change links to
+`/dashboard/settings`, others to `/dashboard`; failures go to
+`/auth/link-expired`.
+
+**Account settings.** Password change re-checks the current password,
+requires confirmation, then signs out every session and returns to login with
+a notice. Email change completes only when the emailed link is used; the page
+shows the pending address. Sign-out ends **all** sessions (`global`).
+
+**Password reset is gated to recovery links.** A reset link signs the person
+in exactly like a login does, so `/auth/confirm` marks recovery links with an
+httpOnly, 15-minute `el-recovery` cookie holding the user id
+(`features/auth/recovery-marker.ts`). The update-password page sends any
+other session to Settings, and `updatePassword` in the auth service refuses
+unless the marker matches the signed-in user; the marker is cleared on
+success.
+
+Known gap: production email and auth settings (C2).
 
 ---
 
-# 25. Authorization
+# 15. Authorization
 
-Authorization must be layered.
+Layered, and the frontend is never the boundary:
 
 ```text
-UI restrictions
+UI restrictions (convenience only)
       ↓
-Server-side authorization
+Server: verifySession() + actor id from the session, never the payload
       ↓
-Supabase / PostgreSQL RLS
+BLL domain rules (ownership lookups, publish readiness, transitions)
+      ↓
+PostgreSQL RLS (ownership)
 ```
 
-Never rely only on the frontend.
-
-Example:
-
-```text
-Organization OWNER
-    ↓
-can manage organization
-
-Organization EDITOR
-    ↓
-can manage permitted content
-
-Organization VIEWER
-    ↓
-read-only
-```
+A foreign event id is indistinguishable from a missing one (`NOT_FOUND`), so a
+stranger cannot learn that an id exists.
 
 ---
 
-# 26. Row Level Security
+# 16. Application layers
 
-RLS is mandatory for protected data.
-
-Examples:
-
-A user may edit:
-
-```text
-their profile
-organizations they manage
-events they are authorized to manage
-```
-
-A user must not automatically be able to edit another user's data.
-
-RLS policies must be created alongside protected tables.
-
-Never disable RLS to make a feature easier to implement.
-
----
-
-# 27. Supabase Service Role
-
-The Supabase service-role key is a privileged secret.
-
-It must:
-
-* never be exposed to the browser
-* never be included in client bundles
-* never be committed to Git
-* never be logged
-
-Use privileged server-side access only when genuinely required.
-
----
-
-# 28. Media
-
-Use Supabase Storage.
-
-MVP media:
-
-* event cover images
-* event gallery images
-* organization logos
-* user avatars
-
-Expected capabilities:
-
-* upload
-* delete
-* reorder
-* validate file type
-* validate size
-* optimize images where appropriate
-
-Storage policies must be explicitly defined.
-
-> **Implemented (2026-09-26).** Avatars, profile covers and event covers
-> upload through Server Actions into the `profile-media` and `event-media`
-> buckets. Avatar and cover can be removed: the column is cleared first, then
-> the files are deleted, so a failure never leaves a broken image referenced.
-> A profile with no cover renders its public page without a banner.
->
-> Server Actions report no upload progress, so the uploader shows an
-> indeterminate bar rather than a percentage. A measured percentage would
-> need a direct-to-Storage upload with a signed URL; that is a deliberate
-> later choice, not a gap to paper over with a simulated number.
-
----
-
-# 29. Notifications
-
-Potential MVP notifications:
-
-* Event published
-* Event updated
-* Event cancelled
-* Event postponed
-* Moderation decision
-* Account/security events
-
-The notification system should remain simple.
-
-Do not build a complex notification center unless required.
-
----
-
-# 30. Moderation
-
-events-lab uses hybrid moderation.
-
-Possible flow:
-
-```text
-New organizer
-     ↓
-Moderation may be required
-     ↓
-Approve
-     ↓
-Publish
-```
-
-Trusted organizers may receive a faster publishing path.
-
-Moderators/admins can:
-
-* approve
-* reject
-* unpublish
-* remove
-* review reports
-
-Do not build an unnecessarily complex reputation system in MVP.
-
----
-
-# 31. SEO
-
-Public event and organization pages are important acquisition surfaces.
-
-Support:
-
-* SEO metadata
-* Open Graph
-* social sharing metadata
-* canonical URLs
-* sitemap
-* robots configuration
-* event structured data
-* semantic URLs
-
-Public event pages should be indexable when appropriate.
-
----
-
-# 32. Performance
-
-MVP performance priorities:
-
-* server rendering where appropriate
-* optimized images
-* pagination
-* database indexes
-* efficient queries
-* avoid N+1 queries
-* minimize unnecessary client JavaScript
-* lazy loading for heavy content
-* responsive performance
-
-Do not add Redis or complex caching without evidence that it is necessary.
-
----
-
-# 33. API / Application Layer
-
-The application layer belongs primarily inside Next.js.
-
-Use:
-
-* Server Components
-* Server Actions
-* Route Handlers
-
-as appropriate.
-
-Do not create a separate backend service during MVP.
-
-Every feature that reads or changes application data must follow this dependency
-direction:
+Every feature that reads or changes data follows this direction:
 
 ```text
 UI / Server Component
         ↓
-Server Action / Route Handler / server-side query entry point
+Server Action · Route Handler · server query entry point (features/*/queries.ts)
         ↓
-Zod validation + authenticated actor context
+Zod validation + authenticated actor
         ↓
-Business Logic Layer (BLL)
+BLL  (features/*/bll)   use cases, domain rules, orchestration
         ↓
-Data Access Layer (DAL)
+DAL  (features/*/dal)   contract + Supabase adapter, row mapping, error translation
         ↓
-Supabase client → PostgreSQL / Auth / Storage
+Supabase → PostgreSQL / Auth / Storage
 ```
 
-## 33.1 Business Logic Layer (BLL)
-
-The BLL owns use cases and domain policy, including:
-
-* authorization and permission decisions;
-* domain invariants and state transitions;
-* orchestration of one or more DAL operations;
-* transaction and idempotency requirements;
-* domain-level errors and result types.
-
-The BLL must not render UI, parse raw HTTP requests, or issue Supabase queries
-directly. Server Components, Server Actions, Route Handlers, forms, query hooks,
-and UI components must not contain business rules.
-
-## 33.2 Data Access Layer (DAL)
-
-The DAL is the only application layer permitted to call Supabase for domain data.
-It owns:
-
-* typed PostgreSQL queries and persistence;
-* Supabase Auth and Storage operations behind explicit adapters;
-* mapping database rows to domain-facing data;
-* translating provider/database failures into defined data-access errors;
-* transaction/RPC calls required by the BLL.
-
-The DAL must use generated Supabase database types and must not contain UI,
-transport, or business-policy decisions. It must never bypass RLS as a shortcut.
-
-## 33.3 Contracts, server state, and HTTP
-
-All user-controlled or external values must be validated with Zod at the first
-trusted server boundary. Client-side validation exists for feedback only and does
-not replace server validation. Types should be inferred from Zod schemas and
-generated Supabase types instead of being duplicated by hand.
-
-TanStack Query is the standard for client-managed server state, including query
-keys, caching, invalidation, background refresh, and mutations. Prefer direct BLL
-calls from Server Components when client-side server-state behavior is unnecessary.
-
-Axios is the standard HTTP client for browser-to-Route-Handler calls and external
-HTTP APIs. Axios must not be inserted between the application and Supabase; the
-typed Supabase SDK is the approved data connection.
-
-## 33.4 UI data systems
-
-TanStack Form is the required form-state library and must integrate with shared
-Zod schemas. shadcn/ui is the required source of application UI primitives.
-
-TanStack Table is the required table engine, rendered through accessible
-shadcn/ui-compatible markup. TanStack Charts is the required chart engine. Because
-TanStack Charts is currently a pre-1.0 dependency, pin its version and keep it
-behind shared chart components so upgrades remain isolated.
-
-All table filtering, sorting, pagination, and chart aggregation over non-trivial
-datasets must happen server-side unless the bounded dataset is explicitly known to
-be small.
+* **Composition roots:** `features/*/service.ts` build a BLL service over a
+  DAL adapter with the right client (request-scoped or public).
+* **BLL** owns policy and orchestration; it never imports Supabase or UI.
+* **DAL** is the only layer that calls Supabase; it uses generated types and
+  throws `DataAccessError` (or `AuthProviderError` in auth).
+* **Contracts** (`features/*/contracts.ts`) hold the canonical Zod schemas;
+  types are inferred from them and from generated database types.
+* **Errors:** codes in `lib/errors.ts` (`ApplicationErrorCode`), user wording
+  in `USER_FACING_MESSAGES` via `toUserMessage`. Layers throw; every Server
+  Action catches and calls `actionFailure` (`lib/action-errors.ts`), which
+  logs (warn for refused rules, error for faults) and returns a `FormResult`;
+  non-application errors are logged and rethrown to the route's error
+  boundary. `redirect()` always sits outside the `try`. Client components
+  show every result and catch thrown calls. Cleanup after a successful write
+  is logged, never thrown.
+* **URLs typed by people** are http(s) only (`lib/urls.ts`).
+* **Logging:** `createLogger(scope)` in `lib/logging.ts` only; `console.*` is
+  lint-forbidden elsewhere.
+* **Routes:** every href comes from `lib/routes.ts` (`routes.*` for links,
+  `routePatterns.*` for `revalidatePath(pattern, "page")`).
+* **Client server state:** TanStack Query only where a Client Component owns
+  it (username availability). Server Components call query entry points
+  directly.
+* **Axios** is for browser → Route Handler and external HTTP APIs, never for
+  Supabase.
 
 ---
 
-# 34. Repository Architecture
+# 17. Routes
 
-Initial structure:
+| Route | Type | Purpose |
+| --- | --- | --- |
+| `/` | static | Landing page |
+| `/publishers/[username]` | dynamic | Publisher page; `?preview=1` hides the site header |
+| `/publishers/[username]/[slug]` | dynamic | Public event page |
+| `/auth?mode=login\|signup` | static | Combined sign-in / sign-up |
+| `/auth/check-email` | dynamic | After signup without a session; resend |
+| `/auth/forgot-password` | static | Request a reset link |
+| `/auth/update-password` | dynamic | Set a new password after a recovery link |
+| `/auth/link-expired` | static | Failed or reused email link |
+| `/auth/confirm` | route handler | Exchanges emailed links |
+| `/api/auth/username-available` | route handler | Public availability check |
+| `/api/analytics` | route handler | `POST` a page view or ticket click (public; 204/400/500) |
+| `/dashboard` | dynamic, protected | Overview with analytics |
+| `/dashboard/events` | dynamic, protected | Events list; create/edit dialog |
+| `/dashboard/events/[id]/edit` | dynamic, protected | Full editor + lifecycle panel |
+| `/dashboard/profile` | dynamic, protected | Profile and media |
+| `/dashboard/settings` | dynamic, protected | Email and password |
+
+Every route falls back to `app/not-found.tsx` and `app/error.tsx`
+(`app/global-error.tsx` if the root layout fails); dashboard routes have
+their own `error`, `not-found` and `loading` inside the shell. Public pages
+deliberately have no `loading.tsx`: streaming would send a 200 before
+`notFound()` could set the 404.
+
+Usernames live under `/publishers`, so they cannot shadow a top-level route.
+`RESERVED_ROUTE_SEGMENTS` is still kept so a username never reads like an
+application path. Public pages render dynamically per request (no
+`generateStaticParams`), so a new publisher is live immediately.
+
+---
+
+# 18. Discovery and search
+
+**Post-MVP.** The placeholder `/discover` (UI over empty mock data) was
+removed on 2026-09-30 rather than shipped half-working; the route name stays
+reserved and `events.search_vector` stays in place for it.
+
+**Decided for when it returns:** search uses PostgreSQL — structured filters, indexes and
+full-text search over the existing `search_vector`. No Elasticsearch,
+OpenSearch, Algolia, Meilisearch or Typesense without a demonstrated need. The
+discovery service interface stays abstract enough to swap in a search provider
+later without rewriting the UI.
+
+---
+
+# 19. Analytics
+
+Implemented 2026-09-30 from a confirmed `/architect` blueprint.
+
+* **What counts.** A *visit* is a view of a publisher page or an event page,
+  once per browser session per page (`sessionStorage`), in the browser after
+  render — so crawlers without JS and link prefetches are not counted. A
+  *ticket click* is a click on the ticket button (event card or event page),
+  once per session per event. The publisher's own visits (signed in as the
+  owner) and `?preview=1` are never counted.
+* **Write path.** `TrackView` / `TicketLink` (client) → `reportHit` in
+  `features/analytics/transport.ts` (Axios, fire-and-forget) →
+  `POST /api/analytics` → Zod (`analyticsHitSchema`) → analytics BLL
+  (`recordHit`, skips the owner) → DAL → `record_analytics_hit`. The ticket
+  link stays a plain anchor to the provider, so it works without JS (just
+  uncounted).
+* **Read path.** Overview → `getAnalyticsOverview` → BLL builds UTC day
+  buckets (7 d, 30 d, or all time from the first hit, 30 empty days when
+  there is none) → DAL → `analytics_daily` / `analytics_top_events`.
+* **Known limit.** The endpoint is public and unthrottled, so a script can
+  inflate a publisher's counts. Rate limiting is post-MVP.
+
+---
+
+# 20. SEO
+
+Implemented: per-page `generateMetadata` titles and descriptions, Open Graph
+(event cover; publisher cover or avatar), schema.org `Event` JSON-LD with
+status and attendance mode, semantic URLs.
+
+Not implemented: sitemap, `robots`, canonical URLs, Open Graph image
+generation.
+
+---
+
+# 21. Performance
+
+Server rendering by default, client components only for interaction,
+`next/image`, database indexes, filtering in SQL (the events repository has no
+"list everything" method). No Redis or caching layer without evidence.
+
+Known: no pagination anywhere (owner and public lists are unbounded); metadata
+and page each fetch the same row; `getCurrentProfile` is not memoised.
+
+---
+
+# 22. Repository structure
 
 ```text
-events-lab/
-├── app/
-│   ├── (marketing)/
-│   ├── (auth)/
-│   ├── dashboard/
-│   ├── events/
-│   ├── organizations/
-│   ├── discover/
-│   └── admin/
-│
-├── components/
-│   ├── ui/
-│   ├── layout/
-│   └── shared/
-│
-├── features/
-│   ├── auth/
-│   ├── users/
-│   ├── organizations/
-│   ├── events/
-│   ├── discovery/
-│   ├── moderation/
-│   └── media/
-│
-│   Each feature may contain:
-│   └── [domain]/
-│       ├── components/
-│       ├── schemas/
-│       ├── bll/
-│       ├── dal/
-│       ├── queries/
-│       └── types/
-│
-├── lib/
-│   ├── supabase/
-│   ├── http/
-│   ├── query/
-│   ├── validation/
-│   ├── permissions/
-│   ├── maps/
-│   └── utils/
-│
-├── supabase/
-│   ├── migrations/
-│   ├── seed/
-│   └── config.toml
-│
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-│
-├── public/
-│
-├── context/
-│   ├── Architecture.md
-│   ├── build-plan.md
-│   ├── code-standard.md
-│   ├── progress-tracker.md
-│   ├── ui-registry.md
-│   └── ui-rules.md
-│
-├── .env.example
-├── package.json
-├── tsconfig.json
-└── ...
+app/                       routes (see §17); page-local client components live beside their page
+components/
+  analytics/  auth/  dashboard/  events/  forms/  layout/  providers/  ui/
+features/
+  <feature>/
+    contracts.ts           Zod schemas, inferred types, compiled parsers
+    actions.ts             Server Actions ("use server")
+    queries.ts             server-only read entry points
+    service.ts             composition root (BLL over DAL + client)
+    bll/                   services and *.test.ts
+    dal/                   repository contract + Supabase / in-memory adapters
+lib/
+  supabase/  env/  http/  query/  hooks/
+  errors.ts  logging.ts  routes.ts  forms.ts  format.ts  types.ts
+  countries.ts  datetime.ts  maps.ts  urls.ts  action-errors.ts
+supabase/
+  config.toml  migrations/  tests/database/ (pgTAP)
+context/                   canonical project docs
+.agents/skills/            project skills (.claude/skills is a symlink)
+proxy.ts                   session refresh + optimistic redirects
 ```
 
-This structure may evolve when implementation provides evidence for a better structure.
+Tests are colocated (`features/**/*.test.ts`, `lib/**/*.test.ts`). There is no
+`tests/` tree and no E2E suite yet.
 
 ---
 
-# 35. Database Principles
+# 23. Testing
 
-Use relational PostgreSQL modeling.
+| Layer | State |
+| --- | --- |
+| BLL unit tests | auth, profiles, events, analytics services (Vitest) |
+| Contract tests | auth, profiles, analytics contracts; `lib` countries, datetime, maps, urls, env; reserved-username drift against the migration |
+| RLS / storage | pgTAP for profiles, profiles hardening, events, analytics, both buckets — committed, never run as a suite (no Docker); analytics privileges verified read-only against hosted |
+| UI / E2E | A signed-out Playwright smoke pass (27 checks) was run on 2026-09-30 from a scratch script; Playwright is not in the repo or CI yet |
 
-Prefer:
-
-* foreign keys
-* unique constraints
-* check constraints
-* indexes
-* normalized relationships
-* explicit join tables
-* timestamps
-* migrations
-
-Avoid:
-
-* duplicated relational data
-* giant JSON blobs
-* implicit relationships
-* database logic hidden only in frontend code
+Critical journeys that need E2E coverage: registration, login, profile edit,
+event create → publish → edit → cancel → delete, public event view,
+authorization (cannot see or edit another publisher's draft).
 
 ---
 
-# 36. Testing
+# 24. Deployment and environments
 
-Critical flows require tests.
-
-Minimum:
-
-* TypeScript
-* Biome check
-* production build
-* unit tests
-* integration tests
-* RLS/security tests
-* Playwright E2E tests
-
-Critical journeys:
-
-1. Registration
-2. Login
-3. Organization creation
-4. Event creation
-5. Event editing
-6. Event publishing
-7. Public event viewing
-8. Event search
-9. Event filtering
-10. Authorization
+Target: GitHub → Vercel (Next.js) + Supabase. Not deployed yet. Environment
+variables must be separated between local, preview and production; secrets are
+never committed. Before launch: custom SMTP, production site URL and redirect
+allow-list, hosted password minimum 8, leaked-password protection on (C2).
 
 ---
 
-# 37. Deployment
+# 25. Post-MVP target architecture
 
-Production architecture:
+Retained decisions for later phases. None of this exists yet.
 
-```text
-GitHub
-   │
-   ▼
-Vercel
-   │
-   ▼
-Next.js
-   │
-   ├── Supabase Auth
-   ├── Supabase PostgreSQL
-   └── Supabase Storage
-```
-
-Environment variables must be separated between:
-
-* local
-* preview
-* production
-
-Secrets must never be committed.
-
----
-
-# 38. Future Infrastructure
-
-Possible future additions:
-
-```text
-Redis
-Dedicated search engine
-Background workers
-Transactional email provider
-Analytics
-CDN/object storage expansion
-Native payments
-Ticketing
-Mobile apps
-Public API
-```
-
-These are not MVP dependencies.
+* **Organizations** (deferred, not cancelled): `organizations`,
+  `organization_members`, roles `OWNER / ADMIN / EDITOR / VIEWER`, invites,
+  membership-aware RLS, public organization pages. Trigger: shared publisher
+  accounts or multi-publisher users become a requirement (§6).
+* **System roles:** `USER / MODERATOR / ADMIN / SUPER_ADMIN`, derived and
+  enforced server-side.
+* **Moderation:** hybrid — queue, reports, approve / reject / unpublish /
+  remove; a faster path for trusted publishers; no reputation engine.
+* **Notifications:** event published / updated / cancelled / postponed,
+  moderation results, account security. Simple email first; no notification
+  center.
+* **Recurrence:** daily, weekly, selected weekdays, monthly, end date — no
+  complex engine; the data model must leave room.
+* **Maps and location:** Mapbox, geocoding into the existing coordinate
+  columns, location picker, browser geolocation for "near me" (never the only
+  way to choose a location), distance search with PostGIS where justified.
+* **Discovery:** `/discover` with PostgreSQL search over `search_vector`,
+  category and date range first; then tags, city, country, event type,
+  organizer, free/paid, distance, featured, trending, sorting, pagination.
+* **Analytics:** rate limiting on `/api/analytics`, referrers, per-event pages.
+* **Media:** event galleries with ordering.
+* **SEO:** sitemap, robots, canonical URLs.
+* **Visibility:** unlisted / private events.
+* **Auth:** Google OAuth, then Apple, passkeys, phone.
+* **Payments and ticketing:** checkout, Stripe, orders, refunds, QR tickets,
+  payouts, fees — only with explicit approval.
+* **Monetization:** featured / promoted events, pro and business plans,
+  advanced analytics.
+* **Infrastructure, only with evidence:** Redis, a dedicated search engine,
+  background workers, a public API, mobile apps.
 
 ---
 
-# 39. Codex Architecture Rules
+# 26. Agent architecture rules
 
-Before significant implementation work, Codex must read the relevant context files.
+Before significant work, read this file, `code-standard.md`, and
+`ui-registry.md` for UI. Run `/architect` for any non-trivial change.
 
-Codex must:
+Always:
 
-* follow Architecture.md
-* preserve modular boundaries
-* reuse existing infrastructure
-* prefer the simplest solution
-* use Supabase
-* use PostgreSQL
-* use migrations for schema changes
-* preserve RLS
-* validate every user-controlled input with Zod at the server boundary
-* keep business rules in the BLL
-* keep Supabase access in the DAL
-* use strict TypeScript and infer types from schemas/generated types
-* follow SOLID principles at feature and module boundaries
-* use TanStack Form, Query, Table, and Charts for their assigned responsibilities
-* use Axios for HTTP and the Supabase SDK for Supabase
-* use shadcn/ui primitives for application UI
-* run relevant checks
-* update progress-tracker.md after meaningful work
+* follow this document and preserve feature boundaries;
+* reuse existing infrastructure and prefer the simplest solution;
+* use Supabase, PostgreSQL and migrations; preserve RLS;
+* validate every user-controlled input with Zod at the server boundary;
+* keep business rules in the BLL and Supabase access in the DAL;
+* use strict TypeScript and infer types from schemas and generated types;
+* use TanStack Form / Query / Charts (and Table for data tables) for their
+  assigned jobs, Axios for HTTP, the Supabase SDK for Supabase;
+* run Biome, typecheck, tests and build;
+* update `progress-tracker.md` and `build-plan.md` after meaningful work.
 
-Codex must NOT:
+Never, without approval:
 
-* replace Supabase
-* replace PostgreSQL
-* introduce microservices
-* introduce an ORM without approval
-* introduce Redis without approval
-* introduce a dedicated search engine without approval
-* disable RLS
-* expose secrets
-* access Supabase domain data directly from UI, actions, or route handlers
-* place business rules in the DAL or UI
-* trust client-side validation
-* duplicate schema-derived or generated types without a documented need
-* rewrite architecture during normal feature work
-* delete major infrastructure without approval
-* add large dependencies without justification
+* replace Supabase or PostgreSQL, introduce microservices, an ORM, Redis or a
+  search engine;
+* disable RLS, expose secrets, or add a service-role client;
+* call Supabase from UI, actions or route handlers, or put business rules in
+  the DAL or UI;
+* trust client-side validation or duplicate generated types;
+* rewrite architecture during feature work or add large dependencies.
 
-If a feature appears to require an architectural change, document the problem and proposed change before implementing it.
+If a feature appears to need an architectural change, document the problem and
+the proposed change before implementing it.

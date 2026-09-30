@@ -1,154 +1,56 @@
 # events-lab — UI Registry
 
-This document contains the approved reusable UI components and patterns.
+The components and patterns that exist in the code, and the classes they use.
+Before building UI, find the closest entry here and match it. After building
+UI, run `/imprint` so this file never drifts from the code.
 
-Before creating a new reusable component, check this registry.
+Last reconciled with the code: 2026-09-30.
 
-Avoid duplicate components.
-
----
-
-# Base UI
-
-* Button
-* IconButton
-* Link
-* Input
-* Textarea
-* Select
-* Checkbox
-* Radio
-* Switch
-* Label
-* FormField
-* FormMessage
-* Badge
-* Avatar
-* Separator
-* Tooltip
-* Dialog
-* Drawer
-* DropdownMenu
-* Popover
-* Tabs
+There is no generated shadcn/ui primitive in the codebase yet (`components.json`
+is configured for one). Base controls are hand-written below, styled from the
+tokens in `app/globals.css`. Add a shadcn primitive only when a pattern here
+cannot cover the need, and register it.
 
 ---
 
-# Navigation
+# Inventory
 
-* Header
-* DesktopNavigation
-* MobileNavigation
-* UserMenu
-* Breadcrumbs
-* Tabs
-* Pagination
+| Component | File | Kind |
+| --- | --- | --- |
+| `Avatar` | components/ui/avatar.tsx | primitive |
+| `EmptyState` | components/ui/empty-state.tsx | primitive |
+| `Switch` | components/ui/switch.tsx | primitive |
+| `StatusMessage`, `statusPrimaryActionClass`, `statusSecondaryActionClass` | components/ui/status-message.tsx | primitive |
+| `Skeleton`, `LoadingRegion` | components/ui/skeleton.tsx | primitive |
+| `TrackView`, `TicketLink` | components/analytics/ | analytics |
+| `Field`, `SelectControl`, `fieldControlClass`, `fieldDescribedBy`, `formSubmitClass` | components/forms/field.tsx | form primitive |
+| `FormSection` | components/forms/form-section.tsx | form primitive |
+| `ImageUploader` | components/forms/image-uploader.tsx | form primitive |
+| `AuthCard`, `FormAlert`, `authSubmitClass` | components/auth/auth-card.tsx | auth shell |
+| `SiteHeader`, `SiteFooter`, `WordmarkLink` | components/layout/ | public chrome |
+| `DashboardShell`, `DashboardHeader` | components/layout/ | dashboard chrome |
+| `Panel`, `PanelEmpty`, `StatsCard`, `StatsCardRow`, `RangeTabs`, `TrendChart` | components/dashboard/ | dashboard |
+| `EventCard`, `EventStatusBadge` | components/events/ | events |
+| `QueryProvider` | components/providers/query-provider.tsx | infrastructure |
+| `EventForm` (+ `event-form-values.ts`) | app/dashboard/events/event-form.tsx | page-local |
+| `NewEventProvider`, `NewEventTrigger`, `useEventDialog` | app/dashboard/events/event-dialog.tsx | page-local |
+| `EventRowActions` | app/dashboard/events/event-row-actions.tsx | page-local |
+| `EventLifecycle` | app/dashboard/events/[id]/edit/event-lifecycle.tsx | page-local |
+| `ProfileForm`, `ProfileMediaField` | app/dashboard/profile/ | page-local |
+| `EmailForm`, `PasswordForm` | app/dashboard/settings/ | page-local |
+| Login, signup, forgot/update password forms, `ResendButton` | app/auth/ | page-local |
+| `not-found`, `error`, `global-error`, dashboard `error` / `not-found` / `loading` | app/ | route files |
 
----
+Generic, reusable pieces live in `components/`; a component used by one route
+lives beside that route. Promote it to `components/` the second time it is
+needed.
 
-# Event Components
+## Planned, not built
 
-* NewEventDialog
-* EventCard
-* EventGrid
-* EventList
-* EventHero
-* EventDate
-* EventTime
-* EventLocation
-* EventStatusBadge
-* EventCategoryBadge
-* EventOrganizer
-* EventGallery
-* EventActions
-* EventShare
-* EventFilters
-* EventSearch
-* RelatedEvents
-* EventMap
-* EventMapMarker
-
----
-
-# Organization Components
-
-* OrganizationCard
-* OrganizationHeader
-* OrganizationLogo
-* OrganizationTypeBadge
-* OrganizationEvents
-* OrganizationMembers
-* OrganizationRoleBadge
-
----
-
-# Dashboard
-
-* DashboardShell
-* DashboardHeader
-* Panel
-* RangeTabs
-* TrendChart
-* StatsCard
-* StatsCardRow
-* DataTable
-* EmptyState
-* LoadingState
-* ErrorState
-* ConfirmationDialog
-
----
-
-# Forms
-
-* Field
-* FormSection
-* EventForm
-* OrganizationForm
-* ProfileForm
-* SearchForm
-* LocationPicker
-* ImageUploader
-* GalleryUploader
-* DateTimePicker
-* DateRangePicker
-
----
-
-# Discovery
-
-* SearchBar
-* FilterBar
-* FilterDrawer
-* CategoryList
-* TagList
-* LocationFilter
-* SortControl
-* EventMap
-* EventMapMarker
-
----
-
-# Feedback
-
-* Toast
-* Alert
-* InlineError
-* Skeleton
-* Spinner
-* EmptyState
-* SuccessState
-
----
-
-# Admin / Moderation
-
-* ModerationQueue
-* ModerationCard
-* ReportDialog
-* AdminTable
-* RoleBadge
-* StatusBadge
+Do not assume these exist: toast, tooltip, dropdown menu, drawer, pagination,
+confirmation dialog, gallery uploader, location picker, event map, date-range
+picker, discovery filters (removed with `/discover`), organization
+components, moderation components.
 
 ---
 
@@ -160,7 +62,7 @@ classes — match them when building anything of the same type.
 ### SiteHeader
 
 File: components/layout/site-header.tsx
-Last updated: 2026-09-03
+Last updated: 2026-09-26
 
 | Property         | Class                                            |
 | ---------------- | ------------------------------------------------ |
@@ -176,7 +78,8 @@ Last updated: 2026-09-03
 
 **Pattern notes:**
 The public header carries exactly two actions — a ghost `Log in` and a solid
-`Get started` (`bg-foreground text-background`), both to `/auth`. It holds no
+`Get started` (`bg-foreground text-background`), to `routes.auth.signIn()`
+and `routes.auth.signUp()` so each opens the form it promises. It holds no
 app navigation: Discover is reached from the landing page, and the dashboard
 is reached from its own sidebar once signed in. Do not add nav links here.
 
@@ -213,7 +116,7 @@ navigation; do not add links back without asking.
 ### DashboardShell (sidebar)
 
 File: components/layout/dashboard-shell.tsx
-Last updated: 2026-09-03
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -239,7 +142,12 @@ Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
 `border-t` footer holding the public preview link (`font-mono text-xs`,
 `ExternalLink` at `size-3`) and Sign out. The preview link opens `routes.publisherPreview` in a new tab (`target="_blank" rel="noopener noreferrer"`, with an `sr-only` ", opens in a new tab"), like every preview link in the dashboard.
 Sign out is always last and uses the same idle-nav-item treatment rather than
-a destructive color — it is a navigation action, not a dangerous one.
+a destructive color — it is a navigation action, not a dangerous one. It is a
+`<form action={signOutAction}>`, so it works without client JavaScript.
+
+Below `md` the sidebar is not collapsed: the whole nav stacks above the page
+content. Known gap (`build-plan.md` M13); a mobile pattern is still to be
+designed.
 
 ### DashboardHeader
 
@@ -629,9 +537,9 @@ submission with a closing `border-t` footer. Password fields autocomplete as
 `current-password` / `new-password` next to a hidden `username` input, so
 password managers file the change under the right account.
 
-### NewEventDialog
+### EventDialog (NewEventProvider / NewEventTrigger / useEventDialog)
 
-File: app/dashboard/events/event-create-dialog.tsx
+File: app/dashboard/events/event-dialog.tsx
 Last updated: 2026-09-26
 
 | Property         | Class                                              |
@@ -669,7 +577,9 @@ with the mode; a dialog edit closes back to the list rather than navigating.
 Multiple triggers share one dialog through `NewEventProvider` — never mount a
 second copy per button, or every field id on the page duplicates.
 `NewEventTrigger` takes its classes from the caller, so the same dialog opens
-from a header button and from an `EmptyState` `actionSlot`.
+from a header button and from an `EmptyState` `actionSlot`. Rows open it for
+editing with `useEventDialog().openEdit(event)`; the footer then carries a
+"Full editor" link to `routes.dashboard.editEvent(id)`.
 
 ### EventForm
 
@@ -731,6 +641,12 @@ event in front of them — the value is still submitted, just not asked for.
 Dates are held as `datetime-local` readings plus a separate zone and resolved
 at submit through `lib/datetime`. Never compare a wall-clock string as if it
 were an instant.
+
+Server field errors are the only validation today (no `validators.onChange`,
+unlike the other forms — `build-plan.md` M6). Hidden fields never block Save:
+`toPayload` sends inapplicable fields empty, and any field error whose field
+is not on screen (`renderedFields`) becomes the form-level message, with
+"Open the full editor to fix it." in the dialog.
 
 ### TagInput
 
@@ -862,6 +778,16 @@ Every control carries an `sr-only` label naming the event. A column of
 identical icons is unusable otherwise, and `title` alone is not announced
 reliably.
 
+The toggle acts only on draft, published and unpublished (archived) rows.
+For cancelled and postponed rows it is shown on and disabled, with a `title`
+pointing to the edit page — toggling would silently turn "cancelled" into
+"published". The label beside it is always the real status.
+
+Every result is visible: a refused change (for example publishing a draft
+with no city) appears as a `role="alert"` line in `text-xs text-destructive`
+right under the row's controls; delete shows "Deleting…" while pending and
+the same error line on failure.
+
 ### EventLifecycle
 
 File: app/dashboard/events/[id]/edit/event-lifecycle.tsx
@@ -881,9 +807,11 @@ Last updated: 2026-09-26
 
 **Pattern notes:**
 The same `bg-card/40` bordered panel as the dashboard `Panel`, used here for a
-set of actions rather than content. Available transitions come from a lookup
-keyed by status, not a chain of conditions, so the UI can never offer a change
-the service would refuse.
+set of actions rather than content. The buttons are generated from `EVENT_TRANSITIONS`
+(`features/events/contracts.ts`), the same table the events service
+enforces, so the panel can only offer a change the server accepts. Labels
+depend on where the event comes from (`published` reads "Publish", "Back on"
+or "Publish again"). A failed transition shows its message in a `FormAlert` above the buttons.
 
 Exactly one action per state is primary. Destructive actions are outlined in
 `border-destructive/40` and never filled — a filled red button next to a
@@ -893,30 +821,184 @@ Delete is two-step in place: the button becomes "Delete permanently" beside
 "Keep it", with an explanation of what delete costs over unpublish. No
 `confirm()`, and no modal for a decision this small.
 
-### DiscoverFilters
+### WordmarkLink
 
-File: components/events/discover-filters.tsx
-Last updated: 2026-09-11
+File: components/layout/wordmark-link.tsx
+Last updated: 2026-09-26
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | search control `bg-card`; active chips transparent |
-| Border           | search `border border-border`; chips `border`, active `border-primary` |
-| Border radius    | search and button `rounded-md`; chips `rounded`     |
-| Text — primary   | search `text-sm`; submit `text-sm font-medium`       |
-| Text — secondary | labels and chips `font-mono text-xs uppercase text-muted-foreground` |
-| Spacing          | search `gap-2`; filter rows `mt-8` / `mt-3`; chips `px-3 py-1` |
-| Hover state      | idle chip `hover:text-foreground`; submit `hover:brightness-110` |
+| Background       | none                                                |
+| Border           | none                                                |
+| Border radius    | n/a                                                 |
+| Text — primary   | `font-display text-xl font-extrabold uppercase tracking-tighter` |
+| Text — secondary | n/a                                                 |
+| Spacing          | set by the caller (`mb-10 block` in the sidebar)    |
+| Hover state      | none                                                |
 | Shadow           | none                                                |
-| Accent usage     | active chip border/text/checkmark and submit fill   |
+| Accent usage     | the hyphen, `text-primary`                          |
 
 **Pattern notes:**
-The search form sits in a semantic `<search>` region. Date and category chips
-are grouped in labelled `<fieldset>` elements. Each chip is a button with
-`aria-pressed`, and the selected state adds a visible checkmark so colour is
-never the only signal. Filter state belongs in the URL and navigation uses
-`router.replace` without scrolling.
+The only way to render the logo as a link. The caller passes the destination:
+`routes.home()` on public pages, `routes.dashboard.root()` in the dashboard.
+On the page it already points at it renders a plain `<a>` so a click reloads.
+`AuthCard` uses it at `text-2xl`, centred. `SiteFooter` renders the same
+wordmark as plain text, not a link.
 
+### EmptyState
+
+File: components/ui/empty-state.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | transparent                                         |
+| Border           | `border border-dashed border-border`                |
+| Border radius    | `rounded-lg`                                        |
+| Text — primary   | `font-display text-xl font-extrabold uppercase tracking-tight` |
+| Text — secondary | `text-sm leading-relaxed text-muted-foreground`, `max-w-sm` |
+| Spacing          | `px-6 py-20`, icon `mb-5`, title `mb-2`, description `mb-6` |
+| Hover state      | action `hover:brightness-110`                       |
+| Shadow           | none                                                |
+| Accent usage     | the single lime action button                       |
+
+**Pattern notes:**
+Title, description and one action are all required (ui-rules §10). `action`
+is a link; `actionSlot` takes a node for actions that open a dialog (the
+events list passes a `NewEventTrigger`). The dashed border marks "something
+goes here", shared only with the empty `ImageUploader`.
+
+### EventStatusBadge
+
+File: components/events/event-status-badge.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | transparent                                         |
+| Border           | `border`, tone from `EVENT_STATUS_META`             |
+| Border radius    | `rounded`                                           |
+| Text — primary   | `font-mono text-[11px] uppercase tracking-widest`   |
+| Text — secondary | n/a                                                 |
+| Spacing          | `px-2 py-0.5`                                       |
+| Hover state      | none                                                |
+| Shadow           | none                                                |
+| Accent usage     | published `border-primary/40 text-primary`; cancelled destructive; postponed warning; draft and archived muted |
+
+**Pattern notes:**
+Text and colour together, always (ui-rules §16). Tones and labels come from
+`EVENT_STATUS_META` in `lib/format.ts`; never restate them. Public surfaces
+show the badge only for non-published statuses.
+
+### Public event page
+
+File: app/publishers/[username]/[slug]/page.tsx
+Last updated: 2026-09-26
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | hero `bg-card`; info card `bg-card/40`; cancelled banner `bg-destructive/10` |
+| Border           | hero and banner `border-b border-border` / `border-destructive/30`; info card `border border-border` |
+| Border radius    | info card `rounded-lg`; action `rounded-md`         |
+| Text — primary   | title `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-5xl`; info values `text-sm font-medium` |
+| Text — secondary | section labels and info labels `font-mono text-xs uppercase text-muted-foreground` |
+| Spacing          | hero `h-[280px] md:h-[420px]`; article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; info card `p-6 space-y-4` |
+| Hover state      | organizer link `group-hover:text-primary`; action `hover:brightness-110` |
+| Shadow           | none                                                |
+| Accent usage     | category kicker, info-row icons, the full-width primary action |
+
+**Pattern notes:**
+Content in two columns, facts in a right-hand card: date, time with the IANA
+zone beside it, location, price, then one full-width lime action — the ticket
+button (publisher's label, default "Get tickets") or, with no ticket URL,
+"Join online". A cancelled event gets a `role="alert"` banner under the hero
+and no action. JSON-LD is rendered inline with `<` escaped.
+
+The location row shows whatever exists of venue, address and "city, country
+name" for any non-online event, plus "Also online" for hybrid; only an
+online event shows the event type instead. JSON-LD location follows the same
+rule (`Place`, `VirtualLocation`, or both). The page renders `TrackView`, and
+the ticket button is a `TicketLink`.
+
+
+### StatusMessage
+
+File: components/ui/status-message.tsx
+Last updated: 2026-09-30
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | none (page ground)                                  |
+| Border           | none                                                |
+| Border radius    | actions `rounded-md`                                |
+| Text — primary   | title `font-display font-extrabold uppercase tracking-tighter`, `text-4xl md:text-6xl` (page) / `text-3xl md:text-4xl` (panel) |
+| Text — secondary | kicker `font-mono text-xs uppercase tracking-widest text-primary`; description `leading-relaxed text-muted-foreground max-w-md` |
+| Spacing          | `px-6`, `py-24 md:py-32` (page) / `py-20` (panel); kicker `mb-4`, title `mb-4`, description `mb-8`; actions `gap-3` |
+| Hover state      | primary `hover:brightness-110`; secondary `hover:bg-white/5` |
+| Shadow           | none                                                |
+| Accent usage     | the kicker and the one primary action               |
+
+**Pattern notes:**
+The whole-screen state for not found and errors. `size="page"` fills a public
+page between `SiteHeader` and `SiteFooter`; `size="panel"` sits inside the
+dashboard shell, which stays so the publisher can navigate away. Kicker is the
+status in one word ("404", "Error"), the title says what happened, the
+description says what to do, and there is always a way out — primary first
+(`statusPrimaryActionClass`), then an outlined secondary
+(`statusSecondaryActionClass`). Error boundaries never print `error.message`;
+they log it with its `digest`. Presentational only, so Server and Client
+Components share it.
+
+### Skeleton / LoadingRegion
+
+File: components/ui/skeleton.tsx
+Last updated: 2026-09-30
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | `bg-card` with `animate-pulse`                      |
+| Border           | none; panel-shaped blocks add `border border-border` |
+| Border radius    | `rounded-md`; panel-shaped blocks `rounded-lg`      |
+| Text — primary   | n/a                                                 |
+| Text — secondary | `sr-only` label in `LoadingRegion`                  |
+| Spacing          | set by the caller to match the real layout          |
+| Hover state      | none                                                |
+| Shadow           | none                                                |
+| Accent usage     | none                                                |
+
+**Pattern notes:**
+Blocks are sized to the content that replaces them (header block: `h-3 w-24`
+kicker, `h-10 md:h-12` title, `h-4` line; panels at their real heights), so
+nothing jumps on arrival. Wrap the layout in `LoadingRegion` with a label
+("Loading your events") — it is `role="status"` so screen readers hear one
+announcement while the blocks themselves are `aria-hidden`. The pulse stops
+under reduced motion. Do not add `loading.tsx` to public pages that can call
+`notFound()`: streaming commits a 200 before the 404 can be set.
+
+### TrackView / TicketLink
+
+File: components/analytics/track-view.tsx, components/analytics/ticket-link.tsx
+Last updated: 2026-09-30
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | n/a — `TrackView` renders nothing; `TicketLink` takes the caller's classes |
+| Border           | n/a                                                 |
+| Border radius    | n/a                                                 |
+| Text — primary   | n/a                                                 |
+| Text — secondary | n/a                                                 |
+| Spacing          | n/a                                                 |
+| Hover state      | the caller's                                        |
+| Shadow           | none                                                |
+| Accent usage     | none                                                |
+
+**Pattern notes:**
+Put `<TrackView username eventId? />` once on any public page that should
+count as a visit; leave it out of previews rather than passing a flag.
+Every ticket button is a `TicketLink` — an ordinary `target="_blank"` anchor
+to the provider that also reports the click — never a bare `<a>`. Both go
+through `reportHit`, which dedupes per session and never surfaces an error to
+a visitor.
 
 ---
 

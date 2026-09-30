@@ -1,20 +1,28 @@
 import {
   ANALYTICS_RANGE_LABELS,
+  type AnalyticsHitInput,
   type AnalyticsPoint,
   type AnalyticsRange,
 } from "@/features/analytics/contracts";
-import type { AnalyticsRepository } from "@/features/analytics/dal/analytics-repository";
-import { DataAccessError } from "@/lib/errors";
 import type {
-  AnalyticsRecord,
-  EventRecord,
-  EventWithRelations,
-} from "@/lib/types";
+  AnalyticsRepository,
+  AnalyticsWindow,
+  TopEventRow,
+} from "@/features/analytics/dal/analytics-repository";
+import { createLogger } from "@/lib/logging";
+import type { Profile } from "@/lib/types";
 
-export interface MostViewedEntry {
-  event: EventWithRelations;
-  views: number;
+const log = createLogger("analytics.service");
+
+/**
+ * Publisher lookup lives in the profiles domain. Analytics depends on this
+ * narrow port rather than the whole profiles service, as auth does.
+ */
+export interface PublisherLookupPort {
+  getProfileByUsername(username: string): Promise<Profile | null>;
 }
+
+export type MostViewedEntry = TopEventRow;
 
 export interface AnalyticsOverview {
   range: AnalyticsRange;
@@ -25,115 +33,92 @@ export interface AnalyticsOverview {
   mostViewed: MostViewedEntry[];
 }
 
+/**
+ * What happened to a reported hit. Only `recorded` wrote a row; the others
+ * are ordinary outcomes the caller does not surface to the visitor.
+ */
+export type RecordHitOutcome = "recorded" | "own_visit" | "not_public";
+
+export interface AnalyticsService {
+  getOverview(
+    ownerId: string,
+    range: AnalyticsRange,
+  ): Promise<AnalyticsOverview>;
+  /**
+   * `viewerId` is the signed-in account looking at the page, from the
+   * verified session, or null for an anonymous visitor.
+   */
+  recordHit(
+    viewerId: string | null,
+    hit: AnalyticsHitInput,
+  ): Promise<RecordHitOutcome>;
+}
+
 type Clock = () => Date;
 
 const DAY_MS = 86_400_000;
-const DEFAULT_WINDOW_DAYS = 30;
+const EMPTY_WINDOW_DAYS = 30;
 const RANGE_DAYS = { "7d": 7, "30d": 30 } as const;
+const MOST_VIEWED_LIMIT = 5;
 
 const dayStart = (milliseconds: number) =>
   Math.floor(milliseconds / DAY_MS) * DAY_MS;
 const dayKey = (milliseconds: number) =>
   new Date(milliseconds).toISOString().slice(0, 10);
 
-function windowFor(
-  range: AnalyticsRange,
-  rows: readonly AnalyticsRecord[],
-  now: number,
-) {
-  const end = dayStart(now);
-  if (range !== "all") {
-    return { start: end - (RANGE_DAYS[range] - 1) * DAY_MS, end };
-  }
-
-  const earliest = rows.reduce<number | null>((minimum, row) => {
-    const day = dayStart(Date.parse(row.occurred_at));
-    return minimum === null || day < minimum ? day : minimum;
-  }, null);
-
-  return { start: Math.min(earliest ?? end, end), end };
-}
-
 export function createAnalyticsService(
   repository: AnalyticsRepository,
+  publishers: PublisherLookupPort,
   clock: Clock = () => new Date(),
-) {
+): AnalyticsService {
   return {
-    async getOverview(
-      ownerId: string,
-      range: AnalyticsRange,
-    ): Promise<AnalyticsOverview> {
-      const [analytics, events, profiles, categories] = await Promise.all([
-        repository.listAnalytics(),
-        repository.listEvents(),
-        repository.listProfiles(),
-        repository.listCategories(),
-      ]);
-      const owned = analytics.filter((row) => row.owner_id === ownerId);
-      const { start, end } = windowFor(range, owned, clock().getTime());
-      const from =
-        start === end && range === "all"
-          ? end - (DEFAULT_WINDOW_DAYS - 1) * DAY_MS
-          : start;
-      const buckets = new Map<string, AnalyticsPoint>();
+    async getOverview(ownerId, range) {
+      // Days are UTC, matching `analytics_daily`.
+      const today = dayStart(clock().getTime());
+      const window: AnalyticsWindow = {
+        ownerId,
+        from:
+          range === "all"
+            ? null
+            : new Date(today - (RANGE_DAYS[range] - 1) * DAY_MS).toISOString(),
+        to: new Date(today + DAY_MS).toISOString(),
+      };
 
-      for (let day = from; day <= end; day += DAY_MS) {
-        buckets.set(dayKey(day), {
-          date: dayKey(day),
-          visits: 0,
-          clicks: 0,
-        });
+      const [daily, mostViewed] = await Promise.all([
+        repository.dailyCounts(window),
+        repository.topEvents(window, MOST_VIEWED_LIMIT),
+      ]);
+
+      // "All time" starts at the first recorded day; with too little history
+      // to draw a line, it shows the same 30 days a new publisher sees.
+      const earliest = daily.length > 0 ? Date.parse(daily[0].day) : null;
+      const first =
+        window.from !== null
+          ? Date.parse(window.from)
+          : earliest !== null && earliest < today
+            ? earliest
+            : today - (EMPTY_WINDOW_DAYS - 1) * DAY_MS;
+
+      const buckets = new Map<string, AnalyticsPoint>();
+      for (let day = first; day <= today; day += DAY_MS) {
+        buckets.set(dayKey(day), { date: dayKey(day), visits: 0, clicks: 0 });
       }
 
-      const viewsByEvent = new Map<string, number>();
       let siteVisits = 0;
       let ticketClicks = 0;
-
-      for (const row of owned) {
-        const day = dayStart(Date.parse(row.occurred_at));
-        if (day < from || day > end) {
-          continue;
-        }
-        const bucket = buckets.get(dayKey(day));
+      for (const row of daily) {
+        const bucket = buckets.get(row.day);
         if (!bucket) {
           continue;
         }
-
         if (row.metric === "page_view") {
-          bucket.visits += 1;
-          siteVisits += 1;
-          if (row.event_id) {
-            viewsByEvent.set(
-              row.event_id,
-              (viewsByEvent.get(row.event_id) ?? 0) + 1,
-            );
-          }
+          bucket.visits += row.hits;
+          siteVisits += row.hits;
         } else {
-          bucket.clicks += 1;
-          ticketClicks += 1;
+          bucket.clicks += row.hits;
+          ticketClicks += row.hits;
         }
       }
-
-      const join = (event: EventRecord): EventWithRelations => {
-        const owner = profiles.find((profile) => profile.id === event.owner_id);
-        const category = categories.find(
-          (candidate) => candidate.id === event.category_id,
-        );
-        if (!owner || !category) {
-          throw new DataAccessError(
-            `Event ${event.id} references a missing relation.`,
-          );
-        }
-        return { ...event, owner, category };
-      };
-
-      const mostViewed = [...viewsByEvent.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .flatMap(([eventId, views]) => {
-          const event = events.find((candidate) => candidate.id === eventId);
-          return event ? [{ event: join(event), views }] : [];
-        });
 
       return {
         range,
@@ -143,6 +128,35 @@ export function createAnalyticsService(
         series: [...buckets.values()],
         mostViewed,
       };
+    },
+
+    async recordHit(viewerId, hit) {
+      const publisher = await publishers.getProfileByUsername(hit.username);
+      if (!publisher) {
+        return "not_public";
+      }
+
+      // A publisher checking their own page is not an audience. Counting it
+      // would make every edit-and-look cycle read as traffic.
+      if (viewerId !== null && viewerId === publisher.id) {
+        return "own_visit";
+      }
+
+      const recorded = await repository.recordHit(
+        hit.metric,
+        hit.username,
+        hit.eventId,
+      );
+
+      if (!recorded) {
+        log.debug("Hit ignored: the page is not public.", {
+          metric: hit.metric,
+          eventId: hit.eventId,
+        });
+        return "not_public";
+      }
+
+      return "recorded";
     },
   };
 }

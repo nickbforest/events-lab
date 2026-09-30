@@ -14,6 +14,45 @@ export type Database = {
   };
   public: {
     Tables: {
+      analytics_hits: {
+        Row: {
+          event_id: string | null;
+          id: number;
+          metric: Database["public"]["Enums"]["analytics_metric"];
+          occurred_at: string;
+          owner_id: string;
+        };
+        Insert: {
+          event_id?: string | null;
+          id?: never;
+          metric: Database["public"]["Enums"]["analytics_metric"];
+          occurred_at?: string;
+          owner_id: string;
+        };
+        Update: {
+          event_id?: string | null;
+          id?: never;
+          metric?: Database["public"]["Enums"]["analytics_metric"];
+          occurred_at?: string;
+          owner_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "analytics_hits_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "analytics_hits_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categories: {
         Row: {
           id: string;
@@ -250,9 +289,40 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      analytics_daily: {
+        Args: { p_from: string; p_owner_id: string; p_to: string };
+        Returns: {
+          day: string;
+          hits: number;
+          metric: Database["public"]["Enums"]["analytics_metric"];
+        }[];
+      };
+      analytics_top_events: {
+        Args: {
+          p_from: string;
+          p_limit: number;
+          p_owner_id: string;
+          p_to: string;
+        };
+        Returns: {
+          event_id: string;
+          slug: string;
+          status: Database["public"]["Enums"]["event_status"];
+          title: string;
+          views: number;
+        }[];
+      };
+      record_analytics_hit: {
+        Args: {
+          p_event_id?: string;
+          p_metric: Database["public"]["Enums"]["analytics_metric"];
+          p_username: string;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
+      analytics_metric: "page_view" | "ticket_click";
       event_status:
         | "draft"
         | "published"
@@ -405,6 +475,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      analytics_metric: ["page_view", "ticket_click"],
       event_status: [
         "draft",
         "published",

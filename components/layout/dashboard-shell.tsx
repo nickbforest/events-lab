@@ -97,11 +97,11 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
               className="flex items-center gap-2 px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
             >
               <ExternalLink className="size-3" aria-hidden />
-              events-lab/{username}
+              <span className="truncate">{routes.publisher(username)}</span>
               <span className="sr-only">, opens in a new tab</span>
             </a>
-            {/* A form, not a click handler: signing out clears httpOnly
-                cookies, which only the server can do. */}
+            {/* A form posting to a Server Action, not a click handler: it
+                works before hydration and without client JavaScript. */}
             <form action={signOutAction}>
               <button
                 type="submit"

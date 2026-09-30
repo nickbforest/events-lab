@@ -1,3 +1,4 @@
+import type { EventField } from "@/features/events/actions";
 import type { EventDraftValues } from "@/features/events/contracts";
 import { countryName } from "@/lib/countries";
 import {
@@ -5,16 +6,11 @@ import {
   instantToWallClock,
   wallClockToIso,
 } from "@/lib/datetime";
+import { DEFAULT_TICKET_LABEL } from "@/lib/format";
 import type { Category, EventType, EventWithRelations } from "@/lib/types";
 
 /** What the ticket button reads when a publisher does not change it. */
-export const DEFAULT_TICKET_CTA = "Get Tickets";
-
-export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  in_person: "In person",
-  online: "Online",
-  hybrid: "Hybrid",
-};
+export const DEFAULT_TICKET_CTA = DEFAULT_TICKET_LABEL;
 
 /**
  * The form's own shape, shared by the create dialog and the edit page.
@@ -94,7 +90,72 @@ export function toFormValues(
   };
 }
 
+/** Which fields the form currently puts on screen. */
+export function renderedFields(
+  values: EventFormValues,
+  layout: "page" | "dialog",
+  isEdit: boolean,
+): ReadonlySet<EventField> {
+  const fields = new Set<EventField>([
+    "title",
+    "shortDescription",
+    "description",
+    "categoryId",
+    "eventType",
+    "startAt",
+    "endAt",
+    "coverImageUrl",
+  ]);
+
+  if (isEdit) {
+    fields.add("slug");
+  }
+  if (values.eventType !== "online") {
+    for (const field of [
+      "venueName",
+      "address",
+      "city",
+      "countryCode",
+    ] as const) {
+      fields.add(field);
+    }
+  }
+  if (values.eventType !== "in_person") {
+    fields.add("onlineUrl");
+  }
+  if (values.ticketEnabled) {
+    fields.add("ticketCtaLabel");
+    fields.add("ticketUrl");
+  }
+  if (layout === "page") {
+    for (const field of [
+      "timezone",
+      "isFree",
+      "externalUrl",
+      "tags",
+    ] as const) {
+      fields.add(field);
+    }
+    if (!values.isFree) {
+      fields.add("priceInfo");
+    }
+  }
+
+  return fields;
+}
+
+/**
+ * The payload a save sends.
+ *
+ * Fields that do not apply are sent empty, not merely hidden. Otherwise an
+ * event switched from in person to online would keep its venue — and show it
+ * on the public page — and an invalid value typed before the switch would
+ * block Save with an error nobody can see.
+ */
 export function toPayload(values: EventFormValues): EventDraftValues {
+  const hasVenue = values.eventType !== "online";
+  const hasJoinLink = values.eventType !== "in_person";
+
   return {
     title: values.title,
     slug: values.slug,
@@ -105,15 +166,16 @@ export function toPayload(values: EventFormValues): EventDraftValues {
     startAt: wallClockToIso(values.startLocal, values.timezone),
     endAt: wallClockToIso(values.endLocal, values.timezone),
     timezone: values.timezone,
-    venueName: values.venueName,
-    address: values.address,
-    city: values.city,
-    countryCode: values.countryCode,
+    venueName: hasVenue ? values.venueName : "",
+    address: hasVenue ? values.address : "",
+    city: hasVenue ? values.city : "",
+    countryCode: hasVenue ? values.countryCode : "",
+    // Not collected yet (the map layer is post-MVP), so always empty.
     latitude: "",
     longitude: "",
-    onlineUrl: values.onlineUrl,
+    onlineUrl: hasJoinLink ? values.onlineUrl : "",
     isFree: values.isFree,
-    priceInfo: values.priceInfo,
+    priceInfo: values.isFree ? "" : values.priceInfo,
     // Unticking the box clears both columns, so a disabled button cannot
     // leave a stale URL behind for the next person to wonder about.
     ticketUrl: values.ticketEnabled ? values.ticketUrl : "",

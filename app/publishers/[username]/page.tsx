@@ -2,6 +2,7 @@ import { CalendarPlus, Globe, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { TrackView } from "@/components/analytics/track-view";
 import { EventCard } from "@/components/events/event-card";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -13,8 +14,9 @@ import {
 } from "@/features/events/queries";
 import { previewFlagSchema } from "@/features/profiles/contracts";
 import { getProfileByUsername } from "@/features/profiles/queries";
+import { countryName } from "@/lib/countries";
 import { publisherTypeLabel } from "@/lib/format";
-import { PREVIEW_PARAM, routes } from "@/lib/routes";
+import { PREVIEW_PARAM } from "@/lib/routes";
 
 // No generateStaticParams: profiles are created continuously by signup, so
 // eagerly enumerating every username at build time would mean a new account
@@ -52,8 +54,6 @@ export default async function PublisherPage({
 }: PageProps<"/publishers/[username]">) {
   const [{ username }, query] = await Promise.all([params, searchParams]);
 
-  // A publisher previewing their own page wants to see the page, not the
-  // signed-out marketing header above it.
   const isPreview = previewFlagSchema.parse(query[PREVIEW_PARAM]);
 
   const profile = await getProfileByUsername(username);
@@ -67,13 +67,16 @@ export default async function PublisherPage({
     getPastEventsByUsername(username),
   ]);
 
-  const location = [profile.city, profile.country_code]
+  const location = [profile.city, countryName(profile.country_code)]
     .filter(Boolean)
     .join(", ");
 
   return (
     <>
+      {/* A publisher previewing their own page wants the page, not the
+          signed-out header — and is not a visitor to count. */}
       {isPreview ? null : <SiteHeader />}
+      {isPreview ? null : <TrackView username={profile.username} />}
 
       <main className="flex-1">
         {profile.cover_url ? (
@@ -116,12 +119,12 @@ export default async function PublisherPage({
               ) : null}
 
               <div className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase text-muted-foreground">
-                {location && (
+                {location ? (
                   <span className="flex items-center gap-2">
                     <MapPin className="size-3.5" aria-hidden />
                     {location}
                   </span>
-                )}
+                ) : null}
                 {profile.website_url ? (
                   <a
                     href={profile.website_url}
@@ -154,8 +157,7 @@ export default async function PublisherPage({
               <EmptyState
                 icon={<CalendarPlus className="size-8" aria-hidden />}
                 title="No upcoming events"
-                description={`${profile.display_name} has nothing scheduled right now. Check back soon, or browse what else is happening.`}
-                action={{ href: routes.discover(), label: "Browse all events" }}
+                description={`${profile.display_name} has nothing scheduled right now. Check back soon.`}
               />
             )}
 

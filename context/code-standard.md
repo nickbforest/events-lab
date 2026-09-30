@@ -116,9 +116,15 @@ Use:
 * Server Components
 * Server Actions
 * Route Handlers
-* Middleware/proxy where appropriate
+* `proxy.ts` — Next.js 16 renamed Middleware to **Proxy**; it refreshes the
+  session and redirects optimistically, and is never the authorization boundary
 
 Do not create a separate backend service for ordinary MVP functionality.
+
+This is Next.js 16: APIs differ from older versions. Check
+`node_modules/next/dist/docs/` before using an API you have not used here, and
+use the generated global `PageProps<"/route">` / `LayoutProps<"/route">` types
+for pages and layouts.
 
 ---
 
@@ -210,6 +216,12 @@ Use `.catch(...)` for a value with a sensible default (a display mode, a
 notice) and `.safeParse` where the caller must handle the failure (a route
 parameter that should 404).
 
+## Links typed by people
+
+Every URL field a person fills in uses `httpUrlSchema` or
+`optionalHttpUrlSchema` from `lib/urls.ts`. Plain `z.url()` accepts
+`javascript:` and `data:`.
+
 ## Compiled schemas
 
 **Schemas on a per-request path are compiled once at module scope.** Added
@@ -232,9 +244,12 @@ run once per process, such as environment parsing, stay uncompiled.
 
 # 7. Forms
 
-Use TanStack Form for all stateful application forms and compose it with shadcn/ui
-field primitives. Use shared Zod schemas for form validation and infer form values
-from defaults/schemas rather than declaring duplicate interfaces.
+Use TanStack Form for all stateful application forms and compose it with the
+shared field primitives (`Field`, `SelectControl`, `FormSection`,
+`ImageUploader`). Pass the shared Zod schema as `validators.onChange` for
+client feedback, and infer form values from defaults/schemas rather than
+declaring duplicate interfaces. Fields that do not apply are removed from the
+payload, not only from the screen.
 
 Forms must have:
 
@@ -370,13 +385,19 @@ Reusable UI primitives belong in the shared UI system.
 
 Domain-specific UI belongs in the domain feature.
 
-Use shadcn/ui primitives before creating a new base primitive. Use TanStack Table
-for application data tables and TanStack Charts for charts; wrap both in shared,
-accessible components that follow `context/ui-registry.md`.
+Use shadcn/ui primitives before creating a new base primitive. None has been
+generated yet: the hand-written components in `components/ui` and
+`components/forms` are the current base set, listed in `ui-registry.md`. Use
+TanStack Table for application data tables (the events list is still a plain
+`<table>` — `build-plan.md` M11) and TanStack Charts for charts; wrap both in
+shared, accessible components that follow `context/ui-registry.md`.
+
+A component used by one route lives beside it in `app/`; move it to
+`components/` when a second route needs it.
 
 TanStack Table and Charts are logic/rendering engines, not replacements for the
 project's visual system. Use semantic markup, keyboard support, labels, readable
-fallbacks, and shadcn/Tailwind styling.
+fallbacks, and the project's Tailwind tokens.
 
 ---
 
@@ -412,9 +433,10 @@ aloud; a single letter says nothing about what is on the other side of it.
 `/u` was renamed in this review.
 
 **A new top-level route reserves its own name.** `RESERVED_ROUTE_SEGMENTS` in
-`lib/routes.ts` feeds the reserved-username list, because usernames occupy
-the same namespace — adding a route without reserving it lets an existing
-account shadow a page.
+`lib/routes.ts` feeds the reserved-username list. Usernames live under
+`/publishers/`, so they cannot shadow a page today, but a username that reads
+like an application path (`/publishers/dashboard`) still misleads, and a later
+move to root-level handles would make it a real collision.
 
 ---
 
@@ -464,9 +486,15 @@ Restructured 2026-09-26 in review.
   call `console.*` directly; `lint/suspicious/noConsole` enforces it, and the
   logger module is the single opt-out.
 * **Boundaries translate, layers throw.** The BLL and DAL throw
-  `ApplicationError`; the Server Action converts it to a `FormResult` and logs
-  it. A value that is not an `ApplicationError` is a bug: log it and rethrow
-  so the error boundary still sees it.
+  `ApplicationError`; every Server Action wraps its service calls in
+  `try/catch` and returns `actionFailure(log, "actionName", error, context)`
+  (`lib/action-errors.ts`), which logs — `warn` for refused rules, `error`
+  for faults — and returns the user-facing `FormResult`. A value that is not
+  an `ApplicationError` is a bug: `actionFailure` logs it and rethrows so the
+  error boundary still sees it. Keep `redirect()` outside the `try`.
+* **Clients show every result.** A component calling an action renders its
+  error message and catches a thrown call (network, crash) with
+  `USER_FACING_MESSAGES.UNEXPECTED` plus a log line.
 
 Never silently swallow errors. Where a failure genuinely must not surface —
 cleanup after a write that already succeeded — the `catch` logs and says in a
@@ -559,6 +587,15 @@ Test layer boundaries:
 
 A feature is not complete because the UI appears to work.
 
+## Where tests live
+
+* Vitest, node environment: colocated `*.test.ts` under `features/` and
+  `lib/` (`vitest.config.mts` includes only those). BLL tests use a fake
+  repository, never Supabase.
+* pgTAP: `supabase/tests/database/*.test.sql`, one file per protected table or
+  bucket, run with `pnpm db:test` against the local stack.
+* There are no UI or E2E tests yet. Playwright is the chosen E2E tool.
+
 ## Fixtures, not literals
 
 Added 2026-09-26 in review. Identifiers, usernames, paths and URLs that more
@@ -593,10 +630,10 @@ Avoid huge unrelated commits.
 
 # 20.1 Linting and formatting
 
-Use Biome as the repository's single linting and formatting tool. Keep its
-configuration and scripts at the project root, and run the Biome check in CI.
-Remove the temporary ESLint setup when Biome is introduced so competing lint
-rules do not drift.
+Biome is the repository's single linting and formatting tool (ESLint was
+removed in Phase 0). Its configuration lives in `biome.json` at the root and
+also enforces the layer import boundaries; CI runs `pnpm check`. Do not add a
+second linter or formatter.
 
 ---
 
@@ -604,7 +641,8 @@ rules do not drift.
 
 A feature is complete when:
 
-* functionality works
+* functionality works, and has been checked in the browser
+* every action result — success or failure — is visible to the user
 * types pass
 * lint passes
 * validation exists
@@ -620,11 +658,13 @@ A feature is complete when:
 * responsive behavior works
 * accessibility has been considered
 * documentation is updated when necessary
-* progress tracker is updated
+* `progress-tracker.md` and `build-plan.md` are updated
 
 ---
 
-# 22. Codex Rules
+# 22. Agent rules
+
+Applies to every coding agent working in this repository.
 
 Before implementing a significant feature:
 
@@ -632,10 +672,12 @@ Before implementing a significant feature:
 2. Inspect the existing code.
 3. Identify existing reusable components/patterns.
 4. Implement the smallest coherent change.
-5. Run relevant checks.
-6. Update `progress-tracker.md`.
+5. Run relevant checks (`pnpm check`, `pnpm typecheck`, `pnpm test`,
+   `pnpm build`; the same binaries are in `node_modules/.bin` if pnpm is not
+   on the PATH).
+6. Update `progress-tracker.md` and `build-plan.md`.
 
-Codex must not:
+Agents must not:
 
 * rewrite unrelated code
 * introduce architecture changes casually

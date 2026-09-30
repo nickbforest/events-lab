@@ -25,16 +25,21 @@ import {
 import { EVENT_TAG_LIMIT } from "@/features/events/contracts";
 import { COUNTRIES } from "@/lib/countries";
 import { COMMON_TIME_ZONES } from "@/lib/datetime";
+import { USER_FACING_MESSAGES } from "@/lib/errors";
+import { EVENT_TYPE_LABELS } from "@/lib/format";
+import { createLogger } from "@/lib/logging";
 import { routes } from "@/lib/routes";
 import type { Category, EventType, EventWithRelations } from "@/lib/types";
 
 import {
   DEFAULT_TICKET_CTA,
-  EVENT_TYPE_LABELS,
   type EventFormValues,
+  renderedFields,
   toFormValues,
   toPayload,
 } from "./event-form-values";
+
+const log = createLogger("events.form");
 
 /**
  * Suggestions for the country field. The field stays free text — this only
@@ -79,7 +84,8 @@ export function EventForm({
   const isEdit = Boolean(event);
   const isDialog = layout === "dialog";
   // A public event's slug is a live URL and MVP-1 keeps no redirect history.
-  const slugLocked = isEdit && event !== null && event.status !== "draft";
+  // The service keeps the slug once the event has ever been public.
+  const slugLocked = event !== null && event.published_at !== null;
 
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -109,13 +115,39 @@ export function EventForm({
     setServerFieldErrors({});
 
     const payload = toPayload(values);
-    const result = event
-      ? await updateEventAction(event.id, payload)
-      : await createEventAction(payload, publish);
+    let result: Awaited<ReturnType<typeof updateEventAction>>;
+    try {
+      result = event
+        ? await updateEventAction(event.id, payload)
+        : await createEventAction(payload, publish);
+    } catch (error) {
+      // The action itself could not run (network, server crash). Its own
+      // failures come back as results, so this is the unexpected case.
+      log.error("Saving the event failed before a result came back.", error);
+      setFormError(USER_FACING_MESSAGES.UNEXPECTED);
+      return;
+    }
 
     if (result.status === "error") {
-      setFormError(result.message ?? null);
-      setServerFieldErrors(result.fieldErrors ?? {});
+      const fieldErrors = result.fieldErrors ?? {};
+      // An error on a field that is not on screen must still be seen, or
+      // Save appears to do nothing.
+      const shown = renderedFields(values, layout, isEdit);
+      const unseen = Object.entries(fieldErrors)
+        .filter(
+          ([field, message]) => message && !shown.has(field as EventField),
+        )
+        .map(([, message]) => message);
+
+      setFormError(
+        result.message ??
+          (unseen.length > 0
+            ? `${unseen.join(" ")}${isDialog ? " Open the full editor to fix it." : ""}`
+            : Object.keys(fieldErrors).length > 0
+              ? USER_FACING_MESSAGES.VALIDATION_FAILED
+              : null),
+      );
+      setServerFieldErrors(fieldErrors);
       return;
     }
 
@@ -162,7 +194,8 @@ export function EventForm({
         return;
       }
       form.setFieldValue("coverImageUrl", result.url);
-    } catch {
+    } catch (error) {
+      log.error("Cover upload failed before a result came back.", error);
       setCoverError("The image could not be uploaded. Please try again.");
     } finally {
       setCoverBusy(false);
@@ -499,7 +532,7 @@ export function EventForm({
         <ImageUploader
           id="cover-image"
           label="Event image"
-          hint="PNG, JPG up to 5MB"
+          hint="PNG, JPG or WebP up to 5MB"
           description="Square or wide image. Shown in lists and as the hero."
           accept="image/png,image/jpeg,image/webp"
           // A poster is the thing people look at first, so the target is a

@@ -18,6 +18,8 @@ pnpm db:test
 | `profile_media_storage.test.sql` | Phase 2 `profile-media`: bucket limits, owner-folder writes, no enumeration, owner-only delete. |
 | `events_rls.test.sql` | Phase 4 `events`, `categories`, `tags`, `event_tags`: structural constraints, per-owner slug uniqueness, draft privacy, cancelled events staying public, cross-user denial, sealed category list. |
 | `event_media_storage.test.sql` | Phase 4 `event-media`: bucket limits, owner-folder writes, no enumeration, owner-only delete. |
+| `analytics_rls.test.sql` | `analytics_hits`: no direct inserts, `record_analytics_hit` accepts only public targets and derives the owner, owners read only their own counts. |
+| `profiles_hardening.test.sql` | Migration `20260930124644_harden_profiles`: `username` not updatable by owners, reserved names refused at signup. |
 
 ## Known gap
 

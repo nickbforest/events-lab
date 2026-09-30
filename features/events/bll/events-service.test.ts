@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 
 import {
+  canTransition,
   createEventsService,
   hasFinished,
   publishBlockers,
@@ -22,6 +23,7 @@ import {
 } from "./events-service";
 
 const NOW = new Date("2026-09-11T10:00:00Z");
+const OWN_MEDIA = "https://cdn.test/event-media";
 const clock = () => NOW;
 
 const profile: Profile = {
@@ -157,6 +159,9 @@ function fakeRepository(
     setEventTags: vi.fn(async () => undefined),
     uploadCoverImage: vi.fn(async () => "https://cdn.test/cover.png"),
     removeCoverImage: vi.fn(async () => undefined),
+    isOwnedCoverUrl: vi.fn((ownerId: string, url: string) =>
+      url.startsWith(`${OWN_MEDIA}/${ownerId}/`),
+    ),
     ...overrides,
   };
 }
@@ -378,7 +383,7 @@ describe("updateEvent", () => {
     await service.updateEvent(
       "evt",
       profile.id,
-      draft({ coverImageUrl: "https://cdn.test/new.png" }),
+      draft({ coverImageUrl: `${OWN_MEDIA}/${profile.id}/new.png` }),
     );
 
     expect(repository.removeCoverImage).toHaveBeenCalledWith(
@@ -509,5 +514,143 @@ describe("ticket button", () => {
     expect(
       publishBlockers(draft({ ticketUrl: "https://tickets.test/x" })),
     ).toEqual({});
+  });
+});
+
+describe("lifecycle rules", () => {
+  it("allows exactly the moves the editor offers", () => {
+    expect(canTransition("draft", "published")).toBe(true);
+    expect(canTransition("published", "archived")).toBe(true);
+    expect(canTransition("postponed", "published")).toBe(true);
+    expect(canTransition("archived", "published")).toBe(true);
+
+    expect(canTransition("draft", "cancelled")).toBe(false);
+    expect(canTransition("draft", "postponed")).toBe(false);
+    expect(canTransition("cancelled", "published")).toBe(false);
+    expect(canTransition("published", "draft")).toBe(false);
+  });
+
+  it("refuses a move the table does not allow, before touching the row", async () => {
+    const existing = withRelations(
+      record("evt", "draft", { published_at: null }),
+    );
+    const repository = fakeRepository({
+      findByIdForOwner: vi.fn(async () => existing),
+    });
+    const service = createEventsService(repository, clock);
+
+    await expect(
+      service.transitionEvent("evt", profile.id, "cancelled"),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
+    expect(repository.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it("checks readiness when an unpublished event is published again", async () => {
+    // Unpublished, then edited while nobody could see it: no city any more.
+    const existing = withRelations(record("evt", "archived", { city: null }));
+    const repository = fakeRepository({
+      findByIdForOwner: vi.fn(async () => existing),
+    });
+    const service = createEventsService(repository, clock);
+
+    await expect(
+      service.transitionEvent("evt", profile.id, "published"),
+    ).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      message: "An in-person event needs at least a city.",
+    });
+    expect(repository.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps the slug of an unpublished event that was once public", async () => {
+    const existing = withRelations(
+      record("evt", "archived", { slug: "jazz-night" }),
+    );
+    const repository = fakeRepository({
+      findByIdForOwner: vi.fn(async () => existing),
+    });
+    const service = createEventsService(repository, clock);
+
+    await service.updateEvent(
+      "evt",
+      profile.id,
+      draft({ title: "Something else", slug: "something-else" }),
+    );
+
+    expect(repository.updateEvent).toHaveBeenCalledWith(
+      "evt",
+      profile.id,
+      expect.objectContaining({ slug: "jazz-night" }),
+    );
+  });
+});
+
+describe("cover image ownership", () => {
+  it("accepts an image the owner uploaded", async () => {
+    const repository = fakeRepository();
+    const service = createEventsService(repository, clock);
+
+    await service.createEvent(
+      profile.id,
+      draft({ coverImageUrl: `${OWN_MEDIA}/${profile.id}/poster.png` }),
+      false,
+    );
+
+    expect(repository.insertEvent).toHaveBeenCalled();
+  });
+
+  it("refuses a URL outside the owner's own media folder", async () => {
+    const repository = fakeRepository();
+    const service = createEventsService(repository, clock);
+
+    await expect(
+      service.createEvent(
+        profile.id,
+        draft({ coverImageUrl: `${OWN_MEDIA}/someone-else/poster.png` }),
+        false,
+      ),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
+    expect(repository.insertEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps an already-saved cover even if it predates the check", async () => {
+    const legacy = "https://legacy.test/poster.png";
+    const existing = withRelations(
+      record("evt", "draft", { published_at: null, cover_image_url: legacy }),
+    );
+    const repository = fakeRepository({
+      findByIdForOwner: vi.fn(async () => existing),
+    });
+    const service = createEventsService(repository, clock);
+
+    await service.updateEvent(
+      "evt",
+      profile.id,
+      draft({ coverImageUrl: legacy }),
+    );
+
+    expect(repository.updateEvent).toHaveBeenCalled();
+  });
+});
+
+describe("cleanup failures", () => {
+  it("still deletes the event when its cover cannot be removed", async () => {
+    const existing = withRelations(
+      record("evt", "published", {
+        cover_image_url: `${OWN_MEDIA}/${profile.id}/poster.png`,
+      }),
+    );
+    const repository = fakeRepository({
+      findByIdForOwner: vi.fn(async () => existing),
+      removeCoverImage: vi.fn(async () => {
+        throw new Error("storage down");
+      }),
+    });
+    const service = createEventsService(repository, clock);
+
+    await expect(
+      service.deleteEvent("evt", profile.id),
+    ).resolves.toBeUndefined();
+    expect(repository.deleteEvent).toHaveBeenCalledWith("evt", profile.id);
   });
 });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { Constants } from "@/lib/supabase/database.types";
+import { optionalHttpUrlSchema } from "@/lib/urls";
 
 /**
  * Mirrors the `profiles_username_format` check constraint. Keeping the two in
@@ -47,16 +48,7 @@ function optionalText(max: number, error: string) {
     .transform((value) => (value === "" ? null : value));
 }
 
-const optionalUrl = z
-  .string()
-  .trim()
-  .pipe(
-    z.union([
-      z.literal(""),
-      z.url({ error: "Enter a full URL, including https://" }),
-    ]),
-  )
-  .transform((value) => (value === "" ? null : value));
+const optionalUrl = optionalHttpUrlSchema;
 
 const countryCode = z
   .string()

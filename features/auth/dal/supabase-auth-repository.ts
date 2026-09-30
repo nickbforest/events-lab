@@ -103,13 +103,20 @@ export function createSupabaseAuthRepository(
     },
 
     async verifyEmailToken(tokenHash: string, type: EmailConfirmationType) {
-      const { error } = await client.auth.verifyOtp({
+      const { data, error } = await client.auth.verifyOtp({
         token_hash: tokenHash,
         type,
       });
       if (error) {
         fail(error);
       }
+      if (!data.user) {
+        throw new AuthProviderError(
+          "UNKNOWN",
+          "Email link verified but returned no user.",
+        );
+      }
+      return { userId: data.user.id };
     },
 
     async exchangeAuthCode(code) {
@@ -128,7 +135,7 @@ export function createSupabaseAuthRepository(
       }
 
       const { redirectType } = exchangeResultSchema.parse(data);
-      return { isRecovery: redirectType === "recovery" };
+      return { isRecovery: redirectType === "recovery", userId: data.user.id };
     },
 
     async signInWithPassword(email, password) {

@@ -51,7 +51,7 @@ export function isoDateTime(iso: string) {
   return new Date(iso).toISOString();
 }
 
-const EVENT_TYPE_LABELS: Record<EventType, string> = {
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   in_person: "In person",
   online: "Online",
   hybrid: "Hybrid",
@@ -111,6 +111,9 @@ export const EVENT_STATUS_META: Record<
     className: "border-border text-muted-foreground",
   },
 };
+
+/** The ticket button's words when the publisher did not choose any. */
+export const DEFAULT_TICKET_LABEL = "Get tickets";
 
 export function priceLabel(isFree: boolean, priceInfo: string | null) {
   if (isFree) {

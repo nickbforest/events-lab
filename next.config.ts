@@ -4,11 +4,7 @@ const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
 
 const nextConfig: NextConfig = {
   images: {
-    // Event cover art is still local SVG in the prototype, and next/image does
-    // not optimize SVG by default.
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Only uploaded media (PNG, JPEG, WebP) from the project's public buckets.
     remotePatterns: [
       {
         protocol: "https",
