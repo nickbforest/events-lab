@@ -1,404 +1,289 @@
 # events-lab — UI Rules
 
-## 1. Product Personality
+The rules the interface follows. Section numbers are stable: code comments cite
+them (for example "ui-rules.md §13"). Concrete classes live in
+`ui-registry.md`; tokens live in `app/globals.css`.
 
-events-lab should feel:
-
-* modern
-* clean
-* trustworthy
-* professional
-* simple
-* fast
-* approachable
-
-The interface should prioritize content and usability over decoration.
+Last reconciled with the code: 2026-09-30.
 
 ---
 
-# 2. Visual Philosophy
+# 1. Product personality
 
-Use a modern SaaS visual language.
+Confident, editorial, fast, trustworthy, simple. Content and the next action
+come first; decoration never competes with them.
 
-Prioritize:
+---
 
-1. Clear hierarchy
-2. Excellent typography
-3. Consistent spacing
-4. Strong usability
-5. Clear actions
-6. Responsive behavior
-7. Accessibility
+# 2. Visual system
 
-Avoid excessive:
+events-lab uses a **dark editorial system with a single lime accent**,
+chosen by the developer (adapted from the happenings-heap reference; visual
+reference only, never its architecture). It replaces the earlier "neutral
+SaaS" direction.
 
-* gradients
-* glassmorphism
-* shadows
-* animations
-* decorative elements
-* borders
-* visual noise
+* **Ground:** near-black `--background` (`hsl(240 10% 3.9%)`); surfaces are
+  `bg-card` or translucent `bg-card/30`–`/40`; hairline `border-border`.
+* **Accent:** lime `--primary` (`hsl(75 95% 65%)`) with dark
+  `--primary-foreground`. One primary (lime) action per view or card.
+  Kickers, focus rings, active states and the wordmark hyphen use it; body
+  text never does.
+* **Semantic colours:** `--destructive`, `--warning` (postponed),
+  `--success`. Always paired with text (§16).
+* **Radius:** `rounded-md` for controls, `rounded-lg` for cards and panels,
+  `rounded-full` for chips and switches. Avatars are `rounded-lg`, never
+  circles.
+* **Depth:** no shadows. Separation comes from borders, surface tone and the
+  dialog backdrop.
+* **Motion:** `--ease-studio`; the landing hero reveal and marquee, and the
+  upload bar, are the only animations (§14).
+* Dark only: there is no light theme.
+
+Avoid gradients (except the landing marquee edge fades), glassmorphism
+(except the sticky header's `backdrop-blur-md` and the dialog backdrop), and
+extra borders or ornaments.
 
 ---
 
 # 3. Layout
 
-Use a consistent responsive container system.
-
-Desktop should provide generous whitespace without wasting excessive horizontal space.
-
-Mobile must be intentionally designed.
-
-Do not simply shrink desktop layouts.
+* Public pages: `max-w-7xl` header/footer, `max-w-5xl` lists, `max-w-4xl`
+  event article; `px-6` gutters.
+* Dashboard: fixed `w-64` sidebar from `md`; content `px-6 py-10 md:px-10`
+  inside `max-w-5xl` (lists) or `max-w-2xl`–`max-w-3xl` (forms).
+* Auth: a centred `max-w-sm` `AuthCard`.
+* Mobile is designed, not shrunk: the event card's date rail becomes a
+  horizontal strip, grids collapse to one column. The dashboard sidebar still
+  stacks above content on phones (`build-plan.md` M13).
 
 ---
 
 # 4. Typography
 
-Use typography to establish hierarchy:
+| Role | Treatment |
+| --- | --- |
+| Display (page and card titles, stats, wordmark) | Inter Tight (`font-display`), `font-extrabold`, **uppercase**, `tracking-tight`/`tracking-tighter` |
+| Body | Inter (`font-sans`), `text-sm`–`text-lg`, `text-muted-foreground` for supporting copy |
+| Metadata, labels, kickers, hints | JetBrains Mono (`font-mono`), `text-xs`, usually `uppercase tracking-widest` |
 
-```text
-Page title
-Section title
-Card title
-Body
-Metadata
-Supporting text
-```
-
-Event titles should be prominent.
-
-Date, time, location, and organizer should be easy to scan.
+Hierarchy: kicker (mono, lime) → title (display) → context line (mono, muted).
+Event titles are the most prominent text on any event surface. Date, time,
+location and organizer must scan at a glance. Numbers that change use
+`tabular-nums`.
 
 ---
 
-# 5. Event Cards
+# 5. Event cards
 
-Event cards prioritize:
+Priority: date → image → title → summary → location → description → the way
+in (ticket button). Category is the kicker above the date.
 
-1. Image
-2. Date
-3. Title
-4. Location
-5. Organizer/category
-6. Price/status where relevant
-
-Cards should have a clear primary clickable area.
-
-Avoid excessive controls inside cards.
+One primary target: the title link stretches over the card. Inner controls
+(map, ticket) sit above it on `relative z-10`. Never wrap a card containing
+links in an anchor. Descriptions are clamped. No ticket button on a cancelled
+event.
 
 ---
 
-# 6. Public Event Page
+# 6. Public event page
 
-The event page should prioritize:
+Order: hero image → cancelled banner (if cancelled) → category and status →
+title → summary → description → tags → organizer; a sidebar with date, time
+(with zone), location, price, then the primary action (ticket or join). Related
+events follow.
 
-```text
-Hero
-Title
-Date/time
-Location
-Primary action
-Organizer
-Description
-Gallery
-Map
-Related events
-```
-
-The most important information should appear before long descriptions.
+The most important facts appear before long descriptions. Map and gallery are
+post-MVP.
 
 ---
 
-# 7. Event Creation
+# 7. Event creation
 
-Event creation should feel simple even though the underlying data model is powerful.
+Creating an event is a dialog over the events list with the essential
+sections: Basic information, Date & time, Location, Media, Tickets. The full
+editor adds time zone, price, links, tags and the lifecycle panel.
 
-Recommended sections:
-
-```text
-1. Basic information
-2. Date & time
-3. Location
-4. Media
-5. Tickets / external links
-6. Categories / tags
-7. Publishing
-```
-
-Do not overwhelm the user with every optional field at once.
+Inapplicable fields are **absent, not disabled** (online events have no venue
+block; free events have no price field). Don't show every optional field at
+once.
 
 ---
 
 # 8. Forms
 
-Forms must:
-
-* have clear labels
-* indicate required fields
-* provide inline validation
-* preserve user input after recoverable errors
-* display saving state
-* display publishing state
-* provide useful error messages
-* support keyboard navigation
-
----
-
-# 9. Loading States
-
-Every data-driven screen must have an intentional loading state.
-
-Prefer skeletons for content-heavy screens.
-
-Avoid blank screens.
-
-An upload shows it is in flight: a spinner, a busy label and an
-indeterminate progress bar, over a dimmed preview of the chosen image
-(`ImageUploader` in `ui-registry.md`). Never show a percentage the app cannot
-measure — Server Actions report no byte progress, so the bar is
-indeterminate. Added 2026-09-26.
+* A visible `<label>` for every control; hints state constraints up front.
+* Inline validation; a field shows at most one message (the error replaces the
+  hint) and is wired with `aria-describedby` and `aria-invalid`.
+* Form-level failures render as a `role="alert"` line above the submit.
+* Preserve input after recoverable errors.
+* Submit buttons disable while pending and switch to a present participle
+  ("Saving…", "Publishing…").
+* Success is a polite `aria-live` line, and says when a result is not final
+  ("Confirmation pending for …").
+* A value that can be seen but not changed is a real read-only input with a
+  hint that says why.
 
 ---
 
-# 10. Empty States
+# 9. Loading states
 
-An empty state must explain:
+Every data-driven screen needs an intentional loading state; prefer skeletons
+for content screens and never leave a blank screen. Dashboard routes use
+`app/dashboard/loading.tsx` (`Skeleton` blocks shaped like the real layout
+inside a `LoadingRegion`). Public pages have none on purpose: they render
+fast on the server, and streaming would turn a missing page's 404 into a 200.
 
-* what is empty
-* why it is empty
-* what the user can do next
+An upload shows it is in flight with a spinner, a busy label and an
+indeterminate progress bar over a dimmed preview (`ImageUploader`). Never
+show a percentage the app cannot measure — Server Actions report no byte
+progress.
 
-Example:
+---
+
+# 10. Empty states
+
+Say what is empty, why, and what to do next, with one action:
 
 ```text
-No upcoming events yet.
-
-Create your first event to start promoting it.
-
-[ Create Event ]
+No events yet.
+You have not created any events. Your first one takes about a minute…
+[ Create your first event ]
 ```
 
----
-
-# 11. Error States
-
-Errors must be:
-
-* understandable
-* concise
-* actionable when possible
-
-Never show technical implementation details to normal users.
+Full-page empties use `EmptyState` (dashed border). Inside a `Panel`, use the
+one-line `PanelEmpty`.
 
 ---
 
-# 12. Responsive Design
+# 11. Error states
 
-Support:
+Errors are understandable, concise and actionable, and never show technical
+detail. Wording comes from `USER_FACING_MESSAGES` (`lib/errors.ts`). Every
+action result must be shown, next to the control that caused it; a failure
+that produces no visible message is a bug. A field error for a field that is
+not on screen becomes the form-level message.
 
-* mobile
-* tablet
-* desktop
+Whole-screen states use `StatusMessage`: `app/not-found.tsx` and
+`app/error.tsx` on public pages, the dashboard's own `error` and `not-found`
+inside the shell, `app/global-error.tsx` as the last resort. Each says what
+happened, what to do, and offers a way out ("Try again", home, Overview).
+A not-found never reveals whether a hidden page exists.
 
-Event discovery is particularly important on mobile.
+---
 
-Maps and filter interfaces must adapt to small screens.
+# 12. Responsive design
+
+Support phone, tablet and desktop. Public pages and the event card are the
+highest priority on mobile. Filters wrap; tables hide secondary columns below
+`sm`.
 
 ---
 
 # 13. Accessibility
 
-All UI must consider:
-
-* keyboard navigation
-* visible focus
-* semantic HTML
-* screen readers
-* labels
-* accessible forms
-* appropriate ARIA
-* contrast
-* reduced motion
-
-Never communicate status only through color.
+* Keyboard reachable everything; visible `:focus-visible` ring (lime, 2px).
+* Semantic elements first: `<dialog>` for modals, `<button role="switch">` for
+  toggles, `<search>`, `<fieldset>`/`<legend>` for chip groups, `<time>` for
+  dates, a `<label>` wrapping file inputs.
+* Icon-only controls carry an `sr-only` name that includes the item ("Delete
+  Jazz Night").
+* Links that open a new tab say so to screen readers.
+* Toggle chips use `aria-pressed` plus a visible checkmark.
+* Charts have an accessible name and a "View as table" fallback.
+* Respect `prefers-reduced-motion` (handled globally in `globals.css`).
+* Never communicate state by colour alone.
 
 ---
 
 # 14. Animation
 
-Use animation sparingly.
-
-Animation should communicate:
-
-* transitions
-* feedback
-* loading
-* state changes
-
-Avoid decorative animation.
-
-Respect reduced-motion preferences.
+Motion communicates feedback, loading and state changes only. Current motion:
+the landing hero reveal and audience marquee, the upload bar, and colour
+transitions on hover. Everything stops under reduced motion. No decorative
+animation elsewhere.
 
 ---
 
-# 15. Buttons
+# 15. Buttons and actions
 
-Primary actions must be visually obvious.
-
-Examples:
-
-```text
-Create Event
-Publish Event
-Save Changes
-Get Tickets
-Search Events
-```
-
-Destructive actions require appropriate confirmation.
+* **Primary:** lime fill, one per view or card ("Publish", "Save changes",
+  "Get tickets").
+* **Secondary:** outlined `border border-border`, `hover:bg-white/5`.
+* **Destructive:** outlined `border-destructive/40`, never filled.
+* Destructive actions confirm **in place** (the control becomes "Delete? Yes /
+  No" or "Delete permanently / Keep it"). No `confirm()`, no modal for a
+  small decision.
+* Actions that change what a ticket holder sees (cancel, postpone) live on the
+  full editor, not inline in a list.
+* Every preview of a public page opens in a new tab with `?preview=1`
+  (the editor's "View public page" is the current exception — M8).
 
 ---
 
 # 16. Status
 
-Statuses should use both text and visual indication.
-
-Examples:
-
-```text
-Draft
-Published
-Cancelled
-Postponed
-Completed
-Archived
-```
-
-Do not rely only on color.
+Statuses always show text as well as colour: **Draft, Published, Postponed,
+Cancelled, Archived** (`EVENT_STATUS_META` in `lib/format.ts`). There is no
+"Completed" status; finished events are shown under "Past".
 
 ---
 
 # 17. Maps
 
-Maps should support discovery rather than dominate the experience.
-
-Desktop:
-
-```text
-Filters | Event list | Map
-```
-
-Mobile:
-
-```text
-Event list
-     ↕
-Map view
-```
-
-Use an explicit map/list switch when appropriate.
+Post-MVP. Until then an event card links to OpenStreetMap with a plain
+"View on map" link. When maps arrive: they support discovery rather than
+dominate it — desktop `Filters | List | Map`, mobile list ↕ map with an
+explicit switch.
 
 ---
 
 # 18. Images
 
-Images are important to events-lab.
-
-Images should:
-
-* use consistent aspect ratios
-* crop appropriately
-* have meaningful alt text
-* lazy-load when appropriate
-* avoid layout shift
-* use optimized delivery
+Consistent aspect ratios (cover banner `3/1`, event hero fixed height, card
+poster square, dashboard poster target `4/3`), `object-cover`, `next/image`
+with `sizes` matching the rendered width, `priority` only for the first
+image on a page. Decorative images use `alt=""` when the text beside them
+says the same thing.
 
 ---
 
-# 19. SEO/Public Experience
+# 19. Public pages
 
-Public event and organization pages are first-class web pages.
-
-They must be:
-
-* fast
-* shareable
-* indexable where appropriate
-* mobile-friendly
-* readable without authentication
+Publisher and event pages are first-class web pages: fast, shareable,
+indexable, mobile-friendly, and readable without an account. A publisher's
+page is theirs — no signup funnel or marketing call to action on it.
 
 ---
 
-# 20. Consistency Rule
+# 20. Consistency
 
-Once a UI pattern is established, reuse it.
-
-Do not allow individual pages to invent different:
-
-* button styles
-* spacing
-* card structures
-* forms
-* badges
-* loading states
-* empty states
-* navigation patterns
-
-When a genuinely new reusable pattern is required:
-
-1. Add it to `ui-registry.md`
-2. Document the rule here
-3. Implement it consistently
+Once a pattern exists, reuse it: buttons, spacing, cards, forms, badges,
+loading and empty states, navigation. A genuinely new reusable pattern is
+built once, registered in `ui-registry.md` (run `/imprint`), and followed
+everywhere after.
 
 ---
 
-# 21. Forms, Tables, and Charts
+# 21. Forms, tables and charts
 
-Use shadcn/ui primitives as the visual foundation for application interfaces.
-
-Use TanStack Form for stateful forms. Field components must surface Zod validation
-messages accessibly, preserve recoverable input, and expose pending/submission
-state without relying on color alone.
-
-Use TanStack Table as the headless engine for application data tables and render it
-with semantic, accessible shadcn/ui-compatible markup. Tables must support their
-intended keyboard behavior, responsive overflow, loading/error/empty states, and
-server-side pagination/filtering/sorting for non-trivial datasets.
-
-Use TanStack Charts through shared chart components. Every chart must have an
-accessible name and a readable text, summary, or table fallback when the visual is
-required to understand the data. Charts must follow the registered typography,
-spacing, color, tooltip, and reduced-motion patterns.
-
-Do not let TanStack headless defaults create a competing visual system. Register
-new reusable form, table, and chart patterns in `context/ui-registry.md` after they
-are implemented.
+* Stateful forms use TanStack Form with the shared Zod contract and the
+  `Field` / `SelectControl` / `FormSection` primitives.
+* Data tables use semantic `<table>` markup with a caption; TanStack Table is
+  the engine once a table needs sorting, filtering or pagination (server-side
+  for non-trivial data).
+* Charts use TanStack Charts through shared components, with an accessible
+  name, a text or table fallback, and identity that never rests on colour
+  alone (the ticket-click series is also dashed).
 
 ---
 
-## Cursors
+# 22. Cursors
 
-Added 2026-09-26.
+Anything that acts on click shows a pointer. Tailwind v4's reset dropped
+`cursor: pointer` from buttons, so one base rule in `app/globals.css` covers
+`button`, `[role="button"]`, `[role="switch"]`, checkable inputs, labels
+wrapping them, and `summary`; disabled controls keep the default arrow. Do not
+sprinkle `cursor-pointer` per component — add a selector to the base rule.
 
-Anything that acts on click shows a pointer on hover. Tailwind v4's reset
-dropped `cursor: pointer` from `button`, so without this every control in the
-app reads as decoration — a toggle in particular looks like a status light
-rather than a switch.
-
-The rule lives once in `app/globals.css` under `@layer base`, covering
-`button`, `[role="button"]`, `[role="switch"]`, checkable inputs, a label
-wrapping one, and `summary`. Disabled controls are excluded so they keep the
-default arrow; a component wanting `not-allowed` still sets it itself.
-
-Do not sprinkle `cursor-pointer` per component. If something clickable is
-missing the cursor, the base rule needs another selector.
-
-Two exceptions, both about the shape of the target rather than the cursor:
-
-- A compound control states it explicitly, because the cursor is part of
-  what tells you the whole thing is one button (see `Switch`).
-- A control's visible label belongs **inside** its `<button>`, not beside it.
-  Text next to a toggle is the obvious thing to aim at; leaving it outside
-  makes a dead zone that shows an arrow and does nothing when clicked.
+A control's visible label belongs **inside** its `<button>` so the text is
+part of the target (see `Switch`).

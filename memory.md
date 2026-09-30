@@ -1,76 +1,108 @@
-# Memory — Dashboard UI polish (uploads, images, selects, navigation)
+# Memory — MVP baseline audit and hardening pass
 
-Last updated: 2026-09-26
+Last updated: 2026-09-30
 
 ## What was built
 
-Committed on `feat/phase-4-events`, which is on top of `main`.
-Commits `4bae605`, `4403cc4`, `0a68c0f`, `90c5d00`, plus a docs commit.
+Branch `feat/mvp-hardening` (off `main` at `fd61992`). **Nothing is committed
+yet**: the docs rewrite from the 2026-09-26 audit and all of the code below
+are in the working tree.
 
-- **Upload feedback.** `components/forms/image-uploader.tsx` shows a spinning
-  `LoaderCircle`, a `busyLabel` ("Uploading…" / "Removing…") and a lime
-  indeterminate bar (`animate-upload-progress` in `app/globals.css`) over a
-  dimmed local preview.
-- **Image actions.** A set image shows alone, with icon chips in its corner:
-  a pencil (a label wrapping the file input) to replace it and a bin to remove
-  it. The empty state is still the dashed "Click to upload" frame.
-- **Removal.** Avatar and cover are removed right away:
-  `removeProfileMediaAction` → `ProfilesService.removeProfileMedia` clears the
-  column, then deletes the files (3 BLL tests). The event poster's bin clears
-  the form field, and the events service deletes the old file on Save.
-- **`SelectControl`** in `components/forms/field.tsx`: every dashboard select
-  is now 42px tall, like the inputs.
-- **Public page:** the "Claim your events-lab page" box is removed.
-  **Footer:** the wordmark only.
-- **`WordmarkLink`** (`components/layout/wordmark-link.tsx`): in the dashboard
-  the logo goes to Overview, and on the public header it goes home. On the
-  page it already points at, it reloads.
-- **Sidebar page link** opens `routes.publisherPreview` in a new tab.
-- **Docs:** the progress tracker (Phase 4 post-completion refinements table
-  and decision log), the build plan, Architecture §14/16/21/28, the UI
-  registry (ImageUploader, Field/SelectControl, SiteHeader, SiteFooter,
-  DashboardShell, Publisher page) and UI rules §9.
+- **Docs:** every `context/` file rebuilt against the code. `build-plan.md` is
+  now organised by status (§A implemented, §B fix list with stable IDs
+  C1–C2 / I1–I10 / M1–M13, §C partial, §D remaining, §E post-MVP).
+- **Event lifecycle (I1):** `EVENT_TRANSITIONS` in
+  `features/events/contracts.ts` is the one table. The events service
+  enforces it, and `EventLifecycle` renders its buttons from it. Readiness is
+  checked on every move into a public status. The slug is locked once
+  `published_at` is set.
+- **No silent failures (I2):**
+  - `lib/action-errors.ts` `actionFailure()` is used by every Server Action:
+    events, profiles and auth.
+  - Row toggle, delete and lifecycle show errors inline.
+  - `toPayload` clears inapplicable fields, and field errors for fields that
+    aren't on screen become form-level messages (`renderedFields`).
+- **Event page (I3):** location shows whenever it exists, the country by
+  name, and JSON-LD `Place` / `VirtualLocation` / both.
+- **Password reset (I4):**
+  - `/auth/confirm` sets an httpOnly `el-recovery` cookie
+    (`features/auth/recovery-marker.ts`, 15 min, path `/auth`).
+  - The update-password page redirects other sessions to Settings.
+  - `authService.updatePassword(actor, input, marker)` refuses a mismatched
+    marker.
+- **Links (I6):** `lib/urls.ts` `httpUrlSchema`, http(s) only. The cover URL
+  must be in the owner's `event-media` folder
+  (`EventsRepository.isOwnedCoverUrl`).
+- **Analytics (I7), built from a confirmed blueprint:**
+  - Migration `20260930115636_create_analytics.sql`, **applied**:
+    `analytics_hits`, a definer function `record_analytics_hit`, and invoker
+    functions `analytics_daily` and `analytics_top_events`.
+  - Write path: `POST /api/analytics` → analytics BLL (skips the owner) →
+    Supabase DAL.
+  - Browser side: `components/analytics/{track-view,ticket-link}.tsx` via
+    `features/analytics/transport.ts`, deduped per session; previews are not
+    tracked.
+  - The overview uses real data. `lib/mock-data.ts` and the in-memory
+    adapter are deleted.
+- **Screens (I8):** `app/not-found.tsx`, `error.tsx`, `global-error.tsx`;
+  dashboard `error` / `not-found` / `loading`. New primitives:
+  `components/ui/status-message.tsx` and `skeleton.tsx`.
+- **Migrations (I9):** local files renamed to the hosted versions.
+- **Discovery removed:** `/discover`, `features/discovery`, `DiscoverFilters`
+  and the landing and empty-state links. The `discover` username stays
+  reserved.
+- **Tests:** 152 Vitest tests (123 before). New pgTAP files:
+  `analytics_rls`, `profiles_hardening`. There's also a reserved-username
+  drift test.
 
 ## Decisions made
 
-- Upload progress is indeterminate, never a percentage. Server Actions report
-  no byte progress. A real percentage would need signed-URL direct-to-Storage
-  uploads with XHR.
-- Removing an image clears the column first, then deletes the files.
-- Image action chips are always visible, not hover-only, so they work on
-  touch screens.
-- Inside the dashboard the logo means Overview. The footer and public page
-  carry no signup or marketing links.
-- Every preview link opens in a new tab with `?preview=1`.
+- Discovery and the signup publisher-type select are dropped from the MVP.
+- Email, domain and deployment work (C2) goes in its own PR.
+- Analytics counts a visit once per browser session per page, in the
+  browser, never the owner's own visits, never `?preview=1`. Ticket clicks
+  are a beacon on the plain anchor. No IP, user agent or visitor id is
+  stored.
+- Public pages get no `loading.tsx`: streaming turned 404s into 200s.
+- `postponed → archived` is allowed. The list toggle only acts on
+  draft / published / archived rows.
 
 ## Problems solved
 
-- "Hide the cover when none is set" was already how the page worked. The real
-  gap was that an image could not be removed.
-- Native selects came out shorter than the inputs. `appearance-none` plus a
-  fixed height fixes it.
-- A `<Link>` to the current URL does nothing visible. `WordmarkLink` renders
-  a plain `<a>` in that case so the page reloads.
+- A column-level REVOKE doesn't override Supabase's table-level UPDATE grant.
+  The fix is to revoke the table grant and grant a column list.
+- The Next 16 error boundary prop is `retry()`, not `reset`. `global-error`
+  must import `globals.css` itself.
+- `z.url()` accepts `javascript:`, `data:` and `ftp:`.
+- Axios `apiClient` has baseURL `/api`, so `routes.api.*` are now relative to
+  it.
+- `pnpm` isn't on PATH on this machine: use `node_modules/.bin/*`.
+  Playwright ran from a scratch install using the cached
+  `chromium_headless_shell-1243`.
 
 ## Current state
 
-- biome clean, tsc clean, vitest 10 files / 123 tests, `next build` passes.
-- **None of today's changes have been checked in the browser.**
-- Phase 4 still has no recorded end-to-end browser pass.
+- Biome, tsc, Vitest (152) and `next build` are all clean.
+- The signed-out Playwright smoke pass is 27/27. Analytics calls were
+  intercepted, so no test rows were written to the hosted DB.
+- All 8 migrations are applied and match the local files. The username lock
+  and reserved-name trigger (`20260930124644_harden_profiles.sql`) were
+  applied and verified on hosted on 2026-09-30.
+- Supabase advisor warns that `record_analytics_hit` is callable by anon /
+  authenticated. That's intended.
 
 ## Next session starts with
 
-1. Browser-check today's changes: upload animation, pencil and bin on the
-   avatar, cover and poster, the page without a cover, select heights, the
-   logo → Overview, and the sidebar link opening a new tab.
-2. Run a Phase 4 end-to-end pass: create → publish → edit → cancel → delete.
-3. Then Phase 5, the map layer (Mapbox, geocoding, near me).
+1. Commit in focused commits (docs, events/lifecycle, auth, analytics,
+   screens, discovery removal) and open the PR.
+2. The developer runs the signed-in checklist in `build-plan.md` §D.
+3. Then the C2 PR: SMTP, auth settings, domain, deploy.
 
 ## Open questions
 
-- Does the upload wait ever get long enough to justify real percentages?
-- Discovery and analytics are still mock-backed.
-- Custom SMTP is needed before launch. Email change is untested.
-- Recurrence is deferred.
-- Today's commits are not pushed. PR #6 is merged to `main`, and this branch
-  sits on top of it.
+- Sidebar sign-out ends all sessions (`global`). Keep it, or switch to
+  `local`?
+- Is there a test account (with email confirmation) for adding Playwright to
+  CI?
+- Unused dependencies `@tanstack/react-table` and `date-fns` need removing
+  with pnpm (M11).
