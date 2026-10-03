@@ -179,8 +179,8 @@ add a prop here instead. Actions are passed as nodes so a screen can carry a
 ghost + solid pair (Events) or a segmented control (Overview). The actions
 row is `w-full` below `sm`, so a page's buttons can stretch across the
 screen there (`w-full` / `flex-1` + `justify-center`) and sit at their own
-width from `sm`. On Events, New is the wider of the pair: `flex-1` on
-mobile, `sm:min-w-44` above.
+width from `sm`. On Events, New is the wider of the pair on mobile
+(`flex-1`); from `sm` both buttons size to their labels.
 
 ### Panel
 
@@ -337,9 +337,12 @@ disabled:cursor-not-allowed disabled:opacity-60`. It matches `authSubmitClass`
 except for `w-full`. The button swaps its label to a present participle while
 submitting ("Saving…").
 
-`formSubmitWideClass` is `formSubmitClass` plus `w-full`, for a full-page form
-(Profile, Settings) whose submit spans the form edge to edge, under
-`formFooterClass` (`flex flex-col gap-4`) with its status line above it.
+`formSubmitWideClass` is `formSubmitClass` plus `w-full sm:w-auto`, for a
+full-page form (Profile, Settings): below `sm` the submit spans the form edge
+to edge under its status line (`formFooterClass`, `flex flex-col gap-4`);
+from `sm` the footer is a row, status left, button right at its own width.
+Full-width buttons are a mobile treatment only — desktop buttons size to
+their labels.
 
 `fieldControlClass` is `text-base` below `sm` and `sm:text-sm` above: iOS
 Safari zooms into any focused control under 16px and stays zoomed, which
@@ -534,16 +537,17 @@ Last updated: 2026-10-03
 | Border radius    | inherited from `Field` and `formSubmitClass`        |
 | Text — primary   | via `Field`                                         |
 | Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
-| Spacing          | fields `space-y-5`; footer `formFooterClass` (`flex flex-col gap-4`) |
+| Spacing          | fields `space-y-5`; footer `formFooterClass` (column below `sm`, `justify-between` row above) |
 | Hover state      | submit `hover:brightness-110`                       |
 | Shadow           | none                                                |
 | Accent usage     | `formSubmitClass`, and success lines in `text-primary` |
 
 **Pattern notes:**
 Each is a TanStack Form client component rendered by a thin Server Component
-page that loads the data. The footer stacks the status line (`empty:hidden`
-when there is nothing to say) above a full-width `formSubmitWideClass`
-button. Success is an `aria-live="polite"` line in
+page that loads the data. Below `sm` the footer stacks the status line
+(`empty:hidden` when there is nothing to say) above a full-width
+`formSubmitWideClass` button; from `sm` the status sits left and the button
+right. Success is an `aria-live="polite"` line in
 `font-mono text-xs text-primary` ("Profile saved."); a result that is not yet
 final says so ("Confirmation pending for …"), never "changed". A form whose
 success leaves the page (password change signs out) states that consequence in
@@ -736,8 +740,8 @@ poster sits beside the date on a phone rather than pushing the title down.
 The description is `line-clamp-4`: a listing where one event runs three
 screens tall has stopped being a listing. The event page has the whole text.
 
-The ticket button spans the content column (`flex w-full justify-center`,
-2026-10-03). It uses `event.ticket_cta_label`, falling back to "Get
+The ticket button spans the content column below `sm` (`flex w-full
+justify-center`) and sizes to its label above (`sm:inline-flex sm:w-auto`). It uses `event.ticket_cta_label`, falling back to "Get
 tickets", and is hidden entirely for a cancelled event — sending someone to
 buy a ticket for an event that is off is worse than showing nothing.
 

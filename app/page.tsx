@@ -75,10 +75,9 @@ export default function LandingPage() {
                 share what is coming up — without fighting a social algorithm
                 for the privilege.
               </p>
-              {/* A grid, not a wrapping row: both buttons take the same
-                  width — full width stacked on mobile, the wider label's
-                  width side by side from `sm`. */}
-              <div className="grid grid-cols-1 gap-4 sm:inline-grid sm:grid-cols-2">
+              {/* Stacked and stretched below `sm`, so both buttons are the
+                  same full width on a phone; each sizes to its label above. */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                 <Link
                   href={routes.auth.signUp()}
                   className="rounded-md border border-primary bg-primary px-8 py-4 text-center text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
