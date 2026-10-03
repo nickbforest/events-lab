@@ -78,6 +78,14 @@
     color: var(--color-foreground);
   }
 
+  /* A country field is free text with a <datalist> of suggestions. Chrome and
+     Safari draw a dropdown arrow on such inputs, which makes it read as a
+     select; the suggestions still appear as you type. */
+  input[list]::-webkit-calendar-picker-indicator,
+  input[list]::-webkit-list-button {
+    display: none !important;
+  }
+
   body {
     font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01";

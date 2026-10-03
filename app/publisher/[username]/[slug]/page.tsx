@@ -200,10 +200,11 @@ export default async function EventPage({
 
         <article className="mx-auto grid max-w-4xl grid-cols-1 gap-12 px-6 py-12 md:grid-cols-3">
           <div className="space-y-8 md:col-span-2">
-            {/* The event image heads the content column — a framed poster,
-                not a full-width banner, which cropped most of it away. Larger
-                than the listing's 10rem thumbnail, capped so it never takes
-                over the page. Same 4:3 frame as the dashboard upload target. */}
+            {/* The event image heads the content column in a fixed 4:3 frame,
+                larger than the listing's 10rem thumbnail and capped so it
+                never takes over the page. `object-contain`, not `cover`: the
+                whole image shows as uploaded — never cropped or zoomed — with
+                the frame's ground filling any space around it. */}
             {event.cover_image_url ? (
               <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-border bg-secondary">
                 <Image
@@ -212,7 +213,7 @@ export default async function EventPage({
                   fill
                   priority
                   sizes="(min-width: 768px) 28rem, 100vw"
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
             ) : null}
@@ -288,7 +289,9 @@ export default async function EventPage({
             </div>
           </div>
 
-          <aside className="space-y-6">
+          {/* On desktop the facts and the ticket button stay in view while
+              the description scrolls past, clear of the sticky site header. */}
+          <aside className="space-y-6 md:sticky md:top-24 md:self-start">
             <div className="space-y-4 rounded-lg border border-border bg-card/40 p-6">
               <InfoRow
                 icon={<Calendar className="size-4" aria-hidden />}
