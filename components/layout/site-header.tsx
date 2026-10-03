@@ -27,7 +27,7 @@ export function SiteHeader({ showSections = false }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6 sm:pt-4">
       <nav
         aria-label="Main"
-        className="glass mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 rounded-full pr-2 pl-4 shadow-card sm:pl-5"
+        className="glass mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-full pr-2.5 pl-5 shadow-card sm:pl-6"
       >
         <WordmarkLink href={routes.home()} />
 
