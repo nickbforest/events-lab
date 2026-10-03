@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { optionalCountrySchema } from "@/lib/countries";
 import { Constants } from "@/lib/supabase/database.types";
 import { optionalHttpUrlSchema } from "@/lib/urls";
 
@@ -50,20 +51,6 @@ function optionalText(max: number, error: string) {
 
 const optionalUrl = optionalHttpUrlSchema;
 
-const countryCode = z
-  .string()
-  .trim()
-  .toUpperCase()
-  .pipe(
-    z.union([
-      z.literal(""),
-      z.string().regex(/^[A-Z]{2}$/, {
-        error: "Use a two-letter country code, for example GE.",
-      }),
-    ]),
-  )
-  .transform((value) => (value === "" ? null : value));
-
 /**
  * Platforms a publisher can link to. These live in the `social_links` JSON map
  * rather than as columns so adding one never requires a migration.
@@ -101,7 +88,7 @@ export const profileUpdateSchema = z.object({
   publisherType: publisherTypeSchema,
   bio: optionalText(500, "About must be 500 characters or fewer."),
   city: optionalText(100, "City must be 100 characters or fewer."),
-  countryCode: countryCode,
+  countryCode: optionalCountrySchema,
   websiteUrl: optionalUrl,
   socialLinks: socialLinksSchema,
 });

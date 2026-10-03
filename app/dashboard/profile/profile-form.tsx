@@ -4,6 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
 import { FormAlert } from "@/components/auth/auth-card";
+import { CountryOptions } from "@/components/forms/country-options";
 import {
   Field,
   fieldControlClass,
@@ -23,6 +24,7 @@ import {
   SOCIAL_LINK_KEYS,
   type SocialLinkKey,
 } from "@/features/profiles/contracts";
+import { countryName } from "@/lib/countries";
 import { publisherTypeLabel } from "@/lib/format";
 import { firstErrorMessage } from "@/lib/forms";
 import type { Profile, PublisherType } from "@/lib/types";
@@ -51,6 +53,8 @@ const SOCIAL_LABELS: Record<
   },
 };
 
+const COUNTRY_LIST_ID = "profile-country-options";
+
 export interface ProfileFormProps {
   profile: Profile;
 }
@@ -68,7 +72,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       publisherType: profile.publisher_type,
       bio: profile.bio ?? "",
       city: profile.city ?? "",
-      countryCode: profile.country_code ?? "",
+      // The field holds what a person reads; the schema stores the code.
+      countryCode: countryName(profile.country_code) ?? "",
       websiteUrl: profile.website_url ?? "",
       socialLinks: Object.fromEntries(
         SOCIAL_LINK_KEYS.map((key) => [key, profile.social_links[key] ?? ""]),
@@ -241,16 +246,16 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   <Field
                     id={field.name}
                     label="Country"
-                    hint="Two-letter code, e.g. GE."
+                    hint="Type the country name, e.g. Georgia."
                     error={error}
                   >
                     <input
                       id={field.name}
                       name={field.name}
-                      maxLength={2}
-                      autoCapitalize="characters"
+                      list={COUNTRY_LIST_ID}
+                      autoComplete="country-name"
                       className={fieldControlClass}
-                      placeholder="GE"
+                      placeholder="Georgia"
                       value={field.state.value}
                       aria-invalid={error ? true : undefined}
                       aria-describedby={fieldDescribedBy({
@@ -409,6 +414,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           ))}
         </div>
       </FormSection>
+
+      <CountryOptions id={COUNTRY_LIST_ID} />
 
       {formError ? (
         <div className="mb-5">

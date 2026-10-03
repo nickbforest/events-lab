@@ -105,7 +105,13 @@ describe("profileUpdateSchema", () => {
     expect(parsed.socialLinks.twitter).toBeNull();
   });
 
-  it("uppercases a country code and rejects a non-ISO one", () => {
+  it("stores a typed country name as its code and rejects an unknown one", () => {
+    expect(
+      profileUpdateSchema.parse({ ...validUpdate, countryCode: "georgia" })
+        .countryCode,
+    ).toBe("GE");
+
+    // Someone who knows the code is not made to spell the name out.
     expect(
       profileUpdateSchema.parse({ ...validUpdate, countryCode: "ge" })
         .countryCode,

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Countries, as full names for people and ISO 3166-1 alpha-2 codes for the
  * database.
@@ -327,3 +329,31 @@ export function countryCodeFromInput(value: string): string | null {
 
   return CODE_BY_NAME.get(trimmed.toLowerCase()) ?? null;
 }
+
+/**
+ * A country, typed by hand, for any form that stores `country_code`.
+ *
+ * The column stores an ISO alpha-2 code, because "Georgia", "georgia" and
+ * "GE" must not become three different countries the day discovery filters
+ * by one. So the field is free text and this resolves it — the person writes
+ * a country, the row keeps a code. Empty is allowed and stored as null.
+ */
+export const optionalCountrySchema = z
+  .string()
+  .trim()
+  .transform((value, ctx) => {
+    if (value === "") {
+      return null;
+    }
+
+    const code = countryCodeFromInput(value);
+    if (!code) {
+      ctx.addIssue({
+        code: "custom",
+        error: `We do not recognise “${value}” as a country.`,
+      });
+      return null;
+    }
+
+    return code;
+  });

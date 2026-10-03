@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { FormAlert } from "@/components/auth/auth-card";
+import { CountryOptions } from "@/components/forms/country-options";
 import {
   Field,
   fieldControlClass,
@@ -23,7 +24,7 @@ import {
   uploadEventCoverAction,
 } from "@/features/events/actions";
 import { EVENT_TAG_LIMIT } from "@/features/events/contracts";
-import { COUNTRIES } from "@/lib/countries";
+
 import { COMMON_TIME_ZONES } from "@/lib/datetime";
 import { USER_FACING_MESSAGES } from "@/lib/errors";
 import { EVENT_TYPE_LABELS } from "@/lib/format";
@@ -41,21 +42,7 @@ import {
 
 const log = createLogger("events.form");
 
-/**
- * Suggestions for the country field. The field stays free text — this only
- * saves typing, it does not constrain what can be entered.
- */
 const COUNTRY_LIST_ID = "event-country-options";
-
-function CountryOptions() {
-  return (
-    <datalist id={COUNTRY_LIST_ID}>
-      {COUNTRIES.map((country) => (
-        <option key={country.code} value={country.name} />
-      ))}
-    </datalist>
-  );
-}
 
 export interface EventFormProps {
   categories: readonly Category[];
@@ -780,7 +767,7 @@ export function EventForm({
           <FormSection title="Location">{location}</FormSection>
           <FormSection title="Media">{poster}</FormSection>
           <FormSection title="Tickets">{tickets}</FormSection>
-          <CountryOptions />
+          <CountryOptions id={COUNTRY_LIST_ID} />
         </div>
 
         {/* Pinned, with a solid background so content scrolls under it. */}
@@ -862,7 +849,7 @@ export function EventForm({
 
       <FormSection title="Links">{externalLink}</FormSection>
 
-      <CountryOptions />
+      <CountryOptions id={COUNTRY_LIST_ID} />
 
       <FormSection title="Tags">{tags}</FormSection>
 
