@@ -666,6 +666,10 @@ typed by hand; `optionalCountrySchema` (`lib/countries.ts`) resolves the name
 an unrecognised value is a field error rather than a silently bad row. The
 field shows the name, never the code. The profile form's Country field uses
 the same pair (2026-10-03; it was a two-letter code input before).
+Chrome and Safari draw a dropdown arrow on any `input[list]`, which made the
+field read as a select; `globals.css` hides it
+(`::-webkit-calendar-picker-indicator`, `::-webkit-list-button`), and the
+suggestions still appear as you type.
 
 The time zone control appears only in the page layout. The dialog reads its
 times in the browser's own zone, which is right for a publisher creating an
@@ -995,10 +999,15 @@ button (publisher's label, default "Get tickets") or, with no ticket URL,
 header and no action.
 
 The event image heads the left content column as a framed poster
-(`aspect-[4/3] w-full max-w-md rounded-lg border`, `object-cover`,
-`priority`): larger than the listing's `md:w-40` thumbnail, never a
-full-width banner (removed 2026-10-03 — a strip crop lost most of the
-poster). It is also the Open Graph and JSON-LD image. Price is not shown on
+(`aspect-[4/3] w-full max-w-md rounded-lg border bg-secondary`,
+`object-contain`, `priority`): the whole image shows as uploaded, never
+cropped or zoomed, with the frame's ground around it. Larger than the
+listing's `md:w-40` thumbnail, never a full-width banner (removed 2026-10-03
+— a strip crop lost most of the poster).
+
+From `md` the facts card and the action are `md:sticky md:top-24
+md:self-start`, so date, time, location and the ticket button stay in view
+while the description scrolls; `top-24` clears the `h-16` sticky site header. It is also the Open Graph and JSON-LD image. Price is not shown on
 the page (removed 2026-10-03 at the developer's request); the event form
 still records it. JSON-LD is rendered inline with `<` escaped.
 
