@@ -138,7 +138,7 @@ export function AudienceWall({ heading }: { heading: ReactNode }) {
     <>
       <div className="px-6">
         {heading}
-        <p className="reveal-on-scroll mx-auto mb-14 max-w-2xl text-center text-base leading-relaxed text-muted-foreground md:text-lg">
+        <p className="reveal-on-scroll mx-auto mb-8 max-w-2xl md:mb-14 text-center text-base leading-relaxed text-muted-foreground md:text-lg">
           Musicians, bands, DJs, painters, artists and galleries; theaters,
           cinemas, venues, bars, cafes and clubs; sport clubs, schools,
           churches, communities, conferences, festivals and local businesses —{" "}
@@ -150,7 +150,7 @@ export function AudienceWall({ heading }: { heading: ReactNode }) {
 
       <div
         aria-hidden
-        className="flex h-[24rem] items-start justify-center gap-3 md:h-[30rem] md:gap-4 xl:h-[36rem] xl:gap-5"
+        className="flex h-[21rem] items-start justify-center gap-3 md:h-[30rem] md:gap-4 xl:h-[36rem] xl:gap-5"
       >
         {COLUMNS.map(({ seconds, step, cards }, column) => (
           <div

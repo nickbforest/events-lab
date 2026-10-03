@@ -38,7 +38,7 @@ export function SiteFooter() {
         className="absolute bottom-0 left-1/2 -z-10 h-[28rem] w-[62rem] max-w-[160%] -translate-x-1/2 translate-y-1/2 bg-radial from-glow/25 to-transparent to-70%"
       />
 
-      <div className="mx-auto max-w-6xl px-6 pt-20">
+      <div className="mx-auto max-w-6xl px-6 pt-14 md:pt-20">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.5fr_1fr] md:items-end">
           <div>
             <WordmarkLink href={routes.home()} className="mb-8" />
@@ -77,7 +77,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col-reverse gap-4 border-t border-border py-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col-reverse gap-4 md:mt-16 border-t border-border py-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-xs text-muted-foreground">
             © 2026 eventail.space · All rights reserved
           </p>
