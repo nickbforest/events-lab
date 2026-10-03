@@ -160,7 +160,7 @@ export function EventCard({ event }: EventCardProps) {
             href={event.ticket_url}
             username={event.owner.username}
             eventId={event.id}
-            className="relative z-10 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
+            className="relative z-10 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
           >
             {ticketLabel}
             <ArrowUpRight className="size-4" aria-hidden />

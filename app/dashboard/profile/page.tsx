@@ -20,7 +20,7 @@ export default async function DashboardProfilePage() {
               href={routes.publisherPreview(profile.username)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors hover:bg-white/5"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors hover:bg-white/5 sm:w-auto"
             >
               <ExternalLink className="size-3.5" aria-hidden />
               View page

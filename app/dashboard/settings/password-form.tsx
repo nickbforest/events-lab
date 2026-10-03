@@ -8,7 +8,8 @@ import {
   Field,
   fieldControlClass,
   fieldDescribedBy,
-  formSubmitClass,
+  formFooterClass,
+  formSubmitWideClass,
 } from "@/components/forms/field";
 import { changePasswordAction } from "@/features/auth/actions";
 import { changePasswordSchema } from "@/features/auth/contracts";
@@ -141,7 +142,7 @@ export function PasswordForm({ email }: PasswordFormProps) {
 
       {formError ? <FormAlert message={formError} /> : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className={formFooterClass}>
         <p className="font-mono text-xs text-muted-foreground">
           You will be signed out everywhere and asked to log in again.
         </p>
@@ -151,7 +152,7 @@ export function PasswordForm({ email }: PasswordFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={formSubmitClass}
+              className={formSubmitWideClass}
             >
               {isSubmitting ? "Changing…" : "Change password"}
             </button>

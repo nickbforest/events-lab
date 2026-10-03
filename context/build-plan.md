@@ -176,7 +176,7 @@ PR; run an end-to-end check.
   `date-fns` are still installed and unused.
 * [~] **M12** — Stale comments fixed except `RESERVED_ROUTE_SEGMENTS`' history.
 * [~] **M13** — Poster hint, overview kicker and the string render fixed;
-  tag paste and the mobile sidebar remain.
+  the mobile sidebar is a burger menu (2026-10-03); tag paste remains.
 
 ---
 

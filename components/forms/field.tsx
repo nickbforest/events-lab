@@ -3,8 +3,12 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/format";
 
+/**
+ * 16px text below `sm`: iOS Safari zooms the page into any focused control
+ * smaller than that, and the zoom stays after the keyboard closes.
+ */
 export const fieldControlClass =
-  "w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none";
+  "w-full rounded-md border border-border bg-card px-4 py-2.5 text-base placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:text-sm";
 
 export type SelectControlProps = ComponentProps<"select">;
 
@@ -14,7 +18,8 @@ export type SelectControlProps = ComponentProps<"select">;
  * Browsers draw a select with their own box, which ignores padding and comes
  * out shorter than the inputs beside it (Safari most of all). Dropping the
  * native appearance lets `fieldControlClass` size it like every other field,
- * pinned to the input's 42px, with a chevron drawn in its place.
+ * pinned to the input's height (46px below `sm`, 42px above), with a
+ * chevron drawn in its place.
  */
 export function SelectControl({
   className,
@@ -27,7 +32,7 @@ export function SelectControl({
         {...props}
         className={cn(
           fieldControlClass,
-          "h-[2.625rem] cursor-pointer appearance-none pr-10",
+          "h-[2.875rem] cursor-pointer appearance-none pr-10 sm:h-[2.625rem]",
           className,
         )}
       >
@@ -44,6 +49,13 @@ export function SelectControl({
 /** The one lime submit button a dashboard form carries. */
 export const formSubmitClass =
   "rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+
+/**
+ * The submit button and its status line closing a full-page form (Profile,
+ * Settings): the button spans the form, edge to edge, with the status above.
+ */
+export const formFooterClass = "flex flex-col gap-4";
+export const formSubmitWideClass = `${formSubmitClass} w-full`;
 
 export interface FieldProps {
   id: string;

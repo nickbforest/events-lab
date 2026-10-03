@@ -93,7 +93,7 @@ the wordmark as a link again.
 ### SiteFooter
 
 File: components/layout/site-footer.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                            |
 | ---------------- | ------------------------------------------------ |
@@ -101,26 +101,27 @@ Last updated: 2026-09-26
 | Border           | `border-t border-border`                          |
 | Border radius    | none                                              |
 | Text — primary   | wordmark `font-display text-lg font-extrabold uppercase tracking-tighter` |
-| Text — secondary | none                                              |
-| Spacing          | `max-w-7xl px-6 py-10`                            |
+| Text — secondary | copyright `font-mono text-xs text-muted-foreground` |
+| Spacing          | `max-w-7xl px-6 py-10`; stacked `gap-3`, one row `sm:justify-between` |
 | Hover state      | none                                              |
 | Shadow           | none                                              |
 | Accent usage     | `text-primary` on the wordmark dot only        |
 
 **Pattern notes:**
-The footer is the wordmark and nothing else. The Discover and Start
-publishing links and the "Prototype — no live data" note were removed on
-2026-09-26 at the developer's request. Like `SiteHeader`, it carries no app
+The footer is the wordmark and the line "© 2026 eventail.space All rights
+reserved." (added 2026-10-03) — stacked on mobile, one row from `sm`. The
+Discover and Start publishing links and the "Prototype — no live data" note
+were removed on 2026-09-26 at the developer's request. Like `SiteHeader`, it carries no app
 navigation; do not add links back without asking.
 
 ### DashboardShell (sidebar)
 
 File: components/layout/dashboard-shell.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/40`                                        |
+| Background       | mobile bar `bg-background/90 backdrop-blur-md`; `md:bg-card/40` |
 | Border           | `border-b border-border` mobile, `md:border-r`      |
 | Border radius    | `rounded-md` on nav items                           |
 | Text — primary   | active `text-foreground`, `text-sm font-medium`     |
@@ -145,9 +146,13 @@ Sign out is always last and uses the same idle-nav-item treatment rather than
 a destructive color — it is a navigation action, not a dangerous one. It is a
 `<form action={signOutAction}>`, so it works without client JavaScript.
 
-Below `md` the sidebar is not collapsed: the whole nav stacks above the page
-content. Known gap (`build-plan.md` M13); a mobile pattern is still to be
-designed.
+Below `md` the sidebar is a sticky `h-16` bar — wordmark left, burger right
+(`Menu` / `X` at `size-5` in a `size-10` button, `aria-expanded`,
+`aria-controls="dashboard-menu"`). Opening it drops the same nav, preview
+link and Sign out below the bar, pushing the page down rather than
+overlaying it. The menu remembers the path it was opened on, so any
+navigation closes it without an effect; Escape closes it too. Added
+2026-10-03, closing the mobile-sidebar part of `build-plan.md` M13.
 
 ### DashboardHeader
 
@@ -171,7 +176,11 @@ Every dashboard screen opens with this and nothing else — a lime mono kicker,
 the uppercase display title, an optional mono context line, then the screen's
 actions pushed right on `items-end`. Do not hand-roll a title block in a page;
 add a prop here instead. Actions are passed as nodes so a screen can carry a
-ghost + solid pair (Events) or a segmented control (Overview).
+ghost + solid pair (Events) or a segmented control (Overview). The actions
+row is `w-full` below `sm`, so a page's buttons can stretch across the
+screen there (`w-full` / `flex-1` + `justify-center`) and sit at their own
+width from `sm`. On Events, New is the wider of the pair: `flex-1` on
+mobile, `sm:min-w-44` above.
 
 ### Panel
 
@@ -327,6 +336,15 @@ font-medium text-primary-foreground hover:brightness-110
 disabled:cursor-not-allowed disabled:opacity-60`. It matches `authSubmitClass`
 except for `w-full`. The button swaps its label to a present participle while
 submitting ("Saving…").
+
+`formSubmitWideClass` is `formSubmitClass` plus `w-full`, for a full-page form
+(Profile, Settings) whose submit spans the form edge to edge, under
+`formFooterClass` (`flex flex-col gap-4`) with its status line above it.
+
+`fieldControlClass` is `text-base` below `sm` and `sm:text-sm` above: iOS
+Safari zooms into any focused control under 16px and stays zoomed, which
+made pages pannable. `SelectControl` follows the taller input
+(`h-[2.875rem] sm:h-[2.625rem]`).
 
 A value the owner can see but not change (username, current email) is a real
 `<input readOnly disabled>` with `fieldControlClass` plus `cursor-not-allowed
@@ -497,7 +515,9 @@ beside the name, not overlapping the cover. Link previews use the cover, or
 failing that the avatar, as their Open Graph image. The publisher can remove
 the cover from the dashboard, and the page then starts at the header.
 
-The page ends with the event lists; there is no "Publishing your own events?
+The lists are headed "Upcoming events" and "Past events" in the mono section
+label style, with no counts (removed 2026-10-03). The page ends with the
+event lists; there is no "Publishing your own events?
 Claim your events-lab page" call to action (removed 2026-09-26). A
 publisher's page is theirs, not a signup funnel. `?preview=1` hides the site
 header for a publisher previewing their own page.
@@ -505,7 +525,7 @@ header for a publisher previewing their own page.
 ### Account forms (ProfileForm, EmailForm, PasswordForm)
 
 Files: app/dashboard/profile/profile-form.tsx, app/dashboard/settings/*.tsx
-Last updated: 2026-09-21
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -514,19 +534,24 @@ Last updated: 2026-09-21
 | Border radius    | inherited from `Field` and `formSubmitClass`        |
 | Text — primary   | via `Field`                                         |
 | Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
-| Spacing          | fields `space-y-5`; footer `flex justify-between gap-4` |
+| Spacing          | fields `space-y-5`; footer `formFooterClass` (`flex flex-col gap-4`) |
 | Hover state      | submit `hover:brightness-110`                       |
 | Shadow           | none                                                |
 | Accent usage     | `formSubmitClass`, and success lines in `text-primary` |
 
 **Pattern notes:**
 Each is a TanStack Form client component rendered by a thin Server Component
-page that loads the data. The footer pairs a left-hand status line with the
-right-hand submit button. Success is an `aria-live="polite"` line in
+page that loads the data. The footer stacks the status line (`empty:hidden`
+when there is nothing to say) above a full-width `formSubmitWideClass`
+button. Success is an `aria-live="polite"` line in
 `font-mono text-xs text-primary` ("Profile saved."); a result that is not yet
 final says so ("Confirmation pending for …"), never "changed". A form whose
 success leaves the page (password change signs out) states that consequence in
 the footer before submit instead.
+
+The profile Media grid is `sm:grid-cols-[10rem_minmax(0,1fr)]`, never a bare
+`1fr`: the cover's `min-h-40` through its 3:1 ratio gives it a 480px
+min-content width, which a `1fr` track honours and the page then overflows.
 
 Server field errors are held beside TanStack's own and cleared when that field
 is edited, so a stale server message never outlives the input that caused it.
@@ -711,7 +736,8 @@ poster sits beside the date on a phone rather than pushing the title down.
 The description is `line-clamp-4`: a listing where one event runs three
 screens tall has stopped being a listing. The event page has the whole text.
 
-The ticket button uses `event.ticket_cta_label`, falling back to "Get
+The ticket button spans the content column (`flex w-full justify-center`,
+2026-10-03). It uses `event.ticket_cta_label`, falling back to "Get
 tickets", and is hidden entirely for a cancelled event — sending someone to
 buy a ticket for an event that is off is worse than showing nothing.
 
@@ -750,7 +776,7 @@ carries the real state where there is one — an events row shows "Published",
 ### EventRowActions
 
 File: app/dashboard/events/event-row-actions.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -765,8 +791,13 @@ Last updated: 2026-09-26
 | Accent usage     | none — a row of actions is not a call to action     |
 
 **Pattern notes:**
-Three controls per row: a `Switch` for publish/unpublish with the status
-spelled out beside it, then edit and delete icons. Only the toggle is inline — cancel and postpone change
+Four controls per row: a `Switch` for publish/unpublish with the status
+spelled out beside it, then copy-link, edit and delete icons. Copy link
+(`Link2`, a `Check` in `text-primary` for two seconds after copying, with an
+`aria-live` announcement) writes the event's absolute public URL to the
+clipboard. It is disabled with an explanatory `title` while the event is a
+draft or archived, since that link is a 404 for anyone else; a clipboard
+failure shows the URL in the row's error line so it can be copied by hand. Only the toggle is inline — cancel and postpone change
 what a ticket holder sees, so they stay on the edit page rather than sitting
 one stray click away in a list.
 
@@ -905,12 +936,12 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | hero `bg-card`; info card `bg-card/40`; cancelled banner `bg-destructive/10` |
-| Border           | hero and banner `border-b border-border` / `border-destructive/30`; info card `border border-border` |
+| Background       | info card `bg-card/40`; cancelled banner `bg-destructive/10` |
+| Border           | banner `border-b border-destructive/30`; info card `border border-border` |
 | Border radius    | info card `rounded-lg`; action `rounded-md`         |
 | Text — primary   | title `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-5xl`; info values `text-sm font-medium` |
 | Text — secondary | section labels and info labels `font-mono text-xs uppercase text-muted-foreground` |
-| Spacing          | hero `h-[280px] md:h-[420px]`; article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; info card `p-6 space-y-4` |
+| Spacing          | article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; info card `p-6 space-y-4` |
 | Hover state      | organizer link `group-hover:text-primary`; action `hover:brightness-110` |
 | Shadow           | none                                                |
 | Accent usage     | category kicker, info-row icons, "View on map" link, the full-width primary action |
@@ -919,8 +950,10 @@ Last updated: 2026-10-03
 Content in two columns, facts in a right-hand card: date, time with the IANA
 zone beside it, location, price, then one full-width lime action — the ticket
 button (publisher's label, default "Get tickets") or, with no ticket URL,
-"Join online". A cancelled event gets a `role="alert"` banner under the hero
-and no action. JSON-LD is rendered inline with `<` escaped.
+"Join online". A cancelled event gets a `role="alert"` banner under the site
+header and no action. There is no cover banner (removed 2026-10-03 at the
+developer's request: a poster cropped to a full-width strip loses most of
+itself); the image is still the Open Graph and JSON-LD image. JSON-LD is rendered inline with `<` escaped.
 
 The location row shows whatever exists of venue, address and "city, country
 name" for any non-online event, plus "Also online" for hybrid; only an
