@@ -176,7 +176,7 @@ Last updated: 2026-10-03
 | Text — primary | hero `font-display text-5xl … lg:text-8xl font-semibold leading-[0.95] tracking-[-0.035em]`; section titles `text-3xl md:text-5xl font-semibold tracking-tight` |
 | Text — secondary | `text-lg leading-relaxed text-muted-foreground` |
 | Spacing | sections `px-6 py-24 md:py-32`; hero `pt-40 pb-24 md:pt-48 md:pb-32`; section heading `mb-14` |
-| Hover state | feature cards `hover:-translate-y-1 hover:border-white/15 hover:shadow-lift` + a violet corner glow |
+| Hover state | feature cards `hover:-translate-y-1 hover:border-white/15 hover:shadow-lift` + a violet corner glow; icon tile `group-hover:scale-110 shadow-glow` plus the icon's own motion |
 | Shadow | `shadow-card` / `shadow-lift` |
 | Accent usage | hero CTA, `text-gradient` on one phrase per headline, feature icon tiles `bg-primary/10 text-primary` |
 
@@ -184,8 +184,29 @@ Last updated: 2026-10-03
 Order: hero (headline, copy, primary + secondary CTA — no eyebrow, removed
 at the developer's request — then a decorative publisher-page preview of a
 made-up New York organiser with two floating chips from `xl`), Features (bento,
-`md:grid-cols-3` with two `md:col-span-2` cards), How it works (three
-numbered steps), Who it's for (two-row marquee), closing CTA panel. Section
+`md:grid-cols-3` with two `md:col-span-2` cards; each icon has its own hover
+motion via `iconMotion`), How it works (three steps with icons — `UserPlus`,
+`CalendarPlus`, `Send` — and a small bare lime arrow centred in each gap —
+no circle — pointing right from `md`, down on phones), Who it's for (`AudienceWall`, `app/audience-wall.tsx`, pure CSS: the
+heading and a caption naming every audience come first; below them, a
+pyramid of seven centred columns — the centre tallest, each step out
+shorter (100/82/64/46% of the wall), so the lower edge draws the App Store
+V — whose audience cards stream slowly downward forever
+(`animate-stream-down`: each column holds its five cards twice and slides by
+half its height, 36–54s per loop, negative delays so no two move in step).
+Cards are rounded `[1.4rem]`–`[2rem]`, with an
+icon chip and the name in `font-display`, on soft two-stop gradients (violet,
+indigo, lime, teal, rose, amber, sky, plum, graphite, pearl), at
+`opacity-50` — full colour and a slight scale on hover; hovering a column
+pauses it. The wall is `h-[24rem]`/`30rem`/`36rem`; each column is masked to fade in
+at the top and out at its own lower edge, so cards seem to arrive from above
+and leave below. Phones show the centre 3 columns, `md` 5, `xl` 7; cards are
+`size-[6.5rem]`/`32`/`[9.5rem]`/`44`. Cards are
+`aria-hidden`; the caption carries the list. Earlier versions — chip
+showcase, orbit, poster wall, icon cascade, levitating V — were rejected), closing CTA panel. Each
+headline has one key phrase in `font-accent text-gradient`: "destination.",
+"tool,", "three steps.", "gather.", "60 seconds." — the marquee was removed
+2026-10-03. Section
 ids `features`, `how-it-works` and `audience` match `LANDING_SECTIONS`;
 anchor clicks scroll smoothly (`html { scroll-behavior: smooth }` with
 `data-scroll-behavior="smooth"` on `<html>`, so route changes still jump).
@@ -204,7 +225,7 @@ Last updated: 2026-10-03
 | Border radius | bar `rounded-full`; links and buttons `rounded-full` |
 | Text — primary | buttons via `buttonClass` (`text-sm font-medium`) |
 | Text — secondary | section links `text-sm text-muted-foreground` |
-| Spacing | wrapper `px-4 pt-3 sm:px-6 sm:pt-4`; bar `h-14 max-w-6xl pr-2 pl-4 sm:pl-5` |
+| Spacing | wrapper `px-4 pt-3 sm:px-6 sm:pt-4`; bar `h-16 max-w-6xl pr-2.5 pl-5 sm:pl-6` |
 | Hover state | links `hover:bg-white/[0.06] hover:text-foreground` |
 | Shadow | `shadow-card` |
 | Accent usage | `Get started` (primary button) and the wordmark |
@@ -217,7 +238,7 @@ started` (`buttonClass({ size: "sm" })`) — to `routes.auth.signIn()` and
 anchors from `LANDING_SECTIONS` (Features, How it works, Who it's for),
 hidden below `md`. No other page passes it: a publisher's page is not a
 marketing funnel (ui-rules §19). The landing `<main>` is pulled up
-(`-mt-[4.25rem] sm:-mt-[4.5rem]`) so the hero grid starts behind the bar;
+(`-mt-[4.75rem] sm:-mt-[5rem]`) so the hero grid starts behind the bar;
 other public pages get the same effect from `PublicShell`.
 
 The wordmark is `WordmarkLink` (`components/layout/wordmark-link.tsx`, added
@@ -234,22 +255,26 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background | inherits `bg-background` |
-| Border | `border-t border-border`; bottom bar `border-t`; a `via-glow/50` gradient hairline on top |
-| Border radius | none |
-| Text — primary | wordmark via `WordmarkLink`; column headings `text-xs font-medium uppercase tracking-[0.14em] text-foreground/70` |
-| Text — secondary | links and tagline `text-sm text-muted-foreground`; copyright `font-mono text-xs` |
-| Spacing | `max-w-6xl px-6 py-14`, `gap-10`; bottom bar `py-6` |
-| Hover state | links `hover:text-foreground` |
+| Background | page ground with a `bg-glow/25 blur-[110px]` glow at the bottom edge |
+| Border | `border-t border-border`; bar `border-t`; a `via-glow/60` gradient hairline on top |
+| Border radius | Back to top pill `rounded-full` |
+| Text — primary | sign-off `font-display text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight` |
+| Text — secondary | group labels `font-mono text-xs text-muted-foreground`; links `text-sm text-foreground/80`; copyright `font-mono text-xs` |
+| Spacing | `max-w-6xl px-6 pt-20`; groups `gap-8`; bar `mt-16 py-6` |
+| Hover state | links `hover:text-primary` + arrow slides in; pill `hover:border-white/20` |
 | Shadow | none |
-| Accent usage | wordmark only |
+| Accent usage | wordmark, the sign-off accent phrase, the giant mark's dot and tail at 30% |
 
 **Pattern notes:**
-Wordmark and tagline, then two link columns — Product (the landing
-sections, linked as `/#id`) and Account (Create your page, Log in) — then a
-bottom bar with the copyright in mono and a one-line sign-off. Columns sit
-side by side from 375px (`grid-cols-2`, brand block `col-span-2`) and in
-three from `sm`. Redesigned 2026-10-03 at the developer's request.
+Redesigned again 2026-10-03: the wordmark over a large sign-off ("Made for
+people who bring *people together.*", accent in `font-accent
+text-gradient`), two link groups (Product → `/#id` sections, Account) whose
+links reveal an `ArrowUpRight` on hover, a bar with the mono copyright and a
+"Back to top" pill (`href="#top"`, which browsers scroll to the top by
+spec), then an oversized decorative `Wordmark` (`text-[clamp(4.5rem,21vw,19rem)]`,
+`text-white/[0.07]`, dot and tail `text-primary/30`) fading out through a
+`mask-image` gradient into the bottom edge, over a violet glow. No sales
+CTA: it also closes publishers' pages (§19).
 
 ### DashboardShell (sidebar)
 
@@ -1047,10 +1072,10 @@ Last updated: 2026-10-03
 | Background | none |
 | Border | none |
 | Border radius | n/a |
-| Text — primary | `font-display text-2xl font-semibold leading-none tracking-tight` (auth passes `text-3xl`) |
+| Text — primary | `font-display text-2xl font-semibold leading-none tracking-[-0.03em]` (auth passes `text-3xl`); the mark is `Wordmark`, also used bare by the footer |
 | Text — secondary | n/a |
 | Spacing | tail `h-[0.82em] align-[-0.082em] ml-[0.03em]` |
-| Hover state | tail `group-hover:-rotate-[8deg]` (wags) |
+| Hover state | tail `group-hover:-rotate-[10deg]`; idle loop `animate-dot-hop` + `animate-tail-wag` every 7s |
 | Shadow | none |
 | Accent usage | the tail (`text-primary`) |
 
@@ -1067,8 +1092,8 @@ developer's request; the fan mark is gone). The visible word is
 `aria-hidden` and an `sr-only` "eventail" names the link. Pass
 `className="flex"`, not `block`, when overriding display.
 
-The favicon is the same full stop and tail (`TAIL_PATH`) in lime on a
-`#0a0a0f` tile:
+The favicon is the tail alone (`TAIL_PATH`, no full stop — the dot does not
+read at icon size) in lime on a `#0a0a0f` tile:
 `app/icon.svg` is the source; `app/favicon.ico` (16/32/48, PNG entries) and
 `app/apple-icon.png` (180, full-bleed) are rasterised from it. Change the
 path in both files together and regenerate the rasters.

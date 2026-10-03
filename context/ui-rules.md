@@ -215,7 +215,13 @@ no JavaScript animation library). What exists:
   `reveal-on-scroll` on landing sections (scroll-driven; browsers without
   support just show the content).
 * **Atmosphere:** the landing hero's slowly drifting glows and the floating
-  preview chips; the audience marquee.
+  preview chips; the audience wall's columns streaming slowly downward
+  (paused on hover).
+* **Brand:** the logo idles — every 7s the dot hops and the tail wags
+  (`animate-dot-hop`, `animate-tail-wag`).
+* **Icons:** feature and step icons move on card hover, each in its own way
+  (`animate-spin-slow`, `-wiggle`, `-pop`, `-flash`); step arrows nudge
+  toward the next step (`animate-nudge-x` / `-y`).
 * **Scrolling:** in-page anchors scroll smoothly; route changes do not
   (`data-scroll-behavior="smooth"`, Next 16).
 * **Feedback:** hover lift on cards and the primary button, colour and
