@@ -422,20 +422,20 @@ redirect("/dashboard");
 Two shapes live in that module and they are not interchangeable:
 
 * `routes.*` build a concrete href, for links and redirects.
-* `routePatterns.*` are Next.js segment patterns (`/publishers/[username]`),
+* `routePatterns.*` are Next.js segment patterns (`/publisher/[username]`),
   for `revalidatePath(pattern, "page")`. Passing a concrete href where a
   pattern is expected silently revalidates nothing — Next.js does not report
   it.
 
-**Route segments are words, not initials.** `/publishers/:username`, not
+**Route segments are words, not initials.** `/publisher/:username`, not
 `/u/:username`. The segment is read by people, shared in messages and read
 aloud; a single letter says nothing about what is on the other side of it.
 `/u` was renamed in this review.
 
 **A new top-level route reserves its own name.** `RESERVED_ROUTE_SEGMENTS` in
 `lib/routes.ts` feeds the reserved-username list. Usernames live under
-`/publishers/`, so they cannot shadow a page today, but a username that reads
-like an application path (`/publishers/dashboard`) still misleads, and a later
+`/publisher/`, so they cannot shadow a page today, but a username that reads
+like an application path (`/publisher/dashboard`) still misleads, and a later
 move to root-level handles would make it a real collision.
 
 ---

@@ -20,11 +20,17 @@ const PUBLIC = {
 } as const;
 
 /**
- * `/publishers` rather than `/u`: the segment is read by people, shared in
+ * `/publisher` rather than `/u`: the segment is read by people, shared in
  * messages and read aloud, and a single letter says nothing about what is on
- * the other side of it. Renamed 2026-09-26 in review.
+ * the other side of it. Renamed from `/u` 2026-09-26 in review, and from
+ * `/publishers` to the singular 2026-10-03 — a link names one publisher.
+ * `next.config.ts` redirects the old plural permanently, so links shared
+ * before the rename still land.
  */
-const PUBLISHERS_SEGMENT = "publishers";
+export const PUBLISHER_SEGMENT = "publisher";
+
+/** The plural segment used until 2026-10-03; only ever a redirect now. */
+export const LEGACY_PUBLISHER_SEGMENT = "publishers";
 
 /** Marks a public page as being previewed by its own publisher. */
 export const PREVIEW_PARAM = "preview";
@@ -40,18 +46,18 @@ export const routes = {
   home: () => PUBLIC.home,
 
   /** A publisher's public page. */
-  publisher: (username: string) => `/${PUBLISHERS_SEGMENT}/${username}`,
+  publisher: (username: string) => `/${PUBLISHER_SEGMENT}/${username}`,
 
   /**
    * The same page without the site header, for a publisher checking their
    * own work. Opened in a new tab, so the dashboard stays where it was.
    */
   publisherPreview: (username: string) =>
-    `/${PUBLISHERS_SEGMENT}/${username}?${PREVIEW_PARAM}=1`,
+    `/${PUBLISHER_SEGMENT}/${username}?${PREVIEW_PARAM}=1`,
 
   /** A single public event under its publisher. */
   event: (username: string, slug: string) =>
-    `/${PUBLISHERS_SEGMENT}/${username}/${slug}`,
+    `/${PUBLISHER_SEGMENT}/${username}/${slug}`,
 
   auth: {
     /** The combined sign-in / sign-up screen, in the given mode. */
@@ -96,8 +102,8 @@ export const routes = {
  * concrete href here is not an error Next.js reports — it just does nothing.
  */
 export const routePatterns = {
-  publisher: `/${PUBLISHERS_SEGMENT}/[username]` as const,
-  event: `/${PUBLISHERS_SEGMENT}/[username]/[slug]` as const,
+  publisher: `/${PUBLISHER_SEGMENT}/[username]` as const,
+  event: `/${PUBLISHER_SEGMENT}/[username]/[slug]` as const,
 } as const;
 
 /**
@@ -111,5 +117,6 @@ export const RESERVED_ROUTE_SEGMENTS: readonly string[] = [
   "dashboard",
   // No page yet: discovery is post-MVP, and the name is held for it.
   "discover",
-  PUBLISHERS_SEGMENT,
+  PUBLISHER_SEGMENT,
+  LEGACY_PUBLISHER_SEGMENT,
 ];

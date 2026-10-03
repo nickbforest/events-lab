@@ -54,10 +54,15 @@ export const formSubmitClass =
  * The submit button and its status line closing a full-page form (Profile,
  * Settings). Below `sm` the button spans the form, edge to edge, with the
  * status above it; from `sm` they share a row, status left, button right.
+ *
+ * The button pins itself right with `ml-auto` rather than relying on
+ * `justify-between`, which puts a lone button on the left whenever the
+ * status line is empty. One fixed width from `sm`, so every form's submit
+ * is the same size whatever its label says.
  */
 export const formFooterClass =
   "flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between";
-export const formSubmitWideClass = `${formSubmitClass} w-full sm:w-auto`;
+export const formSubmitWideClass = `${formSubmitClass} w-full sm:ml-auto sm:w-48`;
 
 export interface FieldProps {
   id: string;

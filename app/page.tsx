@@ -8,7 +8,7 @@ const FEATURES = [
   {
     Icon: Globe,
     title: "Your own public page",
-    body: "Every publisher gets a page of their own at eventail/publishers/yourname — a shareable home for your upcoming schedule.",
+    body: "Every publisher gets a page of their own at eventail.space/publisher/yourname — a shareable home for your upcoming schedule.",
   },
   {
     Icon: Zap,

@@ -162,7 +162,7 @@ export function SignupForm() {
               <Field
                 id={field.name}
                 label="Username"
-                hint="Your public page will be at /publishers/your-name. It cannot be changed later."
+                hint="Your public page will be at /publisher/your-name. It cannot be changed later."
                 error={error}
               >
                 <input

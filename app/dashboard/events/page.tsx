@@ -3,11 +3,10 @@ import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents, listEventCategories } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
-import { formatEventDate, isoDateTime } from "@/lib/format";
 import { routes } from "@/lib/routes";
 
 import { NewEventProvider, NewEventTrigger } from "./event-dialog";
-import { EventRowActions } from "./event-row-actions";
+import { EVENT_LIST_COLUMNS, EventListRow } from "./event-list-row";
 
 export default async function DashboardEventsPage() {
   const profile = await getCurrentProfile();
@@ -19,7 +18,7 @@ export default async function DashboardEventsPage() {
   return (
     <div className="px-6 py-10 md:px-10">
       <NewEventProvider categories={categories}>
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <DashboardHeader
             kicker="Events"
             title="Events"
@@ -38,9 +37,9 @@ export default async function DashboardEventsPage() {
                     your public page, opens in a new tab
                   </span>
                 </a>
-                {/* The primary action, so the wider of the two on mobile,
-                    where it takes the rest of the row. */}
-                <NewEventTrigger className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 sm:flex-none">
+                {/* The primary action, so the wider of the two: the rest of
+                    the row on mobile, a fixed minimum from `sm`. */}
+                <NewEventTrigger className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 sm:min-w-40 sm:flex-none">
                   <Plus className="size-4" aria-hidden />
                   New
                   <span className="sr-only"> event</span>
@@ -51,65 +50,22 @@ export default async function DashboardEventsPage() {
 
           {events.length > 0 ? (
             <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full text-left">
-                <caption className="sr-only">
-                  All events you have created, with their status and date
-                </caption>
-                <thead className="bg-card/50">
-                  <tr className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                    <th scope="col" className="px-5 py-3 font-normal">
-                      Event
-                    </th>
-                    <th
-                      scope="col"
-                      className="hidden px-5 py-3 font-normal sm:table-cell"
-                    >
-                      Date
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-5 py-3 text-right font-normal"
-                    >
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map((event) => {
-                    const date = formatEventDate(
-                      event.start_at,
-                      event.timezone,
-                    );
-                    return (
-                      <tr
-                        key={event.id}
-                        className="border-t border-border transition-colors hover:bg-white/[0.02]"
-                      >
-                        <td className="px-5 py-4">
-                          <div className="font-display font-extrabold uppercase tracking-tight">
-                            {event.title}
-                          </div>
-                          <div className="font-mono text-xs text-muted-foreground">
-                            {event.category.label}
-                            {event.city ? ` / ${event.city}` : ""}
-                          </div>
-                        </td>
-                        <td className="hidden px-5 py-4 sm:table-cell">
-                          <time
-                            dateTime={isoDateTime(event.start_at)}
-                            className="font-mono text-sm text-muted-foreground"
-                          >
-                            {date.month} {date.day} / {date.year}
-                          </time>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <EventRowActions event={event} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Column labels for the `lg` grid. Below it each row labels
+                  its own facts, so this header would only repeat them. */}
+              <div
+                aria-hidden
+                className={`hidden border-b border-border bg-card/50 px-5 py-3 font-mono text-xs uppercase tracking-widest text-muted-foreground ${EVENT_LIST_COLUMNS}`}
+              >
+                <span>Event</span>
+                <span>When</span>
+                <span>Location</span>
+                <span className="text-right">Status</span>
+              </div>
+              <ul aria-label="Your events">
+                {events.map((event) => (
+                  <EventListRow key={event.id} event={event} />
+                ))}
+              </ul>
             </div>
           ) : (
             <EmptyState
