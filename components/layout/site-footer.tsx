@@ -35,7 +35,7 @@ export function SiteFooter() {
       />
       <div
         aria-hidden
-        className="absolute bottom-0 left-1/2 -z-10 h-64 w-[48rem] max-w-[120%] -translate-x-1/2 translate-y-1/2 rounded-full bg-glow/25 blur-[110px]"
+        className="absolute bottom-0 left-1/2 -z-10 h-[28rem] w-[62rem] max-w-[160%] -translate-x-1/2 translate-y-1/2 bg-radial from-glow/25 to-transparent to-70%"
       />
 
       <div className="mx-auto max-w-6xl px-6 pt-20">

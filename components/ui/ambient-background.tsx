@@ -15,7 +15,8 @@ export interface AmbientBackgroundProps {
  * content. Decorative, so hidden from assistive technology and from the
  * pointer. Position its parent `relative isolate` and it fills it.
  *
- * Pure CSS — blurred gradients on composited layers, no JavaScript, and the
+ * Pure CSS — radial gradients, never `filter: blur()` (big blurs left phones
+ * painting blank tiles mid-scroll), no JavaScript, and the
  * drift stops under reduced motion (globals.css).
  */
 export function AmbientBackground({
@@ -33,9 +34,9 @@ export function AmbientBackground({
       {variant === "hero" ? (
         <>
           <div className="bg-grid absolute inset-0" />
-          <div className="absolute -top-40 left-1/2 h-[36rem] w-[56rem] -translate-x-1/2 rounded-full bg-glow/25 blur-[120px]" />
-          <div className="animate-drift absolute top-1/3 -left-40 size-[28rem] rounded-full bg-glow-2/20 blur-[110px]" />
-          <div className="animate-drift-slow absolute -right-32 bottom-0 size-[26rem] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute -top-64 left-1/2 h-[52rem] w-[72rem] -translate-x-1/2 bg-radial from-glow/25 to-transparent to-70%" />
+          <div className="animate-drift absolute top-1/4 -left-56 size-[40rem] bg-radial from-glow-2/20 to-transparent to-70%" />
+          <div className="animate-drift-slow absolute -right-48 -bottom-24 size-[40rem] bg-radial from-primary/10 to-transparent to-70%" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
         </>
       ) : (

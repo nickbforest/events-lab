@@ -85,7 +85,7 @@ hairline, `shadow-card` — always pair it with a `rounded-*` class), `glass`
 (translucent blurred chrome), `bg-grid` (56px grid, radially masked) and
 `text-gradient` (lime → pale tint, for one highlighted headline phrase).
 Motion classes: `animate-reveal` (stagger with `[--reveal-delay:120ms]`),
-`reveal-on-scroll` (scroll-driven fade-up, progressive enhancement),
+`reveal-on-scroll` (scroll-driven fade-up, desktop pointers only, progressive enhancement),
 `animate-drift`/`-slow` (background glows), `animate-float`/`-delayed`
 (floating chips), and the native `<dialog>` scale-in. All of them stop under
 reduced motion. Never use violet for text or controls.
@@ -161,7 +161,8 @@ Decorative, `aria-hidden`, `pointer-events-none`. The parent must be
 whole public page (header included) so the wash starts behind the floating
 bar — used by the publisher page, event page, `not-found` and `error`;
 `quiet` sits behind the dashboard `<main>`. Soft washes are radial gradients,
-never blurred blobs, so a clipping parent never shows a hard edge.
+never blurred blobs, so a clipping parent never shows a hard edge. Every
+glow uses `bg-radial from-<color>/N to-transparent to-70%` — no `blur-*`.
 
 ### Landing page
 
@@ -255,7 +256,7 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background | page ground with a `bg-glow/25 blur-[110px]` glow at the bottom edge |
+| Background | page ground with a `bg-radial from-glow/25` glow at the bottom edge |
 | Border | `border-t border-border`; bar `border-t`; a `via-glow/60` gradient hairline on top |
 | Border radius | Back to top pill `rounded-full` |
 | Text — primary | sign-off `font-display text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight` |
@@ -379,7 +380,7 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background | each tile `surface`; accent tile adds a `bg-primary/15 blur-3xl` corner glow |
+| Background | each tile `surface`; accent tile adds a `bg-radial from-primary/15` corner glow |
 | Border | `surface` hairline |
 | Border radius | `rounded-2xl`; icon tile `rounded-xl` |
 | Text — primary | `font-display text-4xl font-semibold tracking-tight tabular-nums md:text-5xl` |
@@ -1105,7 +1106,7 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background | `bg-white/[0.015]` plus a `bg-glow/10 blur-3xl` wash at the top |
+| Background | `bg-white/[0.015]` plus a `bg-radial from-glow/10` wash at the top |
 | Border | `border border-dashed border-white/15` |
 | Border radius | `rounded-2xl`; icon tile `rounded-2xl` |
 | Text — primary | `font-display text-xl font-semibold tracking-tight` |

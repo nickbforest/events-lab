@@ -28,7 +28,7 @@ export function EmptyState({
     <div className="relative isolate flex flex-col items-center overflow-hidden rounded-2xl border border-dashed border-white/15 bg-white/[0.015] px-6 py-20 text-center">
       <div
         aria-hidden
-        className="absolute top-0 left-1/2 -z-10 h-40 w-80 -translate-x-1/2 rounded-full bg-glow/10 blur-3xl"
+        className="absolute -top-16 left-1/2 -z-10 h-72 w-[28rem] -translate-x-1/2 bg-radial from-glow/10 to-transparent to-70%"
       />
       {icon ? (
         <div className="mb-5 grid size-14 place-items-center rounded-2xl bg-white/[0.04] text-primary ring-1 ring-border">
