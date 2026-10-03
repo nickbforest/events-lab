@@ -74,7 +74,7 @@ Last updated: 2026-10-03
 | Border radius | controls `rounded-lg`; small tiles `rounded-xl`; cards `rounded-2xl`; landing panels `rounded-3xl`; buttons, chips, badges, pills `rounded-full` |
 | Text — primary | headings `font-display` (Bricolage Grotesque) `font-semibold tracking-tight`, sentence case; key phrase `font-accent` (Instrument Serif italic) |
 | Text — secondary | `text-muted-foreground`; metadata (dates, handles, URLs, counts) `font-mono text-xs` |
-| Spacing | landing sections `py-24 md:py-32`; dashboard pages `px-6 py-10 md:px-10` |
+| Spacing | landing sections `py-16 sm:py-20 md:py-32`; dashboard pages `px-6 py-10 md:px-10` |
 | Hover state | translucent white fills `bg-white/[0.04]`–`[0.08]` |
 | Shadow | `shadow-card` (rest), `shadow-lift` (hover/floating), `shadow-glow` (primary only) |
 | Accent usage | lime `primary` for actions; `glow`/`glow-2` (violet/indigo) for atmosphere only |
@@ -176,7 +176,7 @@ Last updated: 2026-10-03
 | Border radius | feature, step and preview cards `rounded-3xl`; CTA panel `rounded-[2rem]` |
 | Text — primary | hero `font-display text-5xl … lg:text-8xl font-semibold leading-[0.95] tracking-[-0.035em]`; section titles `text-3xl md:text-5xl font-semibold tracking-tight` |
 | Text — secondary | `text-lg leading-relaxed text-muted-foreground` |
-| Spacing | sections `px-6 py-24 md:py-32`; hero `pt-40 pb-24 md:pt-48 md:pb-32`; section heading `mb-14` |
+| Spacing | sections `px-6 py-16 sm:py-20 md:py-32` (phones get the tighter rhythm, desktop unchanged); hero `pt-32 pb-16 sm:pb-20 md:pt-44 md:pb-32`; section heading `mb-10 md:mb-14` |
 | Hover state | feature cards `hover:-translate-y-1 hover:border-white/15 hover:shadow-lift` + a violet corner glow; icon tile `group-hover:scale-110 shadow-glow` plus the icon's own motion |
 | Shadow | `shadow-card` / `shadow-lift` |
 | Accent usage | hero CTA, `text-gradient` on one phrase per headline, feature icon tiles `bg-primary/10 text-primary` |
@@ -261,7 +261,7 @@ Last updated: 2026-10-03
 | Border radius | Back to top pill `rounded-full` |
 | Text — primary | sign-off `font-display text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight` |
 | Text — secondary | group labels `font-mono text-xs text-muted-foreground`; links `text-sm text-foreground/80`; copyright `font-mono text-xs` |
-| Spacing | `max-w-6xl px-6 pt-20`; groups `gap-8`; bar `mt-16 py-6` |
+| Spacing | `max-w-6xl px-6 pt-14 md:pt-20`; groups `gap-8`; bar `mt-12 md:mt-16 py-6` |
 | Hover state | links `hover:text-primary` + arrow slides in; pill `hover:border-white/20` |
 | Shadow | none |
 | Accent usage | wordmark, the sign-off accent phrase, the giant mark's dot and tail at 30% |

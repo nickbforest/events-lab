@@ -56,7 +56,7 @@ const PREVIEW_EVENTS = [
 
 function HeroPreview() {
   return (
-    <div aria-hidden className="relative mx-auto mt-16 max-w-3xl md:mt-20">
+    <div aria-hidden className="relative mx-auto mt-12 max-w-3xl md:mt-20">
       {/* Halo behind the window. */}
       <div className="absolute -inset-x-6 -top-20 h-72 bg-radial from-glow/30 to-transparent to-70%" />
 
@@ -276,7 +276,7 @@ function SectionHeading({
   return (
     <div
       className={cn(
-        "reveal-on-scroll mx-auto mb-14 max-w-2xl text-center",
+        "reveal-on-scroll mx-auto mb-10 max-w-2xl text-center md:mb-14",
         className,
       )}
     >
@@ -301,7 +301,7 @@ export default function LandingPage() {
       <main className="-mt-[4.75rem] flex-1 sm:-mt-[5rem]">
         {/* Hero — pulled up under the floating header so the grid and glow
             start at the very top of the page. */}
-        <section className="relative isolate overflow-hidden px-6 pt-36 pb-24 md:pt-44 md:pb-32">
+        <section className="relative isolate overflow-hidden px-6 pt-32 pb-16 sm:pb-20 md:pt-44 md:pb-32">
           <AmbientBackground variant="hero" />
 
           <div className="mx-auto max-w-4xl text-center">
@@ -343,7 +343,10 @@ export default function LandingPage() {
         </section>
 
         {/* Features — a bento grid. */}
-        <section id="features" className="scroll-mt-24 px-6 py-24 md:py-32">
+        <section
+          id="features"
+          className="scroll-mt-24 px-6 py-16 sm:py-20 md:py-32"
+        >
           <div className="mx-auto max-w-6xl">
             <SectionHeading
               eyebrow="Platform"
@@ -391,7 +394,7 @@ export default function LandingPage() {
         {/* How it works */}
         <section
           id="how-it-works"
-          className="relative isolate scroll-mt-24 overflow-hidden px-6 py-24 md:py-32"
+          className="relative isolate scroll-mt-24 overflow-hidden px-6 py-16 sm:py-20 md:py-32"
         >
           <div
             aria-hidden
@@ -449,7 +452,7 @@ export default function LandingPage() {
         {/* Audiences */}
         <section
           id="audience"
-          className="scroll-mt-24 overflow-x-clip py-24 md:py-32"
+          className="scroll-mt-24 overflow-x-clip py-16 sm:py-20 md:py-32"
         >
           <AudienceWall
             heading={
@@ -468,8 +471,8 @@ export default function LandingPage() {
         </section>
 
         {/* Closing call to action */}
-        <section className="px-6 pb-24 md:pb-32">
-          <div className="reveal-on-scroll surface relative isolate mx-auto max-w-5xl overflow-hidden rounded-[2rem] px-6 py-16 text-center md:px-16 md:py-24">
+        <section className="px-6 pb-16 sm:pb-20 md:pb-32">
+          <div className="reveal-on-scroll surface relative isolate mx-auto max-w-5xl overflow-hidden rounded-[2rem] px-6 py-12 text-center md:px-16 md:py-24">
             <div aria-hidden className="bg-grid absolute inset-0 -z-10" />
             <div
               aria-hidden
