@@ -144,7 +144,7 @@ export default async function PublisherPage({
         <section className="px-6 py-12">
           <div className="mx-auto max-w-5xl">
             <h2 className="mb-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              Upcoming — {upcoming.length}
+              Upcoming events
             </h2>
 
             {upcoming.length > 0 ? (
@@ -164,7 +164,7 @@ export default async function PublisherPage({
             {past.length > 0 && (
               <>
                 <h2 className="mb-6 mt-16 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                  Past — {past.length}
+                  Past events
                 </h2>
                 <div className="space-y-4 opacity-60">
                   {past.map((event) => (

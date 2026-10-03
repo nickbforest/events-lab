@@ -75,16 +75,19 @@ export default function LandingPage() {
                 share what is coming up — without fighting a social algorithm
                 for the privilege.
               </p>
-              <div className="flex flex-wrap gap-4">
+              {/* A grid, not a wrapping row: both buttons take the same
+                  width — full width stacked on mobile, the wider label's
+                  width side by side from `sm`. */}
+              <div className="grid grid-cols-1 gap-4 sm:inline-grid sm:grid-cols-2">
                 <Link
                   href={routes.auth.signUp()}
-                  className="rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
+                  className="rounded-md border border-primary bg-primary px-8 py-4 text-center text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
                 >
                   Start publishing free
                 </Link>
                 <Link
                   href={routes.auth.signIn()}
-                  className="rounded-md border border-border px-8 py-4 text-lg font-medium transition-colors hover:bg-white/5"
+                  className="rounded-md border border-border px-8 py-4 text-center text-lg font-medium transition-colors hover:bg-white/5"
                 >
                   Log in
                 </Link>
@@ -168,7 +171,7 @@ export default function LandingPage() {
             </p>
             <Link
               href={routes.auth.signUp()}
-              className="inline-block rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110"
+              className="block w-full rounded-md bg-primary px-8 py-4 text-lg font-medium text-primary-foreground transition-all hover:brightness-110 sm:inline-block sm:w-auto"
             >
               Create your page →
             </Link>

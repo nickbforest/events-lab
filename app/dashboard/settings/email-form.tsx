@@ -8,7 +8,8 @@ import {
   Field,
   fieldControlClass,
   fieldDescribedBy,
-  formSubmitClass,
+  formFooterClass,
+  formSubmitWideClass,
 } from "@/components/forms/field";
 import { changeEmailAction } from "@/features/auth/actions";
 import { changeEmailSchema } from "@/features/auth/contracts";
@@ -113,11 +114,11 @@ export function EmailForm({ currentEmail, pendingEmail }: EmailFormProps) {
 
       {formError ? <FormAlert message={formError} /> : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className={formFooterClass}>
         {/* Not "email changed": it has not changed until the link is used. */}
         <p
           aria-live="polite"
-          className="max-w-md font-mono text-xs leading-relaxed text-primary"
+          className="font-mono text-xs leading-relaxed text-primary empty:hidden"
         >
           {awaiting
             ? `Confirmation pending for ${awaiting}. Open the link we sent there. If a link also arrives at your current address, confirm that one too.`
@@ -129,7 +130,7 @@ export function EmailForm({ currentEmail, pendingEmail }: EmailFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={formSubmitClass}
+              className={formSubmitWideClass}
             >
               {isSubmitting ? "Sending…" : "Change email"}
             </button>

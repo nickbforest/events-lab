@@ -29,7 +29,7 @@ export default async function DashboardEventsPage() {
                   href={routes.publisherPreview(profile.username)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
+                  className="flex items-center justify-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
                 >
                   <Eye className="size-4" aria-hidden />
                   Preview
@@ -38,7 +38,9 @@ export default async function DashboardEventsPage() {
                     your public page, opens in a new tab
                   </span>
                 </a>
-                <NewEventTrigger className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110">
+                {/* The primary action, so the wider of the two: it takes the
+                    rest of the row on mobile and a fixed minimum above. */}
+                <NewEventTrigger className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 sm:min-w-44 sm:flex-none">
                   <Plus className="size-4" aria-hidden />
                   New
                   <span className="sr-only"> event</span>

@@ -8,7 +8,6 @@ import {
   Video,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TicketLink } from "@/components/analytics/ticket-link";
@@ -180,19 +179,9 @@ export default async function EventPage({
       <SiteHeader />
 
       <main className="flex-1">
-        {event.cover_image_url ? (
-          <div className="relative h-[280px] w-full overflow-hidden border-b border-border bg-card md:h-[420px]">
-            <Image
-              src={event.cover_image_url}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-          </div>
-        ) : null}
-
+        {/* No cover banner: a poster cropped to a full-width strip loses
+            most of itself. The image still travels as the link preview
+            (Open Graph) and in the structured data. */}
         {isCancelled && (
           <div
             role="alert"

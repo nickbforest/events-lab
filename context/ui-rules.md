@@ -239,8 +239,8 @@ explicit switch.
 
 # 18. Images
 
-Consistent aspect ratios (cover banner `3/1`, event hero fixed height, card
-poster square, dashboard poster target `4/3`), `object-cover`, `next/image`
+Consistent aspect ratios (cover banner `3/1`, card poster square, dashboard
+poster target `4/3`; the event page has no hero image), `object-cover`, `next/image`
 with `sizes` matching the rendered width, `priority` only for the first
 image on a page. Decorative images use `alt=""` when the text beside them
 says the same thing.

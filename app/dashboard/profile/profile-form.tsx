@@ -8,7 +8,8 @@ import {
   Field,
   fieldControlClass,
   fieldDescribedBy,
-  formSubmitClass,
+  formFooterClass,
+  formSubmitWideClass,
   SelectControl,
 } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
@@ -311,7 +312,11 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       </FormSection>
 
       <FormSection title="Media">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[10rem_1fr]">
+        {/* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track cannot shrink
+            below the cover's min-content width (its 160px minimum height
+            through the 3:1 ratio is 480px), which pushed the page sideways on
+            tablets and landscape phones. */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[10rem_minmax(0,1fr)]">
           <ProfileMediaField
             kind="avatar"
             label="Avatar"
@@ -411,9 +416,12 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+      <div className={`${formFooterClass} border-t border-border pt-6`}>
         {/* Advisory, not an error — announced politely rather than as an alert. */}
-        <p aria-live="polite" className="font-mono text-xs text-primary">
+        <p
+          aria-live="polite"
+          className="font-mono text-xs text-primary empty:hidden"
+        >
           {saved ? "Profile saved." : ""}
         </p>
 
@@ -422,7 +430,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={formSubmitClass}
+              className={formSubmitWideClass}
             >
               {isSubmitting ? "Saving…" : "Save profile"}
             </button>

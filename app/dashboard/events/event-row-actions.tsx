@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Check, Link2, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -9,10 +9,12 @@ import {
   deleteEventAction,
   transitionEventAction,
 } from "@/features/events/actions";
+import { PUBLIC_EVENT_STATUSES } from "@/features/events/contracts";
 import { USER_FACING_MESSAGES } from "@/lib/errors";
 import { EVENT_STATUS_META } from "@/lib/format";
 import type { FormResult } from "@/lib/forms";
 import { createLogger } from "@/lib/logging";
+import { routes } from "@/lib/routes";
 import type { EventStatus, EventWithRelations } from "@/lib/types";
 
 import { useEventDialog } from "./event-dialog";
@@ -33,6 +35,9 @@ const dangerIconClass =
  */
 const TOGGLEABLE: readonly EventStatus[] = ["draft", "published", "archived"];
 
+/** How long the copy button shows its tick before going back to the link. */
+const COPIED_FEEDBACK_MS = 2000;
+
 export interface EventRowActionsProps {
   event: EventWithRelations;
 }
@@ -50,10 +55,31 @@ export function EventRowActions({ event }: EventRowActionsProps) {
   const [pending, startTransition] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { id: eventId, title, status } = event;
   const isOn = status === "published";
   const canToggle = TOGGLEABLE.includes(status);
+  // A draft or archived event's link is a 404 for everyone else, so there is
+  // nothing worth sharing yet.
+  const isPublic = PUBLIC_EVENT_STATUSES.includes(status);
+
+  async function copyLink() {
+    setError(null);
+    const url = new URL(
+      routes.event(event.owner.username, event.slug),
+      window.location.origin,
+    ).toString();
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
+    } catch (thrown) {
+      log.error("Copying the event link failed.", thrown, { eventId });
+      setError(`Could not copy the link. It is ${url}`);
+    }
+  }
 
   function run(label: string, action: () => Promise<FormResult>) {
     setError(null);
@@ -139,6 +165,29 @@ export function EventRowActions({ event }: EventRowActionsProps) {
           }
           className="mr-2"
         />
+
+        <button
+          type="button"
+          disabled={!isPublic}
+          className={iconButtonClass}
+          title={
+            isPublic
+              ? "Copy link"
+              : "Publish this event to get a link you can share."
+          }
+          onClick={() => void copyLink()}
+        >
+          {copied ? (
+            <Check className="size-4 text-primary" aria-hidden />
+          ) : (
+            <Link2 className="size-4" aria-hidden />
+          )}
+          <span className="sr-only">Copy link to {title}</span>
+        </button>
+        {/* Announced politely, so a screen reader hears the copy worked. */}
+        <span aria-live="polite" className="sr-only">
+          {copied ? `Link to ${title} copied.` : ""}
+        </span>
 
         <button
           type="button"
