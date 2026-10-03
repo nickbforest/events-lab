@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { FormAlert } from "@/components/auth/auth-card";
+import { buttonClass } from "@/components/ui/button";
 import {
   deleteEventAction,
   transitionEventAction,
@@ -20,14 +21,11 @@ import type { EventStatus } from "@/lib/types";
 
 const log = createLogger("events.lifecycle");
 
-const buttonClass =
-  "rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60";
+const secondaryClass = buttonClass({ variant: "secondary", size: "sm" });
 
-const primaryClass =
-  "rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+const primaryClass = buttonClass({ size: "sm" });
 
-const dangerClass =
-  "rounded-md border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60";
+const dangerClass = buttonClass({ variant: "destructive", size: "sm" });
 
 /** The words for a move, which depend on where the event is coming from. */
 function transitionLabel(from: EventStatus, to: EventTransition): string {
@@ -89,9 +87,9 @@ export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-card/40 p-5">
+    <div className="surface space-y-4 rounded-2xl p-5">
       <div>
-        <h2 className="font-mono text-xs uppercase tracking-widest text-primary">
+        <h2 className="font-display text-base font-semibold tracking-tight">
           Status
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -110,7 +108,7 @@ export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
           <button
             key={to}
             type="button"
-            className={to === "published" ? primaryClass : buttonClass}
+            className={to === "published" ? primaryClass : secondaryClass}
             disabled={pending}
             onClick={() =>
               run(
@@ -142,7 +140,7 @@ export function EventLifecycle({ eventId, status }: EventLifecycleProps) {
             </button>
             <button
               type="button"
-              className={buttonClass}
+              className={secondaryClass}
               disabled={pending}
               onClick={() => setConfirmingDelete(false)}
             >

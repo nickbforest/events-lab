@@ -21,16 +21,16 @@ export function DashboardHeader({
   actions,
 }: DashboardHeaderProps) {
   return (
-    <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 md:mb-10">
       <div>
-        <div className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">
+        <div className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-primary">
           {kicker}
         </div>
-        <h1 className="font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl">
+        <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
           {title}
         </h1>
         {description ? (
-          <div className="mt-2 font-mono text-sm text-muted-foreground">
+          <div className="mt-1.5 text-sm text-muted-foreground">
             {description}
           </div>
         ) : null}

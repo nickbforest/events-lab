@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { TicketLink } from "@/components/analytics/ticket-link";
+import { buttonClass } from "@/components/ui/button";
 import { countryName } from "@/lib/countries";
 import {
   DEFAULT_TICKET_LABEL,
@@ -52,16 +53,16 @@ export function EventCard({ event }: EventCardProps) {
   const isCancelled = event.status === "cancelled";
 
   return (
-    <article className="group relative flex flex-col gap-6 rounded-lg border border-border bg-card/30 p-6 transition-colors hover:border-primary/50 md:flex-row md:gap-8">
+    <article className="surface rounded-2xl group relative flex flex-col gap-6 p-5 transition-all duration-300 ease-[var(--ease-studio)] hover:-translate-y-0.5 hover:border-white/15 hover:shadow-lift sm:p-6 md:flex-row md:gap-8">
       {/* Date rail: category, day, month — the first thing scanned. */}
       <div className="flex shrink-0 flex-row items-center gap-4 md:w-40 md:flex-col md:items-start md:gap-0">
         <div className="min-w-0">
-          <div className="font-mono text-xs uppercase tracking-widest text-primary">
+          <div className="mb-1 text-xs font-medium text-primary">
             {event.category.label}
           </div>
           <time
             dateTime={isoDateTime(event.start_at)}
-            className="block font-display text-4xl font-extrabold leading-none tracking-tight md:text-5xl"
+            className="block font-display text-4xl font-semibold leading-none tracking-tight md:text-5xl"
           >
             {date.day}
           </time>
@@ -74,13 +75,13 @@ export function EventCard({ event }: EventCardProps) {
         </div>
 
         {event.cover_image_url ? (
-          <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded bg-secondary md:mt-5 md:w-40">
+          <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-secondary ring-1 ring-border md:mt-5 md:w-40">
             <Image
               src={event.cover_image_url}
               alt=""
               fill
               sizes="(max-width: 768px) 6rem, 10rem"
-              className="object-cover"
+              className="object-cover transition-transform duration-500 ease-[var(--ease-studio)] group-hover:scale-105"
             />
           </div>
         ) : null}
@@ -88,7 +89,7 @@ export function EventCard({ event }: EventCardProps) {
 
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex flex-wrap items-center gap-3">
-          <h3 className="font-display text-2xl font-extrabold uppercase tracking-tight transition-colors group-hover:text-primary md:text-3xl">
+          <h3 className="font-display text-2xl font-semibold leading-tight tracking-tight transition-colors group-hover:text-primary md:text-[1.75rem]">
             <Link
               href={routes.event(event.owner.username, event.slug)}
               className="after:absolute after:inset-0 after:content-['']"
@@ -106,15 +107,17 @@ export function EventCard({ event }: EventCardProps) {
         ) : null}
 
         {hasLocation ? (
-          <div className="mb-5 border-l-2 border-primary pl-4">
+          <div className="mb-5 rounded-xl border border-border bg-white/[0.02] p-3.5">
             <div className="flex items-start gap-2">
               <MapPin
                 className="mt-0.5 size-4 shrink-0 text-primary"
                 aria-hidden
               />
-              <div className="min-w-0 font-mono text-xs uppercase leading-relaxed">
+              <div className="min-w-0 text-sm leading-relaxed">
                 {event.venue_name ? (
-                  <div className="text-foreground">{event.venue_name}</div>
+                  <div className="font-medium text-foreground">
+                    {event.venue_name}
+                  </div>
                 ) : null}
                 {event.address ? (
                   <div className="text-muted-foreground">{event.address}</div>
@@ -132,7 +135,7 @@ export function EventCard({ event }: EventCardProps) {
                     href={mapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="relative z-10 mt-1 inline-flex items-center gap-1 text-primary transition-opacity hover:opacity-80"
+                    className="relative z-10 mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
                   >
                     View on map
                     <ArrowUpRight className="size-3" aria-hidden />
@@ -160,7 +163,9 @@ export function EventCard({ event }: EventCardProps) {
             href={event.ticket_url}
             username={event.owner.username}
             eventId={event.id}
-            className="relative z-10 flex w-full items-center justify-center gap-2 rounded-md sm:inline-flex sm:w-auto bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
+            className={buttonClass({
+              className: "relative z-10 w-full sm:w-auto",
+            })}
           >
             {ticketLabel}
             <ArrowUpRight className="size-4" aria-hidden />

@@ -32,18 +32,18 @@ export default async function EditEventPage({
       <div className="mx-auto max-w-2xl">
         <div className="mb-8">
           <div className="mb-2 flex items-center gap-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-primary">
+            <span className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
               Edit
             </span>
             <EventStatusBadge status={event.status} />
           </div>
-          <h1 className="font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl">
+          <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
             {event.title}
           </h1>
           {isPublic ? (
             <Link
               href={routes.event(profile.username, event.slug)}
-              className="mt-3 inline-flex items-center gap-2 font-mono text-xs uppercase text-muted-foreground transition-colors hover:text-primary"
+              className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
             >
               <Eye className="size-3.5" aria-hidden />
               View public page

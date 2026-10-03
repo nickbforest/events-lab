@@ -113,10 +113,7 @@ export function ProfileMediaField({
         onSelect={upload}
         onRemove={() => void remove()}
       />
-      <p
-        aria-live="polite"
-        className="mt-1.5 font-mono text-xs text-primary empty:mt-0"
-      >
+      <p aria-live="polite" className="mt-1.5 text-xs text-primary empty:mt-0">
         {notice}
       </p>
     </div>

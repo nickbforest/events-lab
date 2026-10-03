@@ -47,13 +47,13 @@ export function ForgotPasswordForm() {
         footer={
           <Link
             href={routes.auth.signIn()}
-            className="text-primary hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Back to log in
           </Link>
         }
       >
-        <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           The link expires after a short while. If it does not arrive, check
           your spam folder before requesting another.
         </p>
@@ -68,7 +68,7 @@ export function ForgotPasswordForm() {
       footer={
         <Link
           href={routes.auth.signIn()}
-          className="text-primary hover:underline"
+          className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Back to log in
         </Link>

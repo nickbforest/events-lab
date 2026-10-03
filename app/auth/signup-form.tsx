@@ -93,7 +93,7 @@ export function SignupForm() {
           <Link
             href={routes.auth.signIn()}
             replace
-            className="text-primary hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Log in
           </Link>
@@ -191,7 +191,7 @@ export function SignupForm() {
                     politely rather than as an error. */}
                 <p
                   aria-live="polite"
-                  className="mt-1.5 font-mono text-xs text-primary empty:mt-0"
+                  className="mt-1.5 text-xs text-primary empty:mt-0"
                 >
                   {isAvailable ? "Available" : ""}
                 </p>

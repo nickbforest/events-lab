@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PublicShell } from "@/components/layout/public-shell";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import {
@@ -19,7 +20,7 @@ export const metadata: Metadata = { title: "Page not found" };
  */
 export default function NotFound() {
   return (
-    <>
+    <PublicShell>
       <SiteHeader />
       <main className="flex flex-1 flex-col">
         <StatusMessage
@@ -34,6 +35,6 @@ export default function NotFound() {
         />
       </main>
       <SiteFooter />
-    </>
+    </PublicShell>
   );
 }

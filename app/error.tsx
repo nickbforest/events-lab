@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { PublicShell } from "@/components/layout/public-shell";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import {
@@ -31,7 +32,7 @@ export default function RootError({ error, retry }: RootErrorProps) {
   }, [error]);
 
   return (
-    <>
+    <PublicShell>
       <SiteHeader />
       <main className="flex flex-1 flex-col">
         <StatusMessage
@@ -55,6 +56,6 @@ export default function RootError({ error, retry }: RootErrorProps) {
         />
       </main>
       <SiteFooter />
-    </>
+    </PublicShell>
   );
 }

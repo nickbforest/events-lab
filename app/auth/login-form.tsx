@@ -62,7 +62,7 @@ export function LoginForm() {
           <Link
             href={routes.auth.signUp()}
             replace
-            className="text-primary hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Create account
           </Link>
@@ -71,10 +71,7 @@ export function LoginForm() {
     >
       {/* A confirmation, not an error, so it is announced politely. */}
       {passwordChanged && (
-        <p
-          role="status"
-          className="mb-5 font-mono text-xs leading-relaxed text-primary"
-        >
+        <p role="status" className="mb-5 text-sm leading-relaxed text-primary">
           Password changed. You have been signed out everywhere — log in with
           your new password.
         </p>
@@ -173,7 +170,7 @@ export function LoginForm() {
         <p className="text-center">
           <Link
             href={routes.auth.forgotPassword()}
-            className="font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
+            className="text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             Forgot your password?
           </Link>

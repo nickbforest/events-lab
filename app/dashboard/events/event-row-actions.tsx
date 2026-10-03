@@ -22,10 +22,10 @@ import { useEventDialog } from "./event-dialog";
 const log = createLogger("events.rowActions");
 
 const iconButtonClass =
-  "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
 
 const dangerIconClass =
-  "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
  * Statuses the list toggle can move between. On is `published`, off is
@@ -114,13 +114,13 @@ export function EventRowActions({ event }: EventRowActionsProps) {
     return (
       <div>
         <div className="flex items-center justify-end gap-2">
-          <span className="font-mono text-xs uppercase text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             Delete?
           </span>
           <button
             type="button"
             disabled={pending}
-            className="rounded-md border border-destructive/40 px-3 py-1 font-mono text-xs uppercase text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+            className="rounded-full border border-destructive/40 px-3 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
             onClick={() => run("Delete", () => deleteEventAction(eventId))}
           >
             {pending ? "Deleting…" : "Yes"}
@@ -129,7 +129,7 @@ export function EventRowActions({ event }: EventRowActionsProps) {
           <button
             type="button"
             disabled={pending}
-            className="rounded-md border border-border px-3 py-1 font-mono text-xs uppercase transition-colors hover:bg-white/5 disabled:opacity-50"
+            className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:bg-white/[0.08] disabled:opacity-50"
             onClick={() => {
               setError(null);
               setConfirmingDelete(false);

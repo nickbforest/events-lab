@@ -22,7 +22,7 @@ import type { AnalyticsPoint } from "@/features/analytics/contracts";
  */
 const SERIES = [
   { key: "visits", label: "Site visits", color: "#7E9F30", dash: undefined },
-  { key: "clicks", label: "Ticket clicks", color: "#3B82F6", dash: "6 4" },
+  { key: "clicks", label: "Ticket clicks", color: "#8B6CFF", dash: "6 4" },
 ] as const;
 
 /** `2026-09-09` → `09-09`. The year lives in the card title, not on every tick. */
@@ -108,7 +108,7 @@ export function TrendChart({ series, caption }: TrendChartProps) {
         {SERIES.map((s) => (
           <span
             key={s.key}
-            className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground"
+            className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
           >
             <svg aria-hidden width="16" height="2" className="shrink-0">
               <line
@@ -128,14 +128,14 @@ export function TrendChart({ series, caption }: TrendChartProps) {
 
       {/* Colour alone never carries the numbers — ui-rules.md §16. */}
       <details className="mt-4">
-        <summary className="cursor-pointer font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground">
+        <summary className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
           View as table
         </summary>
-        <div className="mt-3 max-h-64 overflow-auto rounded-md border border-border">
+        <div className="mt-3 max-h-64 overflow-auto rounded-xl border border-border">
           <table className="w-full text-left">
             <caption className="sr-only">{caption}</caption>
             <thead className="sticky top-0 bg-card">
-              <tr className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <tr className="text-xs font-medium text-muted-foreground">
                 <th scope="col" className="px-4 py-2 font-normal">
                   Day
                 </th>

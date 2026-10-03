@@ -14,9 +14,11 @@ import { TicketLink } from "@/components/analytics/ticket-link";
 import { TrackView } from "@/components/analytics/track-view";
 import { EventCard } from "@/components/events/event-card";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { PublicShell } from "@/components/layout/public-shell";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Avatar } from "@/components/ui/avatar";
+import { buttonClass } from "@/components/ui/button";
 import {
   getPublishedEventBySlug,
   getRelatedEvents,
@@ -126,11 +128,11 @@ export interface InfoRowProps {
 function InfoRow({ icon, label, children }: InfoRowProps) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-1 text-primary">{icon}</span>
-      <div className="min-w-0">
-        <div className="font-mono text-xs uppercase text-muted-foreground">
-          {label}
-        </div>
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+        {icon}
+      </span>
+      <div className="min-w-0 pt-0.5">
+        <div className="text-xs text-muted-foreground">{label}</div>
         <div className="text-sm font-medium">{children}</div>
       </div>
     </div>
@@ -172,7 +174,7 @@ export default async function EventPage({
   );
 
   return (
-    <>
+    <PublicShell>
       <script type="application/ld+json">{structuredData}</script>
       <TrackView username={event.owner.username} eventId={event.id} />
       <SiteHeader />
@@ -198,7 +200,7 @@ export default async function EventPage({
           </div>
         )}
 
-        <article className="mx-auto grid max-w-4xl grid-cols-1 gap-12 px-6 py-12 md:grid-cols-3">
+        <article className="mx-auto grid max-w-5xl animate-reveal grid-cols-1 gap-10 px-6 py-12 md:grid-cols-3 md:gap-12 md:py-16">
           <div className="space-y-8 md:col-span-2">
             {/* The event image heads the content column in a fixed 4:3 frame,
                 larger than the listing's 10rem thumbnail and capped so it
@@ -206,7 +208,7 @@ export default async function EventPage({
                 whole image shows as uploaded — never cropped or zoomed — with
                 the frame's ground filling any space around it. */}
             {event.cover_image_url ? (
-              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-border bg-secondary">
+              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-border bg-secondary shadow-lift">
                 <Image
                   src={event.cover_image_url}
                   alt=""
@@ -220,7 +222,7 @@ export default async function EventPage({
 
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
-                <span className="font-mono text-xs uppercase tracking-widest text-primary">
+                <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                   {event.category.label}
                 </span>
                 {event.status !== "published" && (
@@ -228,7 +230,7 @@ export default async function EventPage({
                 )}
               </div>
 
-              <h1 className="mb-4 font-display text-3xl font-extrabold uppercase tracking-tighter md:text-5xl">
+              <h1 className="mb-4 font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
                 {event.title}
               </h1>
 
@@ -241,10 +243,10 @@ export default async function EventPage({
 
             {event.description ? (
               <div>
-                <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
                   About
                 </h2>
-                <p className="whitespace-pre-wrap leading-relaxed">
+                <p className="whitespace-pre-wrap leading-relaxed text-foreground/85">
                   {event.description}
                 </p>
               </div>
@@ -255,7 +257,7 @@ export default async function EventPage({
                 {event.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-border px-3 py-1 font-mono text-xs uppercase text-muted-foreground"
+                    className="rounded-full border border-border bg-white/[0.03] px-3 py-1 text-xs text-muted-foreground"
                   >
                     {tag}
                   </span>
@@ -264,18 +266,18 @@ export default async function EventPage({
             )}
 
             <div className="border-t border-border pt-8">
-              <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <h2 className="mb-3 text-xs font-medium text-muted-foreground">
                 Organised by
               </h2>
               <Link
                 href={routes.publisher(event.owner.username)}
-                className="group flex items-center gap-3"
+                className="surface group inline-flex items-center gap-3 rounded-2xl py-3 pr-5 pl-3 transition-colors hover:border-white/15"
               >
                 <Avatar
                   src={event.owner.avatar_url}
                   name={event.owner.display_name}
                   sizes="40px"
-                  className="size-10 font-bold"
+                  className="size-10"
                 />
                 <span>
                   <span className="block font-medium transition-colors group-hover:text-primary">
@@ -292,7 +294,7 @@ export default async function EventPage({
           {/* On desktop the facts and the ticket button stay in view while
               the description scrolls past, clear of the sticky site header. */}
           <aside className="space-y-6 md:sticky md:top-24 md:self-start">
-            <div className="space-y-4 rounded-lg border border-border bg-card/40 p-6">
+            <div className="surface rounded-2xl space-y-5 p-6">
               <InfoRow
                 icon={<Calendar className="size-4" aria-hidden />}
                 label="Date"
@@ -342,7 +344,7 @@ export default async function EventPage({
                       href={mapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 inline-flex items-center gap-1 font-mono text-xs uppercase text-primary transition-opacity hover:opacity-80"
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
                     >
                       View on map
                       <ArrowUpRight className="size-3" aria-hidden />
@@ -365,7 +367,7 @@ export default async function EventPage({
                 href={event.ticket_url}
                 username={event.owner.username}
                 eventId={event.id}
-                className="block w-full rounded-md bg-primary px-6 py-4 text-center font-medium text-primary-foreground transition-all hover:brightness-110"
+                className={buttonClass({ size: "lg", className: "w-full" })}
               >
                 {event.ticket_cta_label ?? DEFAULT_TICKET_LABEL} ↗
               </TicketLink>
@@ -376,7 +378,7 @@ export default async function EventPage({
                 href={event.online_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full rounded-md bg-primary px-6 py-4 text-center font-medium text-primary-foreground transition-all hover:brightness-110"
+                className={buttonClass({ size: "lg", className: "w-full" })}
               >
                 Join online ↗
               </a>
@@ -387,7 +389,7 @@ export default async function EventPage({
         {related.length > 0 && (
           <section className="border-t border-border px-6 py-12">
             <div className="mx-auto max-w-5xl">
-              <h2 className="mb-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              <h2 className="mb-6 font-display text-xl font-semibold tracking-tight">
                 You might also like
               </h2>
               <div className="space-y-4">
@@ -401,6 +403,6 @@ export default async function EventPage({
       </main>
 
       <SiteFooter />
-    </>
+    </PublicShell>
   );
 }

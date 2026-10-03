@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { WordmarkLink } from "@/components/layout/wordmark-link";
+import { AmbientBackground } from "@/components/ui/ambient-background";
 import { signOutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/format";
 import { routes } from "@/lib/routes";
@@ -60,7 +61,7 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside
-        className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md md:fixed md:inset-y-0 md:left-0 md:w-64 md:border-b-0 md:border-r md:bg-card/40 md:backdrop-blur-none"
+        className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl md:fixed md:inset-y-0 md:left-0 md:w-64 md:border-b-0 md:border-r md:bg-card/50"
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             setMenuOpenedOn(null);
@@ -71,7 +72,7 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
           <div className="flex h-16 items-center justify-between px-6 md:mb-10 md:block md:h-auto md:px-0">
             {/* Inside the dashboard the logo means "back to Overview", never
                 the public landing page a signed-in publisher has no use for. */}
-            <WordmarkLink href={routes.dashboard.root()} className="block" />
+            <WordmarkLink href={routes.dashboard.root()} className="flex" />
 
             {/* Below `md` the nav folds behind a burger rather than stacking
                 four links and a footer above every screen. */}
@@ -79,7 +80,7 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
               type="button"
               aria-expanded={isMenuOpen}
               aria-controls="dashboard-menu"
-              className="-mr-2 inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground md:hidden"
+              className="-mr-2 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground md:hidden"
               onClick={() => setMenuOpenedOn(isMenuOpen ? null : pathname)}
             >
               {isMenuOpen ? (
@@ -112,13 +113,22 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
                     href={href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-white/5 text-foreground"
-                        : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                        ? "bg-white/[0.06] text-foreground ring-1 ring-border"
+                        : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
                     )}
                   >
-                    <Icon className="size-4" aria-hidden />
+                    {isActive ? (
+                      <span
+                        aria-hidden
+                        className="absolute top-1/2 -left-px h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary"
+                      />
+                    ) : null}
+                    <Icon
+                      className={cn("size-4", isActive && "text-primary")}
+                      aria-hidden
+                    />
                     {label}
                   </Link>
                 );
@@ -132,7 +142,7 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
                 href={routes.publisherPreview(username)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
+                className="flex items-center gap-2 rounded-xl px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-primary"
               >
                 <ExternalLink className="size-3" aria-hidden />
                 <span className="truncate">{routes.publisher(username)}</span>
@@ -143,7 +153,7 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
               <form action={signOutAction}>
                 <button
                   type="submit"
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
                 >
                   <LogOut className="size-4" aria-hidden />
                   Sign out
@@ -154,7 +164,10 @@ export function DashboardShell({ children, username }: DashboardShellProps) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 md:ml-64">{children}</main>
+      <main className="relative isolate min-w-0 flex-1 md:ml-64">
+        <AmbientBackground variant="quiet" />
+        {children}
+      </main>
     </div>
   );
 }

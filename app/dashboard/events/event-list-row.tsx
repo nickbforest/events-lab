@@ -14,8 +14,7 @@ import { EventRowActions } from "./event-row-actions";
 export const EVENT_LIST_COLUMNS =
   "lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-start lg:gap-6";
 
-const labelClass =
-  "font-mono text-[0.6875rem] uppercase tracking-widest text-muted-foreground lg:hidden";
+const labelClass = "mb-0.5 text-xs font-medium text-muted-foreground lg:hidden";
 
 /** "OCT 30, 2026 · 8:00 PM" in the event's own timezone. */
 function dateTime(iso: string, timeZone: string) {
@@ -62,10 +61,10 @@ export function EventListRow({ event }: EventListRowProps) {
 
   return (
     <li
-      className={`flex flex-col gap-4 border-t border-border px-5 py-5 transition-colors first:border-t-0 hover:bg-white/[0.02] ${EVENT_LIST_COLUMNS}`}
+      className={`flex flex-col gap-4 border-t border-border px-5 py-5 transition-colors first:border-t-0 hover:bg-white/[0.025] ${EVENT_LIST_COLUMNS}`}
     >
       <div className="flex min-w-0 items-start gap-4">
-        <div className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded bg-secondary">
+        <div className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-secondary ring-1 ring-border">
           {event.cover_image_url ? (
             <Image
               src={event.cover_image_url}
@@ -79,10 +78,10 @@ export function EventListRow({ event }: EventListRowProps) {
           )}
         </div>
         <div className="min-w-0">
-          <div className="break-words font-display font-extrabold uppercase tracking-tight">
+          <div className="break-words font-display text-base font-semibold leading-snug tracking-tight">
             {event.title}
           </div>
-          <div className="font-mono text-xs uppercase tracking-widest text-primary">
+          <div className="mt-1 text-xs font-medium text-primary">
             {event.category.label}
           </div>
         </div>

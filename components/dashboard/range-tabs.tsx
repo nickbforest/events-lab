@@ -26,7 +26,7 @@ export function RangeTabs({
   return (
     <nav
       aria-label="Time range"
-      className="inline-flex overflow-hidden rounded-md border border-border"
+      className="inline-flex rounded-full border border-border bg-white/[0.03] p-1"
     >
       {ANALYTICS_RANGES.map((range) => {
         const isActive = range === active;
@@ -37,10 +37,10 @@ export function RangeTabs({
             href={`${basePath}?range=${range}`}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "border-l border-border px-4 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors first:border-l-0",
+              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200",
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                ? "bg-primary text-primary-foreground shadow-glow"
+                : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
             )}
           >
             {ANALYTICS_RANGE_LABELS[range]}

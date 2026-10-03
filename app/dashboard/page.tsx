@@ -80,7 +80,7 @@ export default async function DashboardOverviewPage({
                       className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                     >
                       <div className="min-w-0">
-                        <div className="truncate font-display font-extrabold uppercase tracking-tight">
+                        <div className="truncate font-display font-semibold tracking-tight">
                           {event.title}
                         </div>
                         <time
@@ -113,12 +113,12 @@ export default async function DashboardOverviewPage({
                     {isPublicStatus(entry.status) ? (
                       <Link
                         href={routes.event(profile.username, entry.slug)}
-                        className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight transition-colors hover:text-primary"
+                        className="min-w-0 truncate font-display font-semibold tracking-tight transition-colors hover:text-primary"
                       >
                         {entry.title}
                       </Link>
                     ) : (
-                      <span className="min-w-0 truncate font-display font-extrabold uppercase tracking-tight text-muted-foreground">
+                      <span className="min-w-0 truncate font-display font-semibold tracking-tight text-muted-foreground">
                         {entry.title}
                       </span>
                     )}

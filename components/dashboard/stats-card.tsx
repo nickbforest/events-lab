@@ -12,8 +12,8 @@ export interface StatsCardProps {
  * A headline metric. Per the dataviz form heuristic a single number is a stat
  * tile, not a chart — the trend beside it is what gets plotted.
  *
- * Tiles sit inside `StatsCardRow` so a set of them reads as one panel divided
- * by hairlines rather than as separate floating cards.
+ * Tiles sit inside `StatsCardRow`. The accent tile (the metric that matters
+ * most) carries the lime value and a faint lime glow.
  */
 export function StatsCard({
   label,
@@ -22,20 +22,32 @@ export function StatsCard({
   accent = false,
 }: StatsCardProps) {
   return (
-    <div className="p-6">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          {label}
-        </div>
+    <div className="surface rounded-2xl relative isolate overflow-hidden p-6">
+      {accent ? (
+        <div
+          aria-hidden
+          className="absolute -top-16 -right-16 -z-10 size-40 rounded-full bg-primary/15 blur-3xl"
+        />
+      ) : null}
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="text-sm font-medium text-muted-foreground">{label}</div>
         {icon ? (
-          <div className="shrink-0 text-muted-foreground" aria-hidden>
+          <div
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-xl ring-1 ring-border",
+              accent
+                ? "bg-primary/10 text-primary"
+                : "bg-white/[0.04] text-muted-foreground",
+            )}
+            aria-hidden
+          >
             {icon}
           </div>
         ) : null}
       </div>
       <div
         className={cn(
-          "font-display text-4xl font-extrabold tracking-tighter tabular-nums md:text-5xl",
+          "font-display text-4xl font-semibold tracking-tight tabular-nums md:text-5xl",
           accent && "text-primary",
         )}
       >
@@ -49,11 +61,9 @@ export interface StatsCardRowProps {
   children: ReactNode;
 }
 
-/** Groups stat tiles into one bordered panel split by hairline dividers. */
+/** Lays stat tiles out side by side from `sm`, stacked on a phone. */
 export function StatsCardRow({ children }: StatsCardRowProps) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card/30 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-      {children}
-    </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
   );
 }

@@ -425,10 +425,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
       <div className={`${formFooterClass} border-t border-border pt-6`}>
         {/* Advisory, not an error — announced politely rather than as an alert. */}
-        <p
-          aria-live="polite"
-          className="font-mono text-xs text-primary empty:hidden"
-        >
+        <p aria-live="polite" className="text-xs text-primary empty:hidden">
           {saved ? "Profile saved." : ""}
         </p>
 
