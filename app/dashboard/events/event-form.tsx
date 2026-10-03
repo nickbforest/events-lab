@@ -518,6 +518,13 @@ export function EventForm({
                     list: COUNTRY_LIST_ID,
                   })}
                 </div>
+                {textField({
+                  name: "mapUrl",
+                  label: "Map link",
+                  type: "url",
+                  hint: "Share the venue from Google Maps and paste the link. Without one, View on map searches the address.",
+                  placeholder: "https://maps.app.goo.gl/...",
+                })}
               </>
             )}
           </>

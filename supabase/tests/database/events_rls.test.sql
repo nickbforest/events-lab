@@ -1,6 +1,6 @@
 begin;
 
-select plan(22);
+select plan(23);
 
 -- Structure --------------------------------------------------------------
 
@@ -118,6 +118,16 @@ select throws_ok(
   23514,
   null,
   'latitude must be a real latitude'
+);
+
+select throws_ok(
+  $$insert into public.events (owner_id, slug, title, category_id, start_at, timezone, map_url)
+    values ('11111111-1111-1111-1111-111111111111', 'bad-map', 'Bad Map',
+            (select id from public.categories where slug = 'concert'),
+            '2026-12-01T19:00:00Z', 'Asia/Tbilisi', 'javascript:alert(1)')$$,
+  23514,
+  null,
+  'a map link must be https'
 );
 
 select throws_ok(

@@ -39,6 +39,7 @@ export interface EventFormValues {
   address: string;
   city: string;
   countryCode: string;
+  mapUrl: string;
   onlineUrl: string;
   isFree: boolean;
   priceInfo: string;
@@ -78,6 +79,7 @@ export function toFormValues(
     // The field is typed by hand, so it shows the name; the contract
     // resolves it back to the code the column stores.
     countryCode: countryName(event?.country_code) ?? "",
+    mapUrl: event?.map_url ?? "",
     onlineUrl: event?.online_url ?? "",
     isFree: event?.is_free ?? true,
     priceInfo: event?.price_info ?? "",
@@ -116,6 +118,7 @@ export function renderedFields(
       "address",
       "city",
       "countryCode",
+      "mapUrl",
     ] as const) {
       fields.add(field);
     }
@@ -170,6 +173,7 @@ export function toPayload(values: EventFormValues): EventDraftValues {
     address: hasVenue ? values.address : "",
     city: hasVenue ? values.city : "",
     countryCode: hasVenue ? values.countryCode : "",
+    mapUrl: hasVenue ? values.mapUrl : "",
     // Not collected yet (the map layer is post-MVP), so always empty.
     latitude: "",
     longitude: "",

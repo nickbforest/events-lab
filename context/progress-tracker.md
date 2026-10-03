@@ -23,6 +23,11 @@ Discovery and the signup publisher-type select were dropped from the MVP.
 
 **Next:** commit and open the PR, run the §D checklist, then the C2 PR.
 
+**2026-10-03 — Map link** (branch `feat/event-map-link`): the event form's
+Location section takes a pasted map link (`events.map_url`, migration
+`add_event_map_url`). "View on map" on the card and event page opens it, and
+falls back to the OpenStreetMap address search when it is empty.
+
 ---
 
 # Hardening pass — 2026-09-30
@@ -264,6 +269,7 @@ Discovery, moderation and organizations are not part of the MVP gate.
 | 2026-09-26 | `ticket_cta_label` column | The button's wording depends on the event; a hard-coded "Get tickets" is wrong for a free workshop |
 | 2026-09-26 | Country typed, stored as ISO code | Free text is faster than a 250-row select; resolving to a code keeps discovery filters from splitting one country three ways |
 | 2026-09-26 | OpenStreetMap link before Mapbox | A plain hyperlink needs no key or SDK, so it does not introduce a second map provider |
+| 2026-10-03 | Publisher-pasted map link, map hosts only | Address search lands on the wrong building; publishers already have the exact pin in Google Maps. Approved by the developer as a hyperlink, not a provider. Allowlisted (Google, Apple, OSM) so "View on map" cannot point anywhere else |
 | 2026-09-26 | Indeterminate upload progress | Server Actions report no byte progress; a fake percentage would claim what the app cannot measure |
 | 2026-09-26 | Dashboard logo leads to Overview | A signed-in publisher has no use for the public landing page mid-task |
 | 2026-09-26 | Profile media is removable | Clearing the column first, then deleting files, mirrors the replace order: a failure never leaves a broken image referenced |

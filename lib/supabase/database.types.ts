@@ -120,6 +120,7 @@ export type Database = {
           is_free: boolean;
           latitude: number | null;
           longitude: number | null;
+          map_url: string | null;
           online_url: string | null;
           owner_id: string;
           price_info: string | null;
@@ -151,6 +152,7 @@ export type Database = {
           is_free?: boolean;
           latitude?: number | null;
           longitude?: number | null;
+          map_url?: string | null;
           online_url?: string | null;
           owner_id: string;
           price_info?: string | null;
@@ -182,6 +184,7 @@ export type Database = {
           is_free?: boolean;
           latitude?: number | null;
           longitude?: number | null;
+          map_url?: string | null;
           online_url?: string | null;
           owner_id?: string;
           price_info?: string | null;

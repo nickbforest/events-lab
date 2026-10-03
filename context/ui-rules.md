@@ -230,8 +230,8 @@ Cancelled, Archived** (`EVENT_STATUS_META` in `lib/format.ts`). There is no
 
 # 17. Maps
 
-Post-MVP. Until then an event card links to OpenStreetMap with a plain
-"View on map" link. When maps arrive: they support discovery rather than
+Post-MVP. Until then the event card and event page show a plain "View on
+map" link: the publisher's pasted map link, else an OpenStreetMap search. When maps arrive: they support discovery rather than
 dominate it — desktop `Filters | List | Map`, mobile list ↕ map with an
 explicit switch.
 
