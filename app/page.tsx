@@ -1,14 +1,18 @@
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  CalendarPlus,
   Check,
   Globe,
   Link2,
   Lock,
   MapPin,
+  Send,
   Share2,
   Sparkles,
   Ticket,
+  UserPlus,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +24,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/format";
 import { routes } from "@/lib/routes";
+import { AudienceWall } from "./audience-wall";
 
 /* Illustrations on this page are decorative sample UI with made-up
    publishers and venues, hidden from assistive technology; the text beside
@@ -160,12 +165,15 @@ interface Feature {
   title: string;
   body: string;
   className?: string;
+  /** The icon's hover motion — each feature moves in its own way. */
+  iconMotion: string;
   visual?: ReactNode;
 }
 
 const FEATURES: Feature[] = [
   {
     Icon: Globe,
+    iconMotion: "group-hover:animate-spin-slow",
     title: "Your own public page",
     body: "Every publisher gets a page of their own at eventail.space/publisher/yourname — a shareable home for your upcoming schedule.",
     className: "md:col-span-2",
@@ -187,6 +195,7 @@ const FEATURES: Feature[] = [
   },
   {
     Icon: Ticket,
+    iconMotion: "group-hover:animate-wiggle",
     title: "External ticket links",
     body: "Keep the ticketing provider you already use. Eventail is the front door; the click goes to your URL.",
     visual: (
@@ -200,6 +209,7 @@ const FEATURES: Feature[] = [
   },
   {
     Icon: Share2,
+    iconMotion: "group-hover:animate-pop",
     title: "Made to be shared",
     body: "Every event page carries its own preview image and event details, so a link looks right in a message, a post or a search result.",
     visual: (
@@ -214,6 +224,7 @@ const FEATURES: Feature[] = [
   },
   {
     Icon: Zap,
+    iconMotion: "group-hover:animate-flash",
     title: "Fast and quiet",
     body: "Server-rendered, mobile-first, no bloated dashboards. Publish an event in under a minute.",
     className: "md:col-span-2",
@@ -232,55 +243,43 @@ const FEATURES: Feature[] = [
 
 const STEPS = [
   {
+    Icon: UserPlus,
     title: "Claim your page",
     body: "Sign up and pick a username. Your page lives at its own link from the first minute.",
   },
   {
+    Icon: CalendarPlus,
     title: "Add an event",
     body: "Title, date, place, an image and your ticket link. Save it as a draft or publish straight away.",
   },
   {
+    Icon: Send,
     title: "Share the link",
     body: "Every event gets its own page with a rich preview, ready for messages, posts and search.",
   },
 ];
-
-const AUDIENCES = [
-  "Musicians",
-  "Bands",
-  "Painters",
-  "Artists",
-  "Sport Clubs",
-  "Cinemas",
-  "Theaters",
-  "Bars",
-  "Cafes",
-  "Clubs",
-  "Conference Organizers",
-  "Schools",
-  "Churches",
-  "Communities",
-  "Local Businesses",
-  "DJs",
-  "Comedians",
-  "Festivals",
-];
-
-const MARQUEE_ITEMS = AUDIENCES.flatMap((word) => [
-  { id: `${word}-first`, word },
-  { id: `${word}-second`, word },
-]);
 
 interface SectionHeadingProps {
   eyebrow: string;
   /** May carry one `font-accent` phrase — the section's key word. */
   title: ReactNode;
   description?: string;
+  className?: string;
 }
 
-function SectionHeading({ eyebrow, title, description }: SectionHeadingProps) {
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+  className,
+}: SectionHeadingProps) {
   return (
-    <div className="reveal-on-scroll mx-auto mb-14 max-w-2xl text-center">
+    <div
+      className={cn(
+        "reveal-on-scroll mx-auto mb-14 max-w-2xl text-center",
+        className,
+      )}
+    >
       <Eyebrow className="mb-5">{eyebrow}</Eyebrow>
       <h2 className="font-display text-3xl font-semibold tracking-tight md:text-5xl">
         {title}
@@ -299,7 +298,7 @@ export default function LandingPage() {
     <>
       <SiteHeader showSections />
 
-      <main className="-mt-[4.25rem] flex-1 sm:-mt-[4.5rem]">
+      <main className="-mt-[4.75rem] flex-1 sm:-mt-[5rem]">
         {/* Hero — pulled up under the floating header so the grid and glow
             start at the very top of the page. */}
         <section className="relative isolate overflow-hidden px-6 pt-36 pb-24 md:pt-44 md:pb-32">
@@ -350,40 +349,41 @@ export default function LandingPage() {
               eyebrow="Platform"
               title={
                 <>
-                  A focused publishing tool, not another{" "}
-                  <span className="font-accent text-white/90">
-                    marketplace.
-                  </span>
+                  A focused publishing{" "}
+                  <span className="font-accent text-gradient">tool,</span> not
+                  another marketplace.
                 </>
               }
               description="Everything a schedule needs to look good and travel well — nothing that gets in the way of it."
             />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {FEATURES.map(({ Icon, title, body, className, visual }) => (
-                <div
-                  key={title}
-                  className={cn(
-                    "surface group reveal-on-scroll relative isolate overflow-hidden rounded-3xl p-7 transition-all duration-300 ease-[var(--ease-studio)] hover:-translate-y-1 hover:border-white/15 hover:shadow-lift md:p-8",
-                    className,
-                  )}
-                >
+              {FEATURES.map(
+                ({ Icon, iconMotion, title, body, className, visual }) => (
                   <div
-                    aria-hidden
-                    className="absolute -top-24 -right-24 -z-10 size-56 rounded-full bg-glow/20 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
-                  />
-                  <div className="mb-6 grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
-                    <Icon className="size-5" aria-hidden />
+                    key={title}
+                    className={cn(
+                      "surface group reveal-on-scroll relative isolate overflow-hidden rounded-3xl p-7 transition-all duration-300 ease-[var(--ease-studio)] hover:-translate-y-1 hover:border-white/15 hover:shadow-lift md:p-8",
+                      className,
+                    )}
+                  >
+                    <div
+                      aria-hidden
+                      className="absolute -top-24 -right-24 -z-10 size-56 rounded-full bg-glow/20 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                    />
+                    <div className="mb-6 grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-all duration-300 ease-[var(--ease-studio)] group-hover:scale-110 group-hover:bg-primary/15 group-hover:shadow-glow">
+                      <Icon className={cn("size-5", iconMotion)} aria-hidden />
+                    </div>
+                    <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">
+                      {title}
+                    </h3>
+                    <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                      {body}
+                    </p>
+                    {visual ? <div aria-hidden>{visual}</div> : null}
                   </div>
-                  <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">
-                    {title}
-                  </h3>
-                  <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                    {body}
-                  </p>
-                  {visual ? <div aria-hidden>{visual}</div> : null}
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
         </section>
@@ -403,83 +403,68 @@ export default function LandingPage() {
               title={
                 <>
                   From idea to shareable link in{" "}
-                  <span className="font-accent text-white/90">
+                  <span className="font-accent text-gradient">
                     three steps.
                   </span>
                 </>
               }
             />
 
-            <div className="relative">
-              {/* The thread joining the steps on wide screens. */}
-              <div
-                aria-hidden
-                className="absolute top-[3.25rem] right-[16%] left-[16%] hidden border-t border-dashed border-white/15 md:block"
-              />
-              <ol className="relative grid grid-cols-1 gap-4 md:grid-cols-3">
-                {STEPS.map((step, index) => (
-                  <li
-                    key={step.title}
-                    className="surface reveal-on-scroll relative rounded-3xl p-7 text-center md:p-8"
-                  >
-                    <span className="relative mx-auto mb-6 grid size-10 place-items-center rounded-full bg-background font-mono text-sm text-primary ring-1 ring-primary/40">
-                      {String(index + 1).padStart(2, "0")}
+            {/* Steps stack on a phone and sit in a row from `md`, with an
+                arrow in each gap pointing to the next one. */}
+            <ol className="grid grid-cols-1 gap-12 md:grid-cols-3">
+              {STEPS.map(({ Icon, title, body }, index) => (
+                <li
+                  key={title}
+                  className="surface group reveal-on-scroll relative rounded-3xl p-7 text-center transition-[border-color,box-shadow] duration-300 hover:border-white/15 hover:shadow-lift md:p-8"
+                >
+                  <span className="mx-auto mb-6 grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/25 transition-all duration-300 ease-[var(--ease-studio)] group-hover:scale-110 group-hover:shadow-glow">
+                    <Icon
+                      aria-hidden
+                      className="size-6 group-hover:animate-pop"
+                    />
+                  </span>
+                  <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">
+                    {title}
+                  </h3>
+                  <p className="mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground">
+                    {body}
+                  </p>
+
+                  {index < STEPS.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-[2.125rem] left-1/2 z-10 grid size-5 -translate-x-1/2 place-items-center text-primary/80 md:top-1/2 md:-right-[2.125rem] md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2"
+                    >
+                      <ArrowDown className="size-5 animate-nudge-y md:hidden" />
+                      <ArrowRight className="hidden size-5 animate-nudge-x md:block" />
                     </span>
-                    <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">
-                      {step.title}
-                    </h3>
-                    <p className="mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground">
-                      {step.body}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </div>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
         {/* Audiences */}
         <section
           id="audience"
-          className="scroll-mt-24 overflow-hidden py-24 md:py-32"
+          className="scroll-mt-24 overflow-x-clip py-24 md:py-32"
         >
-          <div className="px-6">
-            <SectionHeading
-              eyebrow="Who it’s for"
-              title={
-                <>
-                  Anyone with an audience to{" "}
-                  <span className="font-accent text-white/90">gather.</span>
-                </>
-              }
-            />
-          </div>
-
-          <div aria-hidden className="relative space-y-4">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent md:w-48" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent md:w-48" />
-
-            <div className="flex w-max animate-marquee gap-3">
-              {MARQUEE_ITEMS.map(({ id, word }) => (
-                <span
-                  key={`a-${id}`}
-                  className="shrink-0 rounded-full border border-border bg-white/[0.03] px-6 py-3 font-display text-xl font-medium tracking-tight md:text-2xl"
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
-            <div className="flex w-max animate-marquee-reverse gap-3">
-              {MARQUEE_ITEMS.map(({ id, word }) => (
-                <span
-                  key={`b-${id}`}
-                  className="shrink-0 rounded-full border border-primary/30 bg-primary/[0.04] px-6 py-3 font-display text-xl font-medium tracking-tight text-primary md:text-2xl"
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
-          </div>
+          <AudienceWall
+            heading={
+              <SectionHeading
+                eyebrow="Who it’s for"
+                className="mb-6"
+                title={
+                  <>
+                    Anyone with an audience to{" "}
+                    <span className="font-accent text-gradient">gather.</span>
+                  </>
+                }
+              />
+            }
+          />
         </section>
 
         {/* Closing call to action */}

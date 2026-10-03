@@ -88,6 +88,125 @@
   --ease-studio: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Motion tokens. Declared in @theme so variants work
+   (`group-hover:animate-wiggle`). All stop under reduced motion. */
+@theme {
+  --animate-wiggle: wiggle 0.7s ease-in-out infinite;
+  --animate-pop: pop 0.9s var(--ease-studio) infinite;
+  --animate-flash: flash 1s ease-in-out infinite;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-nudge-x: nudge-x 1.6s ease-in-out infinite;
+  --animate-nudge-y: nudge-y 1.6s ease-in-out infinite;
+  --animate-tail-wag: tail-wag 7s ease-in-out infinite;
+  --animate-dot-hop: dot-hop 7s ease-in-out infinite;
+  --animate-stream-down: stream-down 40s linear infinite;
+
+  /* A looping column: the track holds its cards twice, so sliding it by
+     half its height lands on an identical frame. */
+  @keyframes stream-down {
+    from {
+      transform: translateY(-50%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-14deg);
+    }
+    75% {
+      transform: rotate(14deg);
+    }
+  }
+  @keyframes pop {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.22) rotate(-8deg);
+    }
+    70% {
+      transform: scale(0.95);
+    }
+  }
+  @keyframes flash {
+    0%,
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    20% {
+      opacity: 0.35;
+      transform: translateY(-1px);
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(1px);
+    }
+    55% {
+      opacity: 0.5;
+    }
+  }
+  @keyframes nudge-x {
+    0%,
+    100% {
+      transform: translateX(-2px);
+    }
+    50% {
+      transform: translateX(3px);
+    }
+  }
+  @keyframes nudge-y {
+    0%,
+    100% {
+      transform: translateY(-2px);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+  /* Logo idle: the dot hops, then the tail wags twice, then rest. */
+  @keyframes dot-hop {
+    0%,
+    10%,
+    100% {
+      transform: translateY(0);
+    }
+    4% {
+      transform: translateY(-0.28em);
+    }
+    7% {
+      transform: translateY(0.02em);
+    }
+  }
+  @keyframes tail-wag {
+    0%,
+    9%,
+    30%,
+    100% {
+      transform: rotate(0deg);
+    }
+    13% {
+      transform: rotate(-12deg);
+    }
+    18% {
+      transform: rotate(6deg);
+    }
+    23% {
+      transform: rotate(-8deg);
+    }
+    27% {
+      transform: rotate(3deg);
+    }
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -281,23 +400,6 @@
   animation: float 7s ease-in-out 1.5s infinite alternate;
 }
 
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 40s linear infinite;
-}
-
-.animate-marquee-reverse {
-  animation: marquee 50s linear infinite reverse;
-}
-
 /*
  * An upload in flight. Server Actions report no byte progress, so this is an
  * indeterminate bar — it says "still working", never a percentage it cannot
@@ -327,8 +429,6 @@
     scroll-behavior: auto !important;
   }
 
-  .animate-marquee,
-  .animate-marquee-reverse,
   .animate-drift,
   .animate-drift-slow,
   .animate-float,
