@@ -52,10 +52,12 @@ export const formSubmitClass =
 
 /**
  * The submit button and its status line closing a full-page form (Profile,
- * Settings): the button spans the form, edge to edge, with the status above.
+ * Settings). Below `sm` the button spans the form, edge to edge, with the
+ * status above it; from `sm` they share a row, status left, button right.
  */
-export const formFooterClass = "flex flex-col gap-4";
-export const formSubmitWideClass = `${formSubmitClass} w-full`;
+export const formFooterClass =
+  "flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between";
+export const formSubmitWideClass = `${formSubmitClass} w-full sm:w-auto`;
 
 export interface FieldProps {
   id: string;
