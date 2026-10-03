@@ -639,7 +639,7 @@ export function EventForm({
                 name: "ticketUrl",
                 label: "Ticket purchase URL",
                 type: "url",
-                hint: "events-lab does not sell tickets. This sends people to your provider.",
+                hint: "Eventail does not sell tickets. This sends people to your provider.",
                 placeholder: "https://tickets.example.com/...",
               })}
             </div>

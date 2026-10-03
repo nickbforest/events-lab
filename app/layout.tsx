@@ -22,8 +22,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "events-lab — Publish events without the noise",
-    template: "%s — events-lab",
+    default: "Eventail — Publish events without the noise",
+    template: "%s — Eventail",
   },
   description:
     "The publishing toolkit for artists, venues, and organizers to share upcoming events with their audience.",

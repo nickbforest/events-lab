@@ -42,7 +42,7 @@ export function UpdatePasswordForm() {
   return (
     <AuthCard
       heading="Set a new password"
-      subheading="Choose a password you have not used on events-lab before."
+      subheading="Choose a password you have not used on Eventail before."
     >
       <form
         className="space-y-5"
