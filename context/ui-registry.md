@@ -659,11 +659,13 @@ never a `<TextField />` element. A component declared inside another component
 is a new type on every render, so React remounts the input and the field loses
 focus after every keystroke.
 
-Country is a free-text input with a `<datalist>` of names from
-`lib/countries.ts`. It is typed by hand; `countryCodeFromInput` resolves the
-name to the ISO code the column stores, and an unrecognised value is a field
-error rather than a silently bad row. The field shows the name, never the
-code.
+Country is a free-text input with the shared `CountryOptions` datalist
+(`components/forms/country-options.tsx`, one unique `id` per form). It is
+typed by hand; `optionalCountrySchema` (`lib/countries.ts`) resolves the name
+— or a code someone already knows — to the ISO code the column stores, and
+an unrecognised value is a field error rather than a silently bad row. The
+field shows the name, never the code. The profile form's Country field uses
+the same pair (2026-10-03; it was a two-letter code input before).
 
 The time zone control appears only in the page layout. The dialog reads its
 times in the browser's own zone, which is right for a publisher creating an
@@ -975,24 +977,30 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | info card `bg-card/40`; cancelled banner `bg-destructive/10` |
-| Border           | banner `border-b border-destructive/30`; info card `border border-border` |
-| Border radius    | info card `rounded-lg`; action `rounded-md`         |
+| Background       | image frame `bg-secondary`; info card `bg-card/40`; cancelled banner `bg-destructive/10` |
+| Border           | banner `border-b border-destructive/30`; image frame and info card `border border-border` |
+| Border radius    | image frame and info card `rounded-lg`; action `rounded-md` |
 | Text — primary   | title `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-5xl`; info values `text-sm font-medium` |
 | Text — secondary | section labels and info labels `font-mono text-xs uppercase text-muted-foreground` |
-| Spacing          | article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; info card `p-6 space-y-4` |
+| Spacing          | article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; image `aspect-[4/3] w-full max-w-md`; info card `p-6 space-y-4` |
 | Hover state      | organizer link `group-hover:text-primary`; action `hover:brightness-110` |
 | Shadow           | none                                                |
 | Accent usage     | category kicker, info-row icons, "View on map" link, the full-width primary action |
 
 **Pattern notes:**
 Content in two columns, facts in a right-hand card: date, time with the IANA
-zone beside it, location, price, then one full-width lime action — the ticket
+zone beside it, and location, then one full-width lime action — the ticket
 button (publisher's label, default "Get tickets") or, with no ticket URL,
 "Join online". A cancelled event gets a `role="alert"` banner under the site
-header and no action. There is no cover banner (removed 2026-10-03 at the
-developer's request: a poster cropped to a full-width strip loses most of
-itself); the image is still the Open Graph and JSON-LD image. JSON-LD is rendered inline with `<` escaped.
+header and no action.
+
+The event image heads the left content column as a framed poster
+(`aspect-[4/3] w-full max-w-md rounded-lg border`, `object-cover`,
+`priority`): larger than the listing's `md:w-40` thumbnail, never a
+full-width banner (removed 2026-10-03 — a strip crop lost most of the
+poster). It is also the Open Graph and JSON-LD image. Price is not shown on
+the page (removed 2026-10-03 at the developer's request); the event form
+still records it. JSON-LD is rendered inline with `<` escaped.
 
 The location row shows whatever exists of venue, address and "city, country
 name" for any non-online event, plus "Also online" for hybrid; only an

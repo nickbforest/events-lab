@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { usernameSchema } from "@/features/profiles/contracts";
-import { countryCodeFromInput } from "@/lib/countries";
+import { optionalCountrySchema } from "@/lib/countries";
 import { optionalMapUrlSchema } from "@/lib/maps";
 import { Constants } from "@/lib/supabase/database.types";
 import { optionalHttpUrlSchema } from "@/lib/urls";
@@ -64,34 +64,6 @@ function optionalText(max: number, error: string) {
 }
 
 const optionalUrl = optionalHttpUrlSchema;
-
-/**
- * A country, typed by hand.
- *
- * The column stores an ISO alpha-2 code, because "Georgia", "georgia" and
- * "GE" must not become three different countries the day discovery filters
- * by one. So the field is free text and this resolves it — the person writes
- * a country, the row keeps a code.
- */
-const countryCode = z
-  .string()
-  .trim()
-  .transform((value, ctx) => {
-    if (value === "") {
-      return null;
-    }
-
-    const code = countryCodeFromInput(value);
-    if (!code) {
-      ctx.addIssue({
-        code: "custom",
-        error: `We do not recognise “${value}” as a country.`,
-      });
-      return null;
-    }
-
-    return code;
-  });
 
 const optionalCoordinate = (max: number, error: string) =>
   z
@@ -180,7 +152,7 @@ export const eventDraftSchema = z
     venueName: optionalText(160, "Venue must be 160 characters or fewer."),
     address: optionalText(240, "Address must be 240 characters or fewer."),
     city: optionalText(120, "City must be 120 characters or fewer."),
-    countryCode: countryCode,
+    countryCode: optionalCountrySchema,
     latitude: optionalCoordinate(90, "Latitude must be between -90 and 90."),
     longitude: optionalCoordinate(
       180,
