@@ -16,11 +16,11 @@ export default function DashboardLoading() {
         </div>
 
         <div className="space-y-6">
-          <Skeleton className="h-36 rounded-lg border border-border" />
-          <Skeleton className="h-64 rounded-lg border border-border" />
+          <Skeleton className="h-36 rounded-2xl border border-border" />
+          <Skeleton className="h-64 rounded-2xl border border-border" />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Skeleton className="h-48 rounded-lg border border-border" />
-            <Skeleton className="h-48 rounded-lg border border-border" />
+            <Skeleton className="h-48 rounded-2xl border border-border" />
+            <Skeleton className="h-48 rounded-2xl border border-border" />
           </div>
         </div>
       </div>

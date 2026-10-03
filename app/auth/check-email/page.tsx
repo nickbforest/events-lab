@@ -26,14 +26,14 @@ export default async function CheckEmailPage({
         footer={
           <Link
             href={routes.auth.signIn()}
-            className="text-primary hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Back to log in
           </Link>
         }
       >
         <div className="space-y-6">
-          <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Open the link to finish setting up your page. It expires after a
             short while, and the inbox may file it as spam.
           </p>

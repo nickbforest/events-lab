@@ -4,7 +4,7 @@ The components and patterns that exist in the code, and the classes they use.
 Before building UI, find the closest entry here and match it. After building
 UI, run `/imprint` so this file never drifts from the code.
 
-Last reconciled with the code: 2026-10-03.
+Last reconciled with the code: 2026-10-03 ("Lime + Violet" redesign).
 
 There is no generated shadcn/ui primitive in the codebase yet (`components.json`
 is configured for one). Base controls are hand-written below, styled from the
@@ -17,17 +17,20 @@ cannot cover the need, and register it.
 
 | Component | File | Kind |
 | --- | --- | --- |
+| `buttonClass` | components/ui/button.ts | primitive |
+| `Eyebrow` | components/ui/eyebrow.tsx | primitive |
+| `AmbientBackground` | components/ui/ambient-background.tsx | primitive |
 | `Avatar` | components/ui/avatar.tsx | primitive |
 | `EmptyState` | components/ui/empty-state.tsx | primitive |
 | `Switch` | components/ui/switch.tsx | primitive |
 | `StatusMessage`, `statusPrimaryActionClass`, `statusSecondaryActionClass` | components/ui/status-message.tsx | primitive |
 | `Skeleton`, `LoadingRegion` | components/ui/skeleton.tsx | primitive |
 | `TrackView`, `TicketLink` | components/analytics/ | analytics |
-| `Field`, `SelectControl`, `fieldControlClass`, `fieldDescribedBy`, `formSubmitClass` | components/forms/field.tsx | form primitive |
+| `Field`, `SelectControl`, `fieldControlClass`, `fieldDescribedBy`, `formFooterClass`, `formSubmitWideClass` | components/forms/field.tsx | form primitive |
 | `FormSection` | components/forms/form-section.tsx | form primitive |
 | `ImageUploader` | components/forms/image-uploader.tsx | form primitive |
 | `AuthCard`, `FormAlert`, `authSubmitClass` | components/auth/auth-card.tsx | auth shell |
-| `SiteHeader`, `SiteFooter`, `WordmarkLink` | components/layout/ | public chrome |
+| `SiteHeader`, `SiteFooter`, `WordmarkLink`, `LogoMark`, `PublicShell` | components/layout/ | public chrome |
 | `DashboardShell`, `DashboardHeader` | components/layout/ | dashboard chrome |
 | `Panel`, `PanelEmpty`, `StatsCard`, `StatsCardRow`, `RangeTabs`, `TrendChart` | components/dashboard/ | dashboard |
 | `EventCard`, `EventStatusBadge` | components/events/ | events |
@@ -59,29 +62,163 @@ components, moderation components.
 Entries written by `/imprint` from shipped code. These are the authoritative
 classes — match them when building anything of the same type.
 
+### Design foundation (tokens and utilities)
+
+File: app/globals.css
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | page `bg-background` (`hsl(240 16% 4%)`); cards `bg-card` via `surface` |
+| Border | `border-border` (white 8%); inputs `border-input` (white 10%); hover lift to `border-white/15`–`/20` |
+| Border radius | controls `rounded-lg`; small tiles `rounded-xl`; cards `rounded-2xl`; landing panels `rounded-3xl`; buttons, chips, badges, pills `rounded-full` |
+| Text — primary | headings `font-display` (Bricolage Grotesque) `font-semibold tracking-tight`, sentence case; key phrase `font-accent` (Instrument Serif italic) |
+| Text — secondary | `text-muted-foreground`; metadata (dates, handles, URLs, counts) `font-mono text-xs` |
+| Spacing | landing sections `py-24 md:py-32`; dashboard pages `px-6 py-10 md:px-10` |
+| Hover state | translucent white fills `bg-white/[0.04]`–`[0.08]` |
+| Shadow | `shadow-card` (rest), `shadow-lift` (hover/floating), `shadow-glow` (primary only) |
+| Accent usage | lime `primary` for actions; `glow`/`glow-2` (violet/indigo) for atmosphere only |
+
+**Pattern notes:**
+Utilities defined with `@utility` in `globals.css`: `surface` (card fill,
+hairline, `shadow-card` — always pair it with a `rounded-*` class), `glass`
+(translucent blurred chrome), `bg-grid` (56px grid, radially masked) and
+`text-gradient` (lime → pale tint, for one highlighted headline phrase).
+Motion classes: `animate-reveal` (stagger with `[--reveal-delay:120ms]`),
+`reveal-on-scroll` (scroll-driven fade-up, progressive enhancement),
+`animate-drift`/`-slow` (background glows), `animate-float`/`-delayed`
+(floating chips), and the native `<dialog>` scale-in. All of them stop under
+reduced motion. Never use violet for text or controls.
+
+### Button
+
+File: components/ui/button.ts
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | primary `bg-primary`; secondary `bg-white/[0.04]`; ghost none; destructive none |
+| Border | secondary `border border-border`; destructive `border-destructive/40` |
+| Border radius | `rounded-full` |
+| Text — primary | `font-medium`; sizes `sm` `px-4 py-2 text-sm`, `md` `px-6 py-3 text-sm`, `lg` `px-7 py-3.5 text-base` |
+| Text — secondary | ghost `text-muted-foreground` |
+| Spacing | `gap-2` between icon and label |
+| Hover state | primary `-translate-y-px brightness-110`; secondary `border-white/20 bg-white/[0.08]`; ghost `bg-white/[0.06]`; destructive `bg-destructive/10`; all `active:scale-[0.98]` |
+| Shadow | primary `shadow-glow` |
+| Accent usage | primary only — one per view or card |
+
+**Pattern notes:**
+`buttonClass({ variant, size, className })` returns a class string, so the
+same button styles a `<button>`, a `<Link>`, a plain `<a>` and a
+`TicketLink`, in Server and Client Components alike. Never restate button
+classes inline; the named helpers (`authSubmitClass`, `formSubmitWideClass`,
+`statusPrimaryActionClass`, `statusSecondaryActionClass`) are thin aliases
+of it. Disabled and `aria-disabled` drop to 50% and ignore the pointer.
+
+### Eyebrow
+
+File: components/ui/eyebrow.tsx
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | `bg-white/[0.03]` |
+| Border | `border border-border` |
+| Border radius | `rounded-full` |
+| Text — primary | `text-xs font-medium text-muted-foreground` |
+| Text — secondary | n/a |
+| Spacing | `px-3 py-1`, `gap-2` |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | optional `dot`: a pinging lime dot |
+
+**Pattern notes:**
+The kicker for landing sections, `StatusMessage` and the publisher type.
+Dashboard headers keep their plainer lime small-caps kicker. Use `dot` only
+for a live or free hook, at most once per page.
+
+### AmbientBackground / PublicShell
+
+File: components/ui/ambient-background.tsx, components/layout/public-shell.tsx
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | `hero`: `bg-grid` + `bg-glow/25` top bloom + drifting `glow-2` and `primary` blobs; `soft`/`quiet`: a top radial wash of `--glow` at 16% / 9% |
+| Border | none |
+| Border radius | n/a |
+| Text — primary | n/a |
+| Text — secondary | n/a |
+| Spacing | fills its parent (`absolute inset-0 -z-10`) |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | atmosphere only |
+
+**Pattern notes:**
+Decorative, `aria-hidden`, `pointer-events-none`. The parent must be
+`relative isolate`. `hero` is for the landing hero and auth
+(`app/auth/layout.tsx`); `soft` comes through `PublicShell`, which wraps the
+whole public page (header included) so the wash starts behind the floating
+bar — used by the publisher page, event page, `not-found` and `error`;
+`quiet` sits behind the dashboard `<main>`. Soft washes are radial gradients,
+never blurred blobs, so a clipping parent never shows a hard edge.
+
+### Landing page
+
+File: app/page.tsx
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | hero `AmbientBackground variant="hero"`; How it works a centred radial `--glow` wash; CTA panel `surface` + `bg-grid` + bottom glow |
+| Border | cards `surface`; the steps' connecting line `border-dashed border-white/15` |
+| Border radius | feature, step and preview cards `rounded-3xl`; CTA panel `rounded-[2rem]` |
+| Text — primary | hero `font-display text-5xl … lg:text-8xl font-semibold leading-[0.95] tracking-[-0.035em]`; section titles `text-3xl md:text-5xl font-semibold tracking-tight` |
+| Text — secondary | `text-lg leading-relaxed text-muted-foreground` |
+| Spacing | sections `px-6 py-24 md:py-32`; hero `pt-40 pb-24 md:pt-48 md:pb-32`; section heading `mb-14` |
+| Hover state | feature cards `hover:-translate-y-1 hover:border-white/15 hover:shadow-lift` + a violet corner glow |
+| Shadow | `shadow-card` / `shadow-lift` |
+| Accent usage | hero CTA, `text-gradient` on one phrase per headline, feature icon tiles `bg-primary/10 text-primary` |
+
+**Pattern notes:**
+Order: hero (headline, copy, primary + secondary CTA — no eyebrow, removed
+at the developer's request — then a decorative publisher-page preview of a
+made-up New York organiser with two floating chips from `xl`), Features (bento,
+`md:grid-cols-3` with two `md:col-span-2` cards), How it works (three
+numbered steps), Who it's for (two-row marquee), closing CTA panel. Section
+ids `features`, `how-it-works` and `audience` match `LANDING_SECTIONS`;
+anchor clicks scroll smoothly (`html { scroll-behavior: smooth }` with
+`data-scroll-behavior="smooth"` on `<html>`, so route changes still jump).
+Illustrations are sample UI and `aria-hidden`; the text beside them says the
+same thing. Headings use `SectionHeading` (page-local).
+
 ### SiteHeader
 
 File: components/layout/site-header.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
-| Property         | Class                                            |
-| ---------------- | ------------------------------------------------ |
-| Background       | `bg-background/80` + `backdrop-blur-md`           |
-| Border           | `border-b border-border`                          |
-| Border radius    | `rounded-md` (nav links and buttons)              |
-| Text — primary   | `text-sm font-medium` on default foreground       |
-| Text — secondary | `text-sm font-medium text-muted-foreground`       |
-| Spacing          | `h-16 px-6`, `gap-1 sm:gap-3`, links `px-3 py-2`  |
-| Hover state      | ghost `hover:bg-white/5 hover:text-foreground`; solid `hover:opacity-90` |
-| Shadow           | none                                              |
-| Accent usage     | `text-primary` on the wordmark dot only        |
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | `glass` (card 70% + `backdrop-blur`) on the floating bar; header wrapper transparent |
+| Border | `glass` hairline `border-border` |
+| Border radius | bar `rounded-full`; links and buttons `rounded-full` |
+| Text — primary | buttons via `buttonClass` (`text-sm font-medium`) |
+| Text — secondary | section links `text-sm text-muted-foreground` |
+| Spacing | wrapper `px-4 pt-3 sm:px-6 sm:pt-4`; bar `h-14 max-w-6xl pr-2 pl-4 sm:pl-5` |
+| Hover state | links `hover:bg-white/[0.06] hover:text-foreground` |
+| Shadow | `shadow-card` |
+| Accent usage | `Get started` (primary button) and the wordmark |
 
 **Pattern notes:**
-The public header carries exactly two actions — a ghost `Log in` and a solid
-`Get started` (`bg-foreground text-background`), to `routes.auth.signIn()`
-and `routes.auth.signUp()` so each opens the form it promises. It holds no
-app navigation: Discover is reached from the landing page, and the dashboard
-is reached from its own sidebar once signed in. Do not add nav links here.
+A floating glass pill, sticky with a small top gap so the page scrolls under
+it. It carries exactly two actions — a ghost `Log in` and a primary `Get
+started` (`buttonClass({ size: "sm" })`) — to `routes.auth.signIn()` and
+`routes.auth.signUp()`. `showSections` (landing page only) adds the in-page
+anchors from `LANDING_SECTIONS` (Features, How it works, Who it's for),
+hidden below `md`. No other page passes it: a publisher's page is not a
+marketing funnel (ui-rules §19). The landing `<main>` is pulled up
+(`-mt-[4.25rem] sm:-mt-[4.5rem]`) so the hero grid starts behind the bar;
+other public pages get the same effect from `PublicShell`.
 
 The wordmark is `WordmarkLink` (`components/layout/wordmark-link.tsx`, added
 2026-09-26), shared with the dashboard sidebar. It takes the destination:
@@ -95,24 +232,24 @@ the wordmark as a link again.
 File: components/layout/site-footer.tsx
 Last updated: 2026-10-03
 
-| Property         | Class                                            |
-| ---------------- | ------------------------------------------------ |
-| Background       | inherits `bg-background`                          |
-| Border           | `border-t border-border`                          |
-| Border radius    | none                                              |
-| Text — primary   | wordmark `font-display text-lg font-extrabold uppercase tracking-tighter` |
-| Text — secondary | copyright `font-mono text-xs text-muted-foreground` |
-| Spacing          | `max-w-7xl px-6 py-10`; stacked `gap-3`, one row `sm:justify-between` |
-| Hover state      | none                                              |
-| Shadow           | none                                              |
-| Accent usage     | `text-primary` on the wordmark dot only        |
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | inherits `bg-background` |
+| Border | `border-t border-border`; bottom bar `border-t`; a `via-glow/50` gradient hairline on top |
+| Border radius | none |
+| Text — primary | wordmark via `WordmarkLink`; column headings `text-xs font-medium uppercase tracking-[0.14em] text-foreground/70` |
+| Text — secondary | links and tagline `text-sm text-muted-foreground`; copyright `font-mono text-xs` |
+| Spacing | `max-w-6xl px-6 py-14`, `gap-10`; bottom bar `py-6` |
+| Hover state | links `hover:text-foreground` |
+| Shadow | none |
+| Accent usage | wordmark only |
 
 **Pattern notes:**
-The footer is the wordmark and the line "© 2026 eventail.space All rights
-reserved." (added 2026-10-03) — stacked on mobile, one row from `sm`. The
-Discover and Start publishing links and the "Prototype — no live data" note
-were removed on 2026-09-26 at the developer's request. Like `SiteHeader`, it carries no app
-navigation; do not add links back without asking.
+Wordmark and tagline, then two link columns — Product (the landing
+sections, linked as `/#id`) and Account (Create your page, Log in) — then a
+bottom bar with the copyright in mono and a one-line sign-off. Columns sit
+side by side from 375px (`grid-cols-2`, brand block `col-span-2`) and in
+three from `sm`. Redesigned 2026-10-03 at the developer's request.
 
 ### DashboardShell (sidebar)
 
@@ -121,15 +258,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | mobile bar `bg-background/90 backdrop-blur-md`; `md:bg-card/40` |
-| Border           | `border-b border-border` mobile, `md:border-r`      |
-| Border radius    | `rounded-md` on nav items                           |
-| Text — primary   | active `text-foreground`, `text-sm font-medium`     |
-| Text — secondary | idle `text-muted-foreground`, `text-sm font-medium` |
-| Spacing          | shell `p-6`, items `px-3 py-2`, nav `gap-1`, footer `border-t pt-6` |
-| Hover state      | `hover:bg-white/5 hover:text-foreground`            |
-| Shadow           | none                                                |
-| Accent usage     | wordmark dot; preview link `hover:text-primary`  |
+| Background | mobile bar `bg-background/80 backdrop-blur-xl`; `md:bg-card/50`; main carries `AmbientBackground variant="quiet"` |
+| Border | `border-b border-border` mobile, `md:border-r` |
+| Border radius | nav items `rounded-xl`; burger `rounded-full` |
+| Text — primary | active `text-foreground`, `text-sm font-medium`; active icon `text-primary` |
+| Text — secondary | idle `text-muted-foreground` |
+| Spacing | shell `md:p-6`, items `px-3 py-2.5`, nav `gap-1` |
+| Hover state | `hover:bg-white/[0.04] hover:text-foreground` |
+| Shadow | none |
+| Accent usage | active item: lime icon + a `w-0.5 h-4 bg-primary` bar on its left edge |
 
 **Pattern notes:**
 The sidebar wordmark leads to Overview, never to the public landing page —
@@ -138,7 +275,8 @@ dashboard". It uses `WordmarkLink` (see `SiteHeader`). Nav items take their
 hrefs from `routes.dashboard.*`.
 
 Nav items pair a `size-4` lucide icon with a `gap-3` label; the active item is
-marked with `aria-current="page"` and `bg-white/5`. Order is fixed: Overview,
+marked with `aria-current="page"`, `bg-white/[0.06] ring-1 ring-border`, a
+lime icon and a short lime bar on its left edge. Order is fixed: Overview,
 Events, Profile, Settings in the main nav (Settings added 2026-09-21), then a
 `border-t` footer holding the public preview link (`font-mono text-xs`,
 `ExternalLink` at `size-3`) and Sign out. The preview link opens `routes.publisherPreview` in a new tab (`target="_blank" rel="noopener noreferrer"`, with an `sr-only` ", opens in a new tab"), like every preview link in the dashboard.
@@ -157,52 +295,53 @@ navigation closes it without an effect; Escape closes it too. Added
 ### DashboardHeader
 
 File: components/layout/dashboard-header.tsx
-Last updated: 2026-09-09
+Last updated: 2026-10-03
 
-| Property         | Class                                                    |
-| ---------------- | -------------------------------------------------------- |
-| Background       | none (sits on the page ground)                            |
-| Border           | none                                                      |
-| Border radius    | n/a                                                       |
-| Text — primary   | `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-4xl` |
-| Text — secondary | kicker `font-mono text-xs uppercase tracking-widest text-primary`; description `font-mono text-sm text-muted-foreground` |
-| Spacing          | `mb-10`, `gap-4`, kicker `mb-2`, description `mt-2`       |
-| Hover state      | none                                                      |
-| Shadow           | none                                                      |
-| Accent usage     | the kicker, and only the kicker                           |
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background | none (sits on the page ground) |
+| Border | none |
+| Border radius | n/a |
+| Text — primary | `font-display text-3xl font-semibold tracking-tight md:text-4xl` |
+| Text — secondary | kicker `text-xs font-medium uppercase tracking-[0.14em] text-primary`; description `text-sm text-muted-foreground` |
+| Spacing | `mb-8 md:mb-10`, `gap-4`, kicker `mb-2`, description `mt-1.5` |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | the kicker, and only the kicker |
 
 **Pattern notes:**
-Every dashboard screen opens with this and nothing else — a lime mono kicker,
-the uppercase display title, an optional mono context line, then the screen's
+Every dashboard screen opens with this and nothing else — a lime small-caps
+kicker, the sentence-case display title, an optional context line, then the screen's
 actions pushed right on `items-end`. Do not hand-roll a title block in a page;
 add a prop here instead. Actions are passed as nodes so a screen can carry a
 ghost + solid pair (Events) or a segmented control (Overview). The actions
 row is `w-full` below `sm`, so a page's buttons can stretch across the
 screen there (`w-full` / `flex-1` + `justify-center`) and sit at their own
 width from `sm`. On Events, New is the wider of the pair: `flex-1` on
-mobile, `sm:min-w-40` from `sm`.
+mobile, `sm:min-w-36` from `sm`; both are `buttonClass({ size: "sm" })`.
 
 ### Panel
 
 File: components/dashboard/panel.tsx
-Last updated: 2026-09-09
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/30`                                        |
-| Border           | `border border-border`, header split `border-b`     |
-| Border radius    | `rounded-lg`                                        |
-| Text — primary   | `font-display text-sm font-extrabold uppercase tracking-tight` |
-| Text — secondary | `font-mono text-xs text-muted-foreground`           |
-| Spacing          | header `px-6 py-5`, body `p-6`, rows `py-3`         |
-| Hover state      | action link `hover:text-primary`                    |
-| Shadow           | none                                                |
-| Accent usage     | the header action link on hover only                |
+| Background | `surface` (`bg-card`) |
+| Border | `surface` hairline; header split `border-b` |
+| Border radius | `rounded-2xl` |
+| Text — primary | `font-display text-base font-semibold tracking-tight` |
+| Text — secondary | `text-xs text-muted-foreground` |
+| Spacing | header `px-6 py-5`, body `p-6`, rows `py-3` |
+| Hover state | action pill `hover:bg-white/[0.06] hover:text-foreground`, arrow nudges up-right |
+| Shadow | `shadow-card` via `surface` |
+| Accent usage | none |
 
 **Pattern notes:**
 The card used for every titled block on the dashboard — chart, upcoming
 events, most viewed. Header is always hairline-separated from the body; the
-optional action is a mono uppercase link on the right (`ALL`), never a button.
+optional action is a small pill link with an `ArrowUpRight` on the right
+("All"), never a button.
 Lists inside use `divide-y divide-border` with `first:pt-0 last:pb-0` so the
 row rhythm meets the padding cleanly. Use `PanelEmpty` for the nothing-yet
 line rather than the full `EmptyState` — inside a panel the surrounding header
@@ -211,68 +350,68 @@ already says what is empty.
 ### StatsCard / StatsCardRow
 
 File: components/dashboard/stats-card.tsx
-Last updated: 2026-09-09
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/30` on the row, tiles are transparent      |
-| Border           | row `border border-border`, tiles `divide-border`   |
-| Border radius    | `rounded-lg` on the row only                        |
-| Text — primary   | `font-display text-4xl font-extrabold tracking-tighter tabular-nums md:text-5xl` |
-| Text — secondary | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
-| Spacing          | tile `p-6`, label-to-value `mb-4`                   |
-| Hover state      | none — a stat tile is not interactive               |
-| Shadow           | none                                                |
-| Accent usage     | `accent` prop puts one value in `text-primary`      |
+| Background | each tile `surface`; accent tile adds a `bg-primary/15 blur-3xl` corner glow |
+| Border | `surface` hairline |
+| Border radius | `rounded-2xl`; icon tile `rounded-xl` |
+| Text — primary | `font-display text-4xl font-semibold tracking-tight tabular-nums md:text-5xl` |
+| Text — secondary | label `text-sm font-medium text-muted-foreground` |
+| Spacing | tile `p-6`, label-to-value `mb-5`; row `gap-4 sm:grid-cols-2` |
+| Hover state | none — a stat tile is not interactive |
+| Shadow | `shadow-card` |
+| Accent usage | `accent` prop: lime value, lime icon tile, corner glow |
 
 **Pattern notes:**
-Tiles never float individually: they go inside `StatsCardRow`, which draws one
-border and separates them with hairlines (`divide-y` stacking to `sm:divide-x`).
-The optional `size-4` lucide icon sits top-right, muted and `aria-hidden` — it
-labels nothing the text does not already say. At most one tile per row carries
+Each tile is its own `surface` card; `StatsCardRow` lays them out
+(`gap-4`, stacked below `sm`). The optional `size-4` lucide icon sits
+top-right in a `size-9 rounded-xl` tile, `aria-hidden` — it labels nothing
+the text does not already say. At most one tile per row carries
 `accent`; two competing lime numbers read as a chart, not a hierarchy. Values
 are always `tabular-nums` so they do not jitter between range switches.
 
 ### RangeTabs
 
 File: components/dashboard/range-tabs.tsx
-Last updated: 2026-09-09
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | active `bg-primary`, idle transparent               |
-| Border           | `border border-border`, segments `border-l`         |
-| Border radius    | `rounded-md` on the group, segments square          |
-| Text — primary   | active `text-primary-foreground`                    |
-| Text — secondary | idle `text-muted-foreground`                        |
-| Spacing          | segments `px-4 py-2.5`                              |
-| Hover state      | `hover:bg-white/5 hover:text-foreground` (idle only)|
-| Shadow           | none                                                |
-| Accent usage     | the selected segment's lime fill                    |
+| Background | group `bg-white/[0.03]`; active `bg-primary` |
+| Border | group `border border-border` |
+| Border radius | group and segments `rounded-full` |
+| Text — primary | active `text-primary-foreground` |
+| Text — secondary | idle `text-muted-foreground`, all `text-xs font-medium` |
+| Spacing | group `p-1`; segments `px-3.5 py-1.5` |
+| Hover state | idle `hover:bg-white/[0.06] hover:text-foreground` |
+| Shadow | active `shadow-glow` |
+| Accent usage | the selected segment |
 
 **Pattern notes:**
 A segmented control built from `Link`s, not buttons — the selection drives a
 server query, so it belongs in the URL and the page stays a Server Component.
 Selection is marked with `aria-current="page"`, and the group is a `<nav>` with
-an `aria-label`. All segments are `font-mono text-xs uppercase tracking-widest`.
+an `aria-label`. Segments are pills inside a pill track.
 Reuse this shape for any other server-driven segmented filter.
 
 ### TrendChart
 
 File: components/dashboard/trend-chart.tsx
-Last updated: 2026-09-11
+Last updated: 2026-10-03
 
-| Property         | Class / value                                      |
+| Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | none — it sits inside a `Panel`                     |
-| Border           | chart grid uses `var(--border)`; table wrapper `border border-border` |
-| Border radius    | table wrapper `rounded-md`                          |
-| Text — primary   | table values `font-mono text-xs tabular-nums`       |
-| Text — secondary | axes and legend `font-mono text-[11px]` / `text-xs uppercase tracking-widest text-muted-foreground` |
-| Spacing          | legend `mt-4 gap-x-6`, table view `mt-4`            |
-| Hover state      | TanStack Charts grouped x-focus, crosshair, focus markers, and tooltip |
-| Shadow           | none in application-owned markup                    |
-| Accent usage     | series only: visits `#7E9F30`, clicks `#3B82F6`     |
+| Background | none — it sits inside a `Panel` |
+| Border | chart grid `var(--border)`; table wrapper `border border-border` |
+| Border radius | table wrapper `rounded-xl` |
+| Text — primary | table values `font-mono text-xs tabular-nums` |
+| Text — secondary | axes `font-mono text-[11px]`; legend, summary and table head `text-xs font-medium text-muted-foreground` |
+| Spacing | legend `mt-4 gap-x-6`, table view `mt-4` |
+| Hover state | TanStack Charts grouped x-focus, crosshair, focus markers, tooltip |
+| Shadow | none in application-owned markup |
+| Accent usage | series only: visits `#7E9F30`, clicks `#8B6CFF` (violet, re-validated 2026-10-03) |
 
 **Pattern notes:**
 TanStack Charts owns the responsive SVG, axes, animation, keyboard focus, and
@@ -288,20 +427,20 @@ descriptive label and the `View as table` disclosure with all plotted values.
 ### Field / FormSection
 
 File: components/forms/field.tsx, components/forms/form-section.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | control `bg-card`                                   |
-| Border           | control `border border-border`; section heading `border-b border-border` |
-| Border radius    | `rounded-md`                                        |
-| Text — primary   | control `text-sm`                                   |
-| Text — secondary | label and hint `font-mono text-xs uppercase tracking-widest text-muted-foreground` (hint not uppercased) |
-| Text — error     | `mt-1.5 font-mono text-xs leading-relaxed text-destructive` |
-| Spacing          | control `px-4 py-2.5`, label `mb-2`, hint/error `mt-1.5`, fields `space-y-5`, section `mb-10` |
-| Hover state      | none — focus is the state that matters              |
-| Shadow           | none                                                |
-| Accent usage     | section heading `text-primary`; focus `focus:border-primary` |
+| Background | control `bg-white/[0.03]`, focus `bg-white/[0.05]` |
+| Border | control `border border-input`, hover `border-white/20`, focus `border-primary/60`, invalid `aria-invalid:border-destructive/60`; section heading `border-b border-border` |
+| Border radius | control `rounded-lg` |
+| Text — primary | control `text-base sm:text-sm`; label `text-sm font-medium text-foreground/90` |
+| Text — secondary | hint `text-xs leading-relaxed text-muted-foreground` |
+| Text — error | `mt-1.5 text-xs leading-relaxed text-destructive` |
+| Spacing | control `px-4 py-2.5`, label `mb-2`, hint/error `mt-1.5`, fields `space-y-5`, section `mb-10` |
+| Hover state | `hover:border-white/20` |
+| Shadow | inset `shadow-[inset_0_1px_2px_…]`; focus adds a 4px lime ring at 14% |
+| Accent usage | focus border and ring; `FormSection` heading carries a `h-4 w-1 rounded-full bg-primary` bar |
 
 **Pattern notes:**
 `fieldControlClass` is the single source for input, textarea and select
@@ -323,21 +462,19 @@ hasError })` — it returns `${id}-error` or `${id}-hint` so `aria-describedby`
 always points at the message actually on screen — and set `aria-invalid` when
 an error is present. Never surface an error through colour alone.
 
-Sections are grouped by `FormSection`, whose lime mono heading over a hairline
-rule is the only section marker used in dashboard forms. Two-column field grids
+Sections are grouped by `FormSection`, whose display heading with a short
+lime bar, over a hairline rule, is the only section marker used in dashboard
+forms. Two-column field grids
 are `sm:grid-cols-2` with `gap-5`. Its optional `description` (added
 2026-09-26) sits under the rule as `text-sm text-muted-foreground` — use it
 when the heading alone does not say what the section is for, and keep it to
 one line.
 
-`formSubmitClass` (same file, added 2026-09-21) is the single source for a
-dashboard form's lime submit button: `rounded-md bg-primary px-6 py-3 text-sm
-font-medium text-primary-foreground hover:brightness-110
-disabled:cursor-not-allowed disabled:opacity-60`. It matches `authSubmitClass`
-except for `w-full`. The button swaps its label to a present participle while
-submitting ("Saving…").
+Submit buttons use `buttonClass()` (see **Button**); `formSubmitClass` was
+removed on 2026-10-03. The button swaps its label to a present participle
+while submitting ("Saving…").
 
-`formSubmitWideClass` is `formSubmitClass` plus `w-full sm:ml-auto sm:w-48`,
+`formSubmitWideClass` is `buttonClass` plus `w-full sm:ml-auto sm:w-48`,
 for a full-page form (Profile, Settings): below `sm` the submit spans the form
 edge to edge under its status line (`formFooterClass`, `flex flex-col gap-4`);
 from `sm` the footer is a row, status left, button right at one fixed width
@@ -359,19 +496,19 @@ it has to read as a field.
 ### AuthCard
 
 File: components/auth/auth-card.tsx
-Last updated: 2026-09-14
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/40`                                        |
-| Border           | `border border-border`                              |
-| Border radius    | `rounded-lg`                                        |
-| Text — primary   | heading `font-display text-2xl font-extrabold uppercase tracking-tight` |
-| Text — secondary | subheading `text-sm text-muted-foreground`; body `font-mono text-xs leading-relaxed text-muted-foreground` |
-| Spacing          | card `p-8`, wordmark `mb-10`, heading `mb-1`, subheading `mb-8`, fields `space-y-5`, footer `mt-6` |
-| Hover state      | submit `hover:brightness-110`; links `hover:underline` |
-| Shadow           | none                                                |
-| Accent usage     | wordmark dot, footer link, and the submit fill   |
+| Background | `surface` card; page has `AmbientBackground variant="hero"` from `app/auth/layout.tsx` |
+| Border | `surface` hairline; a `via-primary/50` gradient hairline across the top edge |
+| Border radius | `rounded-2xl` |
+| Text — primary | heading `font-display text-2xl font-semibold tracking-tight` |
+| Text — secondary | subheading and body `text-sm (leading-relaxed) text-muted-foreground` |
+| Spacing | card `p-7 sm:p-8`, wordmark `mb-8`, heading `mb-1.5`, subheading `mb-8`, fields `space-y-5`, footer `mt-6` |
+| Hover state | submit via `buttonClass`; links `underline-offset-4 hover:underline` |
+| Shadow | `shadow-card` |
+| Accent usage | wordmark, footer link (`font-medium text-primary`), the submit fill |
 
 **Pattern notes:**
 The shell for every signed-out screen — signup, login, forgot password, update
@@ -380,40 +517,39 @@ centres it with `flex flex-1 flex-col items-center justify-center px-6 py-16`.
 Do not hand-roll this frame in a new auth route; pass `heading`, `subheading`
 and an optional `footer` instead.
 
-`authSubmitClass` is the single source for the primary auth button and carries
-`disabled:cursor-not-allowed disabled:opacity-60`, since every auth form
-disables its button while submitting and swaps the label to a present
-participle ("Logging in…"). Secondary actions inside the card use the outlined
-treatment `border border-border … hover:bg-white/5` rather than a second fill —
-one lime button per card.
+`authSubmitClass` is `buttonClass({ className: "w-full" })`; every auth form
+disables it while submitting and swaps the label to a present participle
+("Logging in…"). Secondary actions inside the card use
+`buttonClass({ variant: "secondary" })` — one lime button per card.
 
-Form-level failures render through `FormAlert` (`role="alert"`, `text-sm
-text-destructive`) directly above the submit button; field-level failures belong
-to `Field`. Advisory confirmations — username availability, "link resent" — use
-an `aria-live="polite"` paragraph in `font-mono text-xs text-primary`, never an
-alert, because they are not errors.
+Form-level failures render through `FormAlert` (`role="alert"`, a
+`rounded-xl border-destructive/30 bg-destructive/10` box) directly above the
+submit button; field-level failures belong to `Field`. Advisory
+confirmations — username availability, "link resent" — use an
+`aria-live="polite"` paragraph in `text-xs text-primary`, never an alert,
+because they are not errors.
 
 A notice carried in from another screen (login's `?notice=password-changed`)
-is a `role="status"` paragraph in `mb-5 font-mono text-xs leading-relaxed
-text-primary` above the form. Only known notice values render, so the URL can
+is a `role="status"` paragraph in `mb-5 text-sm leading-relaxed
+text-primary` above the form. The card fades up on load (`animate-reveal`). Only known notice values render, so the URL can
 never inject text.
 
 ### ImageUploader
 
 File: components/forms/image-uploader.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | transparent; `hover:bg-white/[0.02]`                |
-| Border           | empty `border border-dashed border-border`; with an image `border border-border` |
-| Border radius    | `rounded-md`                                        |
-| Text — primary   | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
-| Text — secondary | constraint line `font-mono text-xs text-muted-foreground` |
-| Spacing          | `px-6 py-12`, `gap-3`                               |
-| Hover state      | `hover:border-primary/50 hover:bg-white/[0.02]`     |
-| Shadow           | none                                                |
-| Accent usage     | `focus-within:border-primary`; while busy, spinner, label and progress bar are `text-primary`/`bg-primary`; remove chip `hover:text-destructive` |
+| Background | empty `bg-white/[0.015]`, hover `bg-primary/[0.03]`; with an image `bg-secondary` |
+| Border | empty `border border-dashed border-white/15`; with an image `border border-border` |
+| Border radius | `rounded-xl`; corner chips `rounded-full` |
+| Text — primary | "Click to upload" `text-sm font-medium text-foreground/90`; label `text-sm font-medium text-foreground/90` |
+| Text — secondary | constraint line `text-xs text-muted-foreground` |
+| Spacing | `px-6 py-12`, `gap-3`; upload icon in a `size-10 rounded-xl` tile |
+| Hover state | `hover:border-primary/50` |
+| Shadow | none |
+| Accent usage | upload icon, `focus-within:border-primary`; busy spinner, label and bar |
 
 **Pattern notes:**
 The dashed frame is a `<label>` wrapping an `sr-only` file input, never a
@@ -437,8 +573,8 @@ as icon chips in the top-right corner (`absolute top-2 right-2 flex gap-2`):
 * **Remove** — a `Trash2` `<button>`, `hover:text-destructive`, rendered only
   when the caller passes `onRemove`.
 
-Both chips are `size-9 rounded-md bg-black/60 text-white backdrop-blur-sm
-hover:bg-black/80` so they read on light and dark photos, carry an `sr-only`
+Both chips are `size-9 rounded-full bg-black/60 text-white ring-1
+ring-white/15 backdrop-blur-sm hover:bg-black/80` so they read on light and dark photos, carry an `sr-only`
 name ("Replace cover image") and a matching `title`, and are always visible
 rather than hover-only, because touch screens have no hover.
 
@@ -471,25 +607,25 @@ the removal takes effect on Save, like every other event field. Avatar frames ar
 ### Avatar
 
 File: components/ui/avatar.tsx
-Last updated: 2026-09-21
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-secondary` (shows behind the letter fallback)   |
-| Border           | none                                                |
-| Border radius    | `rounded-lg`, never a circle                        |
-| Text — primary   | `font-display`; weight and size set by the caller   |
-| Text — secondary | n/a                                                 |
-| Spacing          | none; `grid place-items-center` centres the letter  |
-| Hover state      | none; hover belongs to the surrounding link         |
-| Shadow           | none                                                |
-| Accent usage     | none                                                |
+| Background | `bg-gradient-to-br from-glow/40 to-glow-2/30` behind the letter fallback |
+| Border | `ring-1 ring-border` |
+| Border radius | `rounded-xl` (publisher header overrides `rounded-2xl`), never a circle |
+| Text — primary | `font-display font-semibold`; size set by the caller |
+| Text — secondary | n/a |
+| Spacing | none; `grid place-items-center` centres the letter |
+| Hover state | none; hover belongs to the surrounding link |
+| Shadow | none (publisher header adds `shadow-lift`) |
+| Accent usage | none |
 
 **Pattern notes:**
 A publisher's image, or the first letter of their name when there is none.
 Every existing letter block was replaced by this, so no page hand-rolls one.
-The caller sets size and letter weight together: `size-20 text-3xl
-font-extrabold` in the publisher header, `size-10 font-bold` beside a byline.
+The caller sets size: `size-20 rounded-2xl text-3xl shadow-lift` in the
+publisher header, `size-10` beside a byline.
 `sizes` must match the rendered width so next/image does not fetch a larger
 file than it shows. It is `aria-hidden` because the name is always printed
 beside it; if a use ever shows it alone, give it an accessible name first.
@@ -497,19 +633,19 @@ beside it; if a use ever shows it alone, give it an accessible name first.
 ### Publisher page header
 
 File: app/publisher/[username]/page.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | cover banner `bg-secondary` behind the image        |
-| Border           | cover `border-b border-border`; header `border-b`   |
-| Border radius    | none on the cover; it runs full-bleed               |
-| Text — primary   | `font-display text-4xl font-extrabold uppercase tracking-tighter md:text-5xl` |
-| Text — secondary | handle `font-mono text-sm text-muted-foreground`; meta `font-mono text-xs uppercase` |
-| Spacing          | header `px-6 py-16`, avatar-to-text `gap-6`         |
-| Hover state      | meta links `hover:text-primary`                     |
-| Shadow           | none                                                |
-| Accent usage     | the publisher-type kicker above the name            |
+| Background | `PublicShell` soft wash; cover `bg-secondary` with a bottom fade to `background` |
+| Border | header `border-b border-border` |
+| Border radius | none on the cover; meta chips `rounded-full` |
+| Text — primary | `font-display text-4xl font-semibold tracking-tight md:text-5xl` |
+| Text — secondary | handle `font-mono text-sm text-muted-foreground`; meta chips `text-xs` |
+| Spacing | header `px-6 py-14 md:py-16`, avatar-to-text `gap-6` |
+| Hover state | website chip `hover:border-primary/40 hover:text-primary` |
+| Shadow | avatar `shadow-lift` |
+| Accent usage | none beyond hover — the publisher type is an `Eyebrow` |
 
 **Pattern notes:**
 The cover is an `aspect-[3/1] max-h-80 w-full` banner above the header, loaded
@@ -520,8 +656,8 @@ beside the name, not overlapping the cover. Link previews use the cover, or
 failing that the avatar, as their Open Graph image. The publisher can remove
 the cover from the dashboard, and the page then starts at the header.
 
-The lists are headed "Upcoming events" and "Past events" in the mono section
-label style, with no counts (removed 2026-10-03). The page ends with the
+The lists are headed "Upcoming events" (with a mono count pill) and "Past
+events" (muted) in `font-display text-xl font-semibold`. The page ends with the
 event lists; there is no "Publishing your own events?
 Claim your events-lab page" call to action (removed 2026-09-26). A
 publisher's page is theirs, not a signup funnel. `?preview=1` hides the site
@@ -534,15 +670,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | none; fields carry `bg-card` via `fieldControlClass` |
-| Border           | profile footer `border-t border-border pt-6`        |
-| Border radius    | inherited from `Field` and `formSubmitClass`        |
-| Text — primary   | via `Field`                                         |
-| Text — secondary | footer note `font-mono text-xs text-muted-foreground` |
-| Spacing          | fields `space-y-5`; footer `formFooterClass` (column below `sm`, `justify-between` row above) |
-| Hover state      | submit `hover:brightness-110`                       |
-| Shadow           | none                                                |
-| Accent usage     | `formSubmitClass`, and success lines in `text-primary` |
+| Background | none; fields via `fieldControlClass` |
+| Border | profile footer `border-t border-border pt-6` |
+| Border radius | inherited from `Field` and `buttonClass` |
+| Text — primary | via `Field` |
+| Text — secondary | footer note `text-xs text-muted-foreground` |
+| Spacing | fields `space-y-5`; footer `formFooterClass` |
+| Hover state | submit via `buttonClass` |
+| Shadow | submit `shadow-glow` |
+| Accent usage | the submit, and success lines in `text-xs text-primary` |
 
 **Pattern notes:**
 Each is a TanStack Form client component rendered by a thin Server Component
@@ -551,7 +687,8 @@ page that loads the data. Below `sm` the footer stacks the status line
 `formSubmitWideClass` button; from `sm` the status sits left and the button
 right. Success is an `aria-live="polite"` line in
 `font-mono text-xs text-primary` ("Profile saved."); a result that is not yet
-final says so ("Confirmation pending for …"), never "changed". A form whose
+final says so ("Confirmation pending for …"), never "changed". Status lines
+are `text-xs text-primary`. A form whose
 success leaves the page (password change signs out) states that consequence in
 the footer before submit instead.
 
@@ -571,19 +708,19 @@ password managers file the change under the right account.
 ### EventDialog (NewEventProvider / NewEventTrigger / useEventDialog)
 
 File: app/dashboard/events/event-dialog.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card`; backdrop `backdrop:bg-black/70 backdrop:backdrop-blur-sm` |
-| Border           | `border border-border`; header `border-b`, footer `border-t` |
-| Border radius    | `rounded-lg`                                        |
-| Text — primary   | header `font-display text-sm font-extrabold uppercase tracking-tight` |
-| Text — secondary | `text-muted-foreground`                             |
-| Spacing          | header/footer `px-6 py-4`, body `px-6 pt-6`         |
-| Hover state      | close button `hover:bg-white/5 hover:text-foreground` |
-| Shadow           | none — the backdrop does the separating             |
-| Accent usage     | the single primary submit in the footer             |
+| Background | `bg-card`; backdrop `backdrop:bg-black/70 backdrop:backdrop-blur-sm` |
+| Border | `border border-border`; header `border-b`, footer `border-t` |
+| Border radius | `rounded-2xl`; close button `rounded-full` |
+| Text — primary | header `font-display text-lg font-semibold tracking-tight` |
+| Text — secondary | "Full editor" `text-sm font-medium text-muted-foreground`, underline on hover |
+| Spacing | header/footer `px-6 py-4`, body `px-6 pt-6` |
+| Hover state | close `hover:bg-white/[0.08] hover:text-foreground` |
+| Shadow | `shadow-lift`; opens with `dialog-in` (globals.css) |
+| Accent usage | the single primary submit in the footer |
 
 **Pattern notes:**
 Creating an event is always a modal over the events list; there is no
@@ -615,20 +752,20 @@ editing with `useEventDialog().openEdit(event)`; the footer then carries a
 ### EventForm
 
 File: app/dashboard/events/event-form.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | inherits; controls `bg-card` via `fieldControlClass` |
-| Border           | section rule `border-b border-border`; dialog footer `border-t` |
-| Border radius    | controls and buttons `rounded-md`                   |
-| Text — primary   | section heading `font-mono text-xs uppercase tracking-widest text-primary` |
-| Text — secondary | section description `text-sm text-muted-foreground` |
-| Spacing          | sections `mb-10`; fields `space-y-5`; paired fields `gap-5 sm:grid-cols-2` |
-| Image target     | poster `aspect-[4/3] max-h-[28rem]` — a poster is looked at, not filed |
-| Hover state      | submit `hover:brightness-110`; secondary `hover:bg-white/5` |
-| Shadow           | none                                                |
-| Accent usage     | section headings and the one primary submit         |
+| Background | inherits; controls via `fieldControlClass` |
+| Border | section rule `border-b border-border`; dialog footer `border-t` |
+| Border radius | controls `rounded-lg`; buttons `rounded-full` via `buttonClass` |
+| Text — primary | section heading `font-display text-lg font-semibold tracking-tight` (via `FormSection`) |
+| Text — secondary | section description `text-sm text-muted-foreground`; legends `text-sm font-medium text-foreground/90` |
+| Spacing | sections `mb-10`; fields `space-y-5`; paired fields `gap-5 sm:grid-cols-2` |
+| Image target | poster `aspect-[4/3] max-h-[28rem]` |
+| Hover state | via `buttonClass` |
+| Shadow | primary `shadow-glow` |
+| Accent usage | section bars, radios `accent-primary`, the one primary submit |
 
 **Pattern notes:**
 One component serves four cases: create and edit, page and dialog. `layout`
@@ -688,24 +825,24 @@ is not on screen (`renderedFields`) becomes the form-level message, with
 ### TagInput
 
 File: app/dashboard/events/event-form.tsx (Tags section, page layout only)
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | input `bg-card` via `fieldControlClass`; chips transparent |
-| Border           | chips `border border-border`                        |
-| Border radius    | chips `rounded-full`; input `rounded-md`            |
-| Text — primary   | chip label `font-mono text-xs uppercase`            |
-| Text — secondary | chips `text-muted-foreground`                       |
-| Spacing          | input-to-chips `space-y-3`; chip row `gap-2`; chip `px-3 py-1` |
-| Hover state      | remove button `hover:text-destructive`              |
-| Shadow           | none                                                |
-| Accent usage     | none — tags are metadata, not a call to action      |
+| Background | input via `fieldControlClass`; chips `bg-white/[0.04]` |
+| Border | chips `border border-border` |
+| Border radius | chips and remove button `rounded-full`; input `rounded-lg` |
+| Text — primary | chip label `text-xs font-medium text-foreground/90` |
+| Text — secondary | remove icon `text-muted-foreground` |
+| Spacing | input-to-chips `space-y-3`; chip row `gap-2`; chip `py-1 pr-2 pl-3` |
+| Hover state | remove `hover:bg-destructive/15 hover:text-destructive` |
+| Shadow | none |
+| Accent usage | none — tags are metadata, not a call to action |
 
 **Pattern notes:**
-The chip shape is the same `rounded-full border border-border px-3 py-1
-font-mono text-xs uppercase text-muted-foreground` the public event page uses
-to display tags, so entry and display read as one thing.
+The chip is the same rounded-full bordered pill the public event page uses
+to display tags (`bg-white/[0.03] px-3 py-1 text-xs`), so entry and display
+read as one thing. Tags keep their typed case.
 
 Enter, a comma, or blurring the field commits a tag; Backspace on an empty
 input removes the last one. The input disables itself at the limit rather than
@@ -719,15 +856,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/30`                                        |
-| Border           | `border border-border`; location rail `border-l-2 border-primary` |
-| Border radius    | `rounded-lg`; poster `rounded`; ticket button `rounded-md` |
-| Text — primary   | title `font-display text-2xl font-extrabold uppercase tracking-tight md:text-3xl`; day `text-4xl md:text-5xl` |
-| Text — secondary | `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
-| Spacing          | card `p-6`, `gap-6 md:gap-8`; blocks `mb-5`         |
-| Hover state      | `hover:border-primary/50`, title `group-hover:text-primary` |
-| Shadow           | none                                                |
-| Accent usage     | category kicker, location rail and pin, map link, ticket button |
+| Background | `surface`; location box `bg-white/[0.02]` |
+| Border | `surface` hairline; location box `border border-border` |
+| Border radius | `rounded-2xl`; poster and location box `rounded-xl`; ticket button `rounded-full` |
+| Text — primary | title `font-display text-2xl font-semibold leading-tight tracking-tight md:text-[1.75rem]`; day `font-display text-4xl font-semibold md:text-5xl` |
+| Text — secondary | month/year and time `font-mono text-xs uppercase tracking-widest text-muted-foreground`; location `text-sm` |
+| Spacing | card `p-5 sm:p-6`, `gap-6 md:gap-8`; blocks `mb-5`; location box `p-3.5` |
+| Hover state | `hover:-translate-y-0.5 hover:border-white/15 hover:shadow-lift`, title `group-hover:text-primary`, poster `group-hover:scale-105` |
+| Shadow | `shadow-card`, `shadow-lift` on hover |
+| Accent usage | category kicker (`text-xs font-medium text-primary`), pin, map link, ticket button |
 
 **Pattern notes:**
 Carries everything needed to decide without opening the event: category, day
@@ -748,8 +885,8 @@ poster sits beside the date on a phone rather than pushing the title down.
 The description is `line-clamp-4`: a listing where one event runs three
 screens tall has stopped being a listing. The event page has the whole text.
 
-The ticket button spans the content column below `sm` (`flex w-full
-justify-center`) and sizes to its label above (`sm:inline-flex sm:w-auto`). It uses `event.ticket_cta_label`, falling back to "Get
+The ticket button is `buttonClass({ className: "relative z-10 w-full sm:w-auto" })`:
+it spans the content column below `sm` and sizes to its label above. It uses `event.ticket_cta_label`, falling back to "Get
 tickets", and is hidden entirely for a cancelled event — sending someone to
 buy a ticket for an event that is off is worse than showing nothing.
 
@@ -760,15 +897,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | list in `rounded-lg border border-border`; header `bg-card/50`; row `hover:bg-white/[0.02]`; poster `bg-secondary` |
-| Border           | rows `border-t border-border first:border-t-0`      |
-| Border radius    | container `rounded-lg`; poster `rounded`            |
-| Text — primary   | title `font-display font-extrabold uppercase tracking-tight`; facts `font-mono text-xs leading-relaxed` |
-| Text — secondary | category `font-mono text-xs uppercase tracking-widest text-primary`; "Starts"/"Ends", address and city `text-muted-foreground` |
-| Spacing          | row `px-5 py-5`, stacked `gap-4`, grid `lg:gap-6`; poster `size-16` beside the title at `gap-4` |
-| Hover state      | row `hover:bg-white/[0.02]`                         |
-| Shadow           | none                                                |
-| Accent usage     | the category label                                  |
+| Background | list in `surface rounded-2xl`; header `bg-white/[0.02]`; row `hover:bg-white/[0.025]`; poster `bg-secondary` |
+| Border | rows `border-t border-border first:border-t-0` |
+| Border radius | container `rounded-2xl`; poster `rounded-xl ring-1 ring-border` |
+| Text — primary | title `font-display text-base font-semibold leading-snug tracking-tight`; facts `font-mono text-xs leading-relaxed` |
+| Text — secondary | category `text-xs font-medium text-primary`; mobile fact labels and column header `text-xs font-medium text-muted-foreground` |
+| Spacing | row `px-5 py-5`, stacked `gap-4`, grid `lg:gap-6` |
+| Hover state | row `hover:bg-white/[0.025]` |
+| Shadow | `shadow-card` on the container |
+| Accent usage | the category label |
 
 **Pattern notes:**
 Replaced the three-column table on 2026-10-03. Each row is an `<li>`
@@ -781,7 +918,7 @@ name", and "Online"/"Hybrid" where it applies), then `EventRowActions`.
 `EVENT_LIST_COLUMNS` is the one `lg` grid definition
 (`minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.3fr) auto`), used by both the rows
 and the `aria-hidden` column header, so they cannot drift apart. Below `lg`
-the header is hidden and each row stacks as a card, with a small mono label
+the header is hidden and each row stacks as a card, with a small label
 ("When", "Location") over each fact instead, and the actions sit under a
 `border-t border-border pt-4` divider. Nothing is hidden on mobile. The events page is `max-w-6xl`
 to give the four columns room.
@@ -789,18 +926,18 @@ to give the four columns room.
 ### Switch
 
 File: components/ui/switch.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | track on `bg-primary`, off `bg-secondary`; knob `bg-background` |
-| Border           | none                                                |
-| Border radius    | `rounded-full` on both track and knob               |
-| Text — secondary | state label `font-mono text-xs uppercase tracking-widest text-muted-foreground` |
-| Spacing          | track `h-6 w-11`, knob `size-5`, label gap `gap-3`  |
-| Hover state      | none — the state change is the feedback             |
-| Shadow           | none                                                |
-| Accent usage     | the track when on                                   |
+| Background | track on `bg-primary`, off `bg-white/[0.06]` (`group-hover:bg-white/[0.1]`); knob on `bg-primary-foreground`, off `bg-foreground/80` |
+| Border | track `ring-1` — `ring-primary/50` on, `ring-border` off |
+| Border radius | `rounded-full` on both track and knob |
+| Text — secondary | state label `text-xs font-medium text-muted-foreground` |
+| Spacing | track `h-6 w-11`, knob `size-5`, label gap `gap-3` |
+| Hover state | label `group-hover:text-foreground` |
+| Shadow | on `shadow-glow`; knob `shadow-sm` |
+| Accent usage | the track when on |
 
 **Pattern notes:**
 A real `<button role="switch">` with `aria-checked`, never a styled checkbox
@@ -825,15 +962,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | transparent; hover `hover:bg-white/5`, destructive `hover:bg-destructive/10` |
-| Border           | none at rest; confirm buttons `border border-border` / `border-destructive/40` |
-| Border radius    | `rounded-md`                                        |
-| Text — primary   | icons only, `size-4`                                |
-| Text — secondary | confirm prompt `font-mono text-xs uppercase text-muted-foreground` |
-| Spacing          | buttons `size-8`, row `gap-1`; confirm row `gap-2`  |
-| Hover state      | `hover:text-foreground`; destructive `hover:text-destructive` |
-| Shadow           | none                                                |
-| Accent usage     | none — a row of actions is not a call to action     |
+| Background | transparent; hover `hover:bg-white/[0.08]`, destructive `hover:bg-destructive/15` |
+| Border | none at rest; confirm buttons `border border-border` / `border-destructive/40` |
+| Border radius | `rounded-full` |
+| Text — primary | icons only, `size-4` |
+| Text — secondary | confirm prompt `text-xs font-medium text-muted-foreground` |
+| Spacing | buttons `size-8`, row `gap-1`; confirm row `gap-2`, buttons `px-3 py-1 text-xs` |
+| Hover state | `hover:text-foreground`; destructive `hover:text-destructive` |
+| Shadow | none |
+| Accent usage | none — a row of actions is not a call to action |
 
 **Pattern notes:**
 Four controls per row: a `Switch` for publish/unpublish with the status
@@ -870,23 +1007,23 @@ the same error line on failure.
 ### EventLifecycle
 
 File: app/dashboard/events/[id]/edit/event-lifecycle.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card/40`                                        |
-| Border           | `border border-border`; destructive `border-destructive/40` |
-| Border radius    | `rounded-lg`; buttons `rounded-md`                  |
-| Text — primary   | heading `font-mono text-xs uppercase tracking-widest text-primary` |
-| Text — secondary | explanation `text-sm text-muted-foreground`         |
-| Spacing          | panel `p-5`, `space-y-4`; button row `gap-3`        |
-| Hover state      | default `hover:bg-white/5`; destructive `hover:bg-destructive/10` |
-| Shadow           | none                                                |
-| Accent usage     | the one forward action (Publish / Back on)          |
+| Background | `surface` |
+| Border | `surface` hairline |
+| Border radius | `rounded-2xl`; buttons `rounded-full` |
+| Text — primary | heading `font-display text-base font-semibold tracking-tight` |
+| Text — secondary | explanation `text-sm text-muted-foreground` |
+| Spacing | panel `p-5`, `space-y-4`; button row `gap-3` |
+| Hover state | via `buttonClass` (`secondary`, `primary`, `destructive`, all `size: "sm"`) |
+| Shadow | `shadow-card` |
+| Accent usage | the one forward action (Publish / Back on) |
 
 **Pattern notes:**
-The same `bg-card/40` bordered panel as the dashboard `Panel`, used here for a
-set of actions rather than content. The buttons are generated from `EVENT_TRANSITIONS`
+The same `surface` card as the dashboard `Panel`, used here for a set of
+actions rather than content. The buttons are generated from `EVENT_TRANSITIONS`
 (`features/events/contracts.ts`), the same table the events service
 enforces, so the panel can only offer a change the server accepts. Labels
 depend on where the event comes from (`published` reads "Publish", "Back on"
@@ -907,44 +1044,51 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | none                                                |
-| Border           | none                                                |
-| Border radius    | n/a                                                 |
-| Text — primary   | `font-display text-xl font-extrabold uppercase tracking-tighter` |
-| Text — secondary | n/a                                                 |
-| Spacing          | set by the caller (`mb-10 block` in the sidebar)    |
-| Hover state      | none                                                |
-| Shadow           | none                                                |
-| Accent usage     | the trailing dot, `text-primary`                          |
+| Background | none |
+| Border | none |
+| Border radius | n/a |
+| Text — primary | `font-display text-2xl font-semibold leading-none tracking-tight` (auth passes `text-3xl`) |
+| Text — secondary | n/a |
+| Spacing | tail `h-[0.82em] align-[-0.082em] ml-[0.03em]` |
+| Hover state | tail `group-hover:-rotate-[8deg]` (wags) |
+| Shadow | none |
+| Accent usage | the tail (`text-primary`) |
 
 **Pattern notes:**
 The only way to render the logo as a link. The caller passes the destination:
 `routes.home()` on public pages, `routes.dashboard.root()` in the dashboard.
 On the page it already points at it renders a plain `<a>` so a click reloads.
-`AuthCard` uses it at `text-2xl`, centred. `SiteFooter` renders the same
-wordmark as plain text, not a link.
+The logo is the word itself: a lime full stop, then "eventai" in Bricolage
+Grotesque (`tracking-[-0.03em]`), then `LogoMark`
+(`components/layout/logo-mark.tsx`), the final "l" drawn as a lime stem that
+sweeps into a tapered, upturned tail, sized to Bricolage's "l" (0.70em
+ascender, 0.125em stem; `h-[0.78em] align-[-0.078em]`) (redesigned 2026-10-03 at the
+developer's request; the fan mark is gone). The visible word is
+`aria-hidden` and an `sr-only` "eventail" names the link. Pass
+`className="flex"`, not `block`, when overriding display.
 
-The brand mark is a lime five-blade fan ("éventail") on the dark background:
-`app/icon.svg` is the source; `app/favicon.ico` (16/32/48) and
-`app/apple-icon.png` (180, full-bleed) are rasterised from it. Regenerate both
-when the SVG changes.
+The favicon is the same full stop and tail (`TAIL_PATH`) in lime on a
+`#0a0a0f` tile:
+`app/icon.svg` is the source; `app/favicon.ico` (16/32/48, PNG entries) and
+`app/apple-icon.png` (180, full-bleed) are rasterised from it. Change the
+path in both files together and regenerate the rasters.
 
 ### EmptyState
 
 File: components/ui/empty-state.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | transparent                                         |
-| Border           | `border border-dashed border-border`                |
-| Border radius    | `rounded-lg`                                        |
-| Text — primary   | `font-display text-xl font-extrabold uppercase tracking-tight` |
+| Background | `bg-white/[0.015]` plus a `bg-glow/10 blur-3xl` wash at the top |
+| Border | `border border-dashed border-white/15` |
+| Border radius | `rounded-2xl`; icon tile `rounded-2xl` |
+| Text — primary | `font-display text-xl font-semibold tracking-tight` |
 | Text — secondary | `text-sm leading-relaxed text-muted-foreground`, `max-w-sm` |
-| Spacing          | `px-6 py-20`, icon `mb-5`, title `mb-2`, description `mb-6` |
-| Hover state      | action `hover:brightness-110`                       |
-| Shadow           | none                                                |
-| Accent usage     | the single lime action button                       |
+| Spacing | `px-6 py-20`, icon tile `size-14 mb-5`, title `mb-2`, description `mb-6` |
+| Hover state | action via `buttonClass` |
+| Shadow | action `shadow-glow` |
+| Accent usage | the icon (`text-primary`) and the single primary action |
 
 **Pattern notes:**
 Title, description and one action are all required (ui-rules §10). `action`
@@ -955,19 +1099,19 @@ goes here", shared only with the empty `ImageUploader`.
 ### EventStatusBadge
 
 File: components/events/event-status-badge.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | transparent                                         |
-| Border           | `border`, tone from `EVENT_STATUS_META`             |
-| Border radius    | `rounded`                                           |
-| Text — primary   | `font-mono text-[11px] uppercase tracking-widest`   |
-| Text — secondary | n/a                                                 |
-| Spacing          | `px-2 py-0.5`                                       |
-| Hover state      | none                                                |
-| Shadow           | none                                                |
-| Accent usage     | published `border-primary/40 text-primary`; cancelled destructive; postponed warning; draft and archived muted |
+| Background | tinted, from `EVENT_STATUS_META` (`bg-primary/10`, `bg-destructive/10`, `bg-warning/10`, `bg-white/[0.04]`) |
+| Border | `border`, tone from `EVENT_STATUS_META` (`/30`) |
+| Border radius | `rounded-full` |
+| Text — primary | `text-xs font-medium`, with a `size-1.5 bg-current` dot |
+| Text — secondary | n/a |
+| Spacing | `px-2.5 py-0.5`, `gap-1.5` |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | published lime; cancelled destructive; postponed warning; draft and archived muted |
 
 **Pattern notes:**
 Text and colour together, always (ui-rules §16). Tones and labels come from
@@ -981,15 +1125,15 @@ Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | image frame `bg-secondary`; info card `bg-card/40`; cancelled banner `bg-destructive/10` |
-| Border           | banner `border-b border-destructive/30`; image frame and info card `border border-border` |
-| Border radius    | image frame and info card `rounded-lg`; action `rounded-md` |
-| Text — primary   | title `font-display text-3xl font-extrabold uppercase tracking-tighter md:text-5xl`; info values `text-sm font-medium` |
-| Text — secondary | section labels and info labels `font-mono text-xs uppercase text-muted-foreground` |
-| Spacing          | article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; image `aspect-[4/3] w-full max-w-md`; info card `p-6 space-y-4` |
-| Hover state      | organizer link `group-hover:text-primary`; action `hover:brightness-110` |
-| Shadow           | none                                                |
-| Accent usage     | category kicker, info-row icons, "View on map" link, the full-width primary action |
+| Background | `PublicShell` soft wash; image frame `bg-secondary`; facts card `surface`; cancelled banner `bg-destructive/10` |
+| Border | banner `border-b border-destructive/30`; image frame `border border-border` |
+| Border radius | image frame, facts card, organiser chip `rounded-2xl`; info icons `rounded-xl`; action `rounded-full` |
+| Text — primary | title `font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl`; info values `text-sm font-medium` |
+| Text — secondary | info labels `text-xs text-muted-foreground`; section headings `font-display text-lg/xl font-semibold` |
+| Spacing | article `max-w-5xl gap-10 md:gap-12 px-6 py-12 md:py-16`; facts card `p-6 space-y-5` |
+| Hover state | organiser chip `hover:border-white/15`; action via `buttonClass` |
+| Shadow | image `shadow-lift`; cards `shadow-card`; action `shadow-glow` |
+| Accent usage | category pill, info icon tiles (`bg-primary/10 text-primary`), "View on map", the full-width primary action |
 
 **Pattern notes:**
 Content in two columns, facts in a right-hand card: date, time with the IANA
@@ -999,7 +1143,7 @@ button (publisher's label, default "Get tickets") or, with no ticket URL,
 header and no action.
 
 The event image heads the left content column as a framed poster
-(`aspect-[4/3] w-full max-w-md rounded-lg border bg-secondary`,
+(`aspect-[4/3] w-full max-w-md rounded-2xl border bg-secondary shadow-lift`,
 `object-contain`, `priority`): the whole image shows as uploaded, never
 cropped or zoomed, with the frame's ground around it. Larger than the
 listing's `md:w-40` thumbnail, never a full-width banner (removed 2026-10-03
@@ -1007,14 +1151,14 @@ listing's `md:w-40` thumbnail, never a full-width banner (removed 2026-10-03
 
 From `md` the facts card and the action are `md:sticky md:top-24
 md:self-start`, so date, time, location and the ticket button stay in view
-while the description scrolls; `top-24` clears the `h-16` sticky site header. It is also the Open Graph and JSON-LD image. Price is not shown on
+while the description scrolls; `top-24` clears the floating site header. It is also the Open Graph and JSON-LD image. Price is not shown on
 the page (removed 2026-10-03 at the developer's request); the event form
 still records it. JSON-LD is rendered inline with `<` escaped.
 
 The location row shows whatever exists of venue, address and "city, country
 name" for any non-online event, plus "Also online" for hybrid; only an
 online event shows the event type instead. Under it, "View on map"
-(`font-mono text-xs uppercase text-primary`, `ArrowUpRight size-3`,
+(`text-xs font-medium text-primary`, `ArrowUpRight size-3`,
 `hover:opacity-80`, new tab) — the same treatment and the same
 `mapSearchUrl` as the card's. JSON-LD location follows the same rule
 (`Place` with `hasMap`, `VirtualLocation`, or both). The page renders `TrackView`, and
@@ -1024,19 +1168,19 @@ the ticket button is a `TicketLink`.
 ### StatusMessage
 
 File: components/ui/status-message.tsx
-Last updated: 2026-09-30
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | none (page ground)                                  |
-| Border           | none                                                |
-| Border radius    | actions `rounded-md`                                |
-| Text — primary   | title `font-display font-extrabold uppercase tracking-tighter`, `text-4xl md:text-6xl` (page) / `text-3xl md:text-4xl` (panel) |
-| Text — secondary | kicker `font-mono text-xs uppercase tracking-widest text-primary`; description `leading-relaxed text-muted-foreground max-w-md` |
-| Spacing          | `px-6`, `py-24 md:py-32` (page) / `py-20` (panel); kicker `mb-4`, title `mb-4`, description `mb-8`; actions `gap-3` |
-| Hover state      | primary `hover:brightness-110`; secondary `hover:bg-white/5` |
-| Shadow           | none                                                |
-| Accent usage     | the kicker and the one primary action               |
+| Background | none (page ground; public pages sit in `PublicShell`) |
+| Border | none |
+| Border radius | actions `rounded-full` |
+| Text — primary | title `font-display font-semibold tracking-tight`, `text-4xl md:text-6xl` (page) / `text-3xl md:text-4xl` (panel) |
+| Text — secondary | kicker is an `Eyebrow`; description `leading-relaxed text-muted-foreground max-w-md` |
+| Spacing | `px-6`, `py-24 md:py-32` (page) / `py-20` (panel); kicker `mb-5`, title `mb-4`, description `mb-8`; actions `gap-3` |
+| Hover state | via `buttonClass` |
+| Shadow | primary `shadow-glow` |
+| Accent usage | the one primary action |
 
 **Pattern notes:**
 The whole-screen state for not found and errors. `size="page"` fills a public
@@ -1044,27 +1188,27 @@ page between `SiteHeader` and `SiteFooter`; `size="panel"` sits inside the
 dashboard shell, which stays so the publisher can navigate away. Kicker is the
 status in one word ("404", "Error"), the title says what happened, the
 description says what to do, and there is always a way out — primary first
-(`statusPrimaryActionClass`), then an outlined secondary
-(`statusSecondaryActionClass`). Error boundaries never print `error.message`;
+(`statusPrimaryActionClass` = `buttonClass()`), then
+`statusSecondaryActionClass` = `buttonClass({ variant: "secondary" })`. Error boundaries never print `error.message`;
 they log it with its `digest`. Presentational only, so Server and Client
 Components share it.
 
 ### Skeleton / LoadingRegion
 
 File: components/ui/skeleton.tsx
-Last updated: 2026-09-30
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
-| Background       | `bg-card` with `animate-pulse`                      |
-| Border           | none; panel-shaped blocks add `border border-border` |
-| Border radius    | `rounded-md`; panel-shaped blocks `rounded-lg`      |
-| Text — primary   | n/a                                                 |
-| Text — secondary | `sr-only` label in `LoadingRegion`                  |
-| Spacing          | set by the caller to match the real layout          |
-| Hover state      | none                                                |
-| Shadow           | none                                                |
-| Accent usage     | none                                                |
+| Background | `bg-white/[0.05]` with `animate-pulse` |
+| Border | none; panel-shaped blocks add `border border-border` |
+| Border radius | `rounded-xl`; panel-shaped blocks `rounded-2xl` |
+| Text — primary | n/a |
+| Text — secondary | `sr-only` label in `LoadingRegion` |
+| Spacing | set by the caller to match the real layout |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | none |
 
 **Pattern notes:**
 Blocks are sized to the content that replaces them (header block: `h-3 w-24`

@@ -4,51 +4,58 @@ The rules the interface follows. Section numbers are stable: code comments cite
 them (for example "ui-rules.md §13"). Concrete classes live in
 `ui-registry.md`; tokens live in `app/globals.css`.
 
-Last reconciled with the code: 2026-09-30.
+Last reconciled with the code: 2026-10-03.
 
 ---
 
 # 1. Product personality
 
-Confident, editorial, fast, trustworthy, simple. Content and the next action
-come first; decoration never competes with them.
+Modern, refined, friendly and slightly playful, professional and
+trustworthy. Content and the next action come first; atmosphere (grid, glow,
+gentle motion) adds depth but never competes with them. The landing page is
+the most expressive surface; the dashboard is the most restrained.
 
 ---
 
 # 2. Visual system
 
-events-lab uses a **dark editorial system with a single lime accent**,
-chosen by the developer (adapted from the happenings-heap reference; visual
-reference only, never its architecture). It replaces the earlier "neutral
-SaaS" direction.
+events-lab uses **"Lime + Violet"** (redesigned 2026-10-03, chosen by the
+developer from the Auralis, Plasma and Forge references): a near-black
+ground, soft raised surfaces, lime for action and violet for atmosphere.
 
-* **Ground:** near-black `--background` (`hsl(240 10% 3.9%)`); surfaces are
-  `bg-card` or translucent `bg-card/30`–`/40`; hairline `border-border`.
-* **Accent:** lime `--primary` (`hsl(75 95% 65%)`) with dark
+* **Ground:** near-black `--background` (`hsl(240 16% 4%)`); cards are
+  `bg-card` through the `surface` utility (hairline + soft depth); floating
+  chrome uses `glass`. Borders are translucent white (`--border` 8%,
+  `--input` 10%).
+* **Accent:** lime `--primary` (`hsl(76 92% 63%)`) with dark
   `--primary-foreground`. One primary (lime) action per view or card.
-  Kickers, focus rings, active states and the wordmark dot use it; body
-  text never does.
+  Kickers, focus rings, active states and the logo's tail use it; body text never does.
+* **Atmosphere:** violet `--glow` and indigo `--glow-2` appear **only** in
+  glows, gradients and the grid — never as text, borders of controls, or
+  actions. `AmbientBackground` (`hero` / `soft` / `quiet`) is the one way to
+  add it; one `text-gradient` phrase per headline at most.
 * **Semantic colours:** `--destructive`, `--warning` (postponed),
   `--success`. Always paired with text (§16).
-* **Radius:** `rounded-md` for controls, `rounded-lg` for cards and panels,
-  `rounded-full` for chips and switches. Avatars are `rounded-lg`, never
-  circles.
-* **Depth:** no shadows. Separation comes from borders, surface tone and the
-  dialog backdrop.
-* **Motion:** `--ease-studio`; the landing hero reveal and marquee, and the
-  upload bar, are the only animations (§14).
+* **Radius:** `rounded-lg` controls, `rounded-xl` small tiles,
+  `rounded-2xl` cards and panels, `rounded-3xl` large landing panels,
+  `rounded-full` buttons, chips, badges and switches. Avatars are rounded
+  squares, never circles.
+* **Depth:** `shadow-card` at rest, `shadow-lift` for hover and floating
+  elements, `shadow-glow` on the primary button only.
+* **Motion:** see §14.
 * Dark only: there is no light theme.
 
-Avoid gradients (except the landing marquee edge fades), glassmorphism
-(except the sticky header's `backdrop-blur-md` and the dialog backdrop), and
-extra borders or ornaments.
+Avoid flat rainbow gradients, more than one glow source per section,
+glassmorphism outside floating chrome and dialogs, and decoration inside the
+dashboard's data areas.
 
 ---
 
 # 3. Layout
 
-* Public pages: `max-w-7xl` header/footer, `max-w-5xl` lists, `max-w-4xl`
-  event article; `px-6` gutters.
+* Public pages: floating `max-w-6xl` header pill, `max-w-6xl` footer and
+  landing sections, `max-w-5xl` lists and event article; `px-6` gutters.
+  Public pages other than the landing page sit in `PublicShell`.
 * Dashboard: fixed `w-64` sidebar from `md`; content `px-6 py-10 md:px-10`
   inside `max-w-5xl` (lists) or `max-w-2xl`–`max-w-3xl` (forms).
 * Auth: a centred `max-w-sm` `AuthCard`.
@@ -62,11 +69,13 @@ extra borders or ornaments.
 
 | Role | Treatment |
 | --- | --- |
-| Display (page and card titles, stats, wordmark) | Inter Tight (`font-display`), `font-extrabold`, **uppercase**, `tracking-tight`/`tracking-tighter` |
+| Display (page, section and card titles, stats, wordmark) | Bricolage Grotesque (`font-display`, optical-size axis), `font-semibold`, **sentence case**, `tracking-tight` (hero `tracking-[-0.02em]`) |
+| Accent (one key phrase per landing headline) | Instrument Serif italic via `font-accent`; with `text-gradient` in the hero and closing CTA, `text-white/90` in section titles |
 | Body | Inter (`font-sans`), `text-sm`–`text-lg`, `text-muted-foreground` for supporting copy |
-| Metadata, labels, kickers, hints | JetBrains Mono (`font-mono`), `text-xs`, usually `uppercase tracking-widest` |
+| Labels and kickers | Inter `text-sm font-medium` for field labels; `Eyebrow` pill or `text-xs font-medium uppercase tracking-[0.14em] text-primary` for kickers |
+| Metadata (dates, times, handles, URLs, counts) | JetBrains Mono (`font-mono`), `text-xs` |
 
-Hierarchy: kicker (mono, lime) → title (display) → context line (mono, muted).
+Hierarchy: kicker (eyebrow or lime small caps) → title (display) → context line (muted).
 Event titles are the most prominent text on any event surface. Date, time,
 location and organizer must scan at a glance. Numbers that change use
 `tabular-nums`.
@@ -181,7 +190,8 @@ highest priority on mobile. Filters wrap; tables hide secondary columns below
 
 # 13. Accessibility
 
-* Keyboard reachable everything; visible `:focus-visible` ring (lime, 2px).
+* Keyboard reachable everything; visible `:focus-visible` ring (lime, 2px);
+  inputs add a soft lime focus halo.
 * Semantic elements first: `<dialog>` for modals, `<button role="switch">` for
   toggles, `<search>`, `<fieldset>`/`<legend>` for chip groups, `<time>` for
   dates, a `<label>` wrapping file inputs.
@@ -197,18 +207,35 @@ highest priority on mobile. Filters wrap; tables hide secondary columns below
 
 # 14. Animation
 
-Motion communicates feedback, loading and state changes only. Current motion:
-the landing hero reveal and audience marquee, the upload bar, and colour
-transitions on hover. Everything stops under reduced motion. No decorative
-animation elsewhere.
+Motion is subtle, premium and performant (transform and opacity only, CSS,
+no JavaScript animation library). What exists:
+
+* **Entrances:** `animate-reveal` on the landing hero (staggered with
+  `--reveal-delay`), auth card, event article and status screens;
+  `reveal-on-scroll` on landing sections (scroll-driven; browsers without
+  support just show the content).
+* **Atmosphere:** the landing hero's slowly drifting glows and the floating
+  preview chips; the audience marquee.
+* **Scrolling:** in-page anchors scroll smoothly; route changes do not
+  (`data-scroll-behavior="smooth"`, Next 16).
+* **Feedback:** hover lift on cards and the primary button, colour and
+  border transitions, `active:scale-[0.98]` on buttons, the dialog scale-in,
+  the upload bar, the pinging `Eyebrow` dot.
+
+The dashboard has no ambient motion. Everything stops under
+`prefers-reduced-motion` (`globals.css`). Do not add looping animation to
+content areas.
 
 ---
 
 # 15. Buttons and actions
 
-* **Primary:** lime fill, one per view or card ("Publish", "Save changes",
-  "Get tickets").
-* **Secondary:** outlined `border border-border`, `hover:bg-white/5`.
+* All buttons come from `buttonClass` (`components/ui/button.ts`): pill
+  shaped, sizes `sm` / `md` / `lg`.
+* **Primary:** lime fill with `shadow-glow`, one per view or card
+  ("Publish", "Save changes", "Get tickets").
+* **Secondary:** translucent fill, `border border-border`.
+* **Ghost:** text only, for header and low-emphasis actions.
 * **Destructive:** outlined `border-destructive/40`, never filled.
 * Destructive actions confirm **in place** (the control becomes "Delete? Yes /
   No" or "Delete permanently / Keep it"). No `confirm()`, no modal for a

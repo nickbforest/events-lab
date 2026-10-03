@@ -22,7 +22,7 @@ export function Avatar({ src, name, sizes, className }: AvatarProps) {
     <span
       aria-hidden
       className={cn(
-        "relative grid shrink-0 place-items-center overflow-hidden rounded-lg bg-secondary font-display",
+        "relative grid shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-glow/40 to-glow-2/30 font-display font-semibold ring-1 ring-border",
         className,
       )}
     >

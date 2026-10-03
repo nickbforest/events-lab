@@ -4,10 +4,12 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { TrackView } from "@/components/analytics/track-view";
 import { EventCard } from "@/components/events/event-card";
+import { PublicShell } from "@/components/layout/public-shell";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import {
   getPastEventsByUsername,
   getUpcomingEventsByUsername,
@@ -72,7 +74,7 @@ export default async function PublisherPage({
     .join(", ");
 
   return (
-    <>
+    <PublicShell>
       {/* A publisher previewing their own page wants the page, not the
           signed-out header — and is not a visitor to count. */}
       {isPreview ? null : <SiteHeader />}
@@ -80,7 +82,7 @@ export default async function PublisherPage({
 
       <main className="flex-1">
         {profile.cover_url ? (
-          <div className="relative aspect-[3/1] max-h-80 w-full border-b border-border bg-secondary">
+          <div className="relative aspect-[3/1] max-h-80 w-full bg-secondary">
             <Image
               src={profile.cover_url}
               alt=""
@@ -89,23 +91,27 @@ export default async function PublisherPage({
               sizes="100vw"
               className="object-cover"
             />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent to-background"
+            />
           </div>
         ) : null}
 
-        <section className="border-b border-border px-6 py-16">
+        <section className="border-b border-border px-6 py-14 md:py-16">
           <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-start">
             <Avatar
               src={profile.avatar_url}
               name={profile.display_name}
               sizes="80px"
-              className="size-20 text-3xl font-extrabold"
+              className="size-20 rounded-2xl text-3xl shadow-lift"
             />
 
             <div className="min-w-0 flex-1">
-              <div className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">
+              <Eyebrow className="mb-4">
                 {publisherTypeLabel(profile.publisher_type)}
-              </div>
-              <h1 className="mb-2 font-display text-4xl font-extrabold uppercase tracking-tighter md:text-5xl">
+              </Eyebrow>
+              <h1 className="mb-1.5 font-display text-4xl font-semibold tracking-tight md:text-5xl">
                 {profile.display_name}
               </h1>
               <p className="mb-4 font-mono text-sm text-muted-foreground">
@@ -118,9 +124,9 @@ export default async function PublisherPage({
                 </p>
               ) : null}
 
-              <div className="flex flex-wrap items-center gap-5 font-mono text-xs uppercase text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 {location ? (
-                  <span className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white/[0.03] px-3 py-1.5">
                     <MapPin className="size-3.5" aria-hidden />
                     {location}
                   </span>
@@ -130,7 +136,7 @@ export default async function PublisherPage({
                     href={profile.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 transition-colors hover:text-primary"
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-white/[0.03] px-3 py-1.5 transition-colors hover:border-primary/40 hover:text-primary"
                   >
                     <Globe className="size-3.5" aria-hidden />
                     Website ↗
@@ -143,7 +149,7 @@ export default async function PublisherPage({
 
         <section className="px-6 py-12">
           <div className="mx-auto max-w-5xl">
-            <h2 className="mb-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <h2 className="mb-6 font-display text-xl font-semibold tracking-tight">
               Upcoming events
             </h2>
 
@@ -163,7 +169,7 @@ export default async function PublisherPage({
 
             {past.length > 0 && (
               <>
-                <h2 className="mb-6 mt-16 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <h2 className="mt-16 mb-6 font-display text-xl font-semibold tracking-tight text-muted-foreground">
                   Past events
                 </h2>
                 <div className="space-y-4 opacity-60">
@@ -178,6 +184,6 @@ export default async function PublisherPage({
       </main>
 
       <SiteFooter />
-    </>
+    </PublicShell>
   );
 }

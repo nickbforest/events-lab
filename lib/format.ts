@@ -92,23 +92,23 @@ export const EVENT_STATUS_META: Record<
 > = {
   draft: {
     label: "Draft",
-    className: "border-border text-muted-foreground",
+    className: "border-border bg-white/[0.04] text-muted-foreground",
   },
   published: {
     label: "Published",
-    className: "border-primary/40 text-primary",
+    className: "border-primary/30 bg-primary/10 text-primary",
   },
   cancelled: {
     label: "Cancelled",
-    className: "border-destructive/40 text-destructive",
+    className: "border-destructive/30 bg-destructive/10 text-destructive",
   },
   postponed: {
     label: "Postponed",
-    className: "border-warning/40 text-warning",
+    className: "border-warning/30 bg-warning/10 text-warning",
   },
   archived: {
     label: "Archived",
-    className: "border-border text-muted-foreground",
+    className: "border-border bg-white/[0.04] text-muted-foreground",
   },
 };
 

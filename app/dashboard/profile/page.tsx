@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 
 import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { buttonClass } from "@/components/ui/button";
 import { getCurrentProfile } from "@/features/profiles/queries";
 import { routes } from "@/lib/routes";
 import { ProfileForm } from "./profile-form";
@@ -20,7 +21,11 @@ export default async function DashboardProfilePage() {
               href={routes.publisherPreview(profile.username)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-border px-5 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors hover:bg-white/5 sm:w-auto"
+              className={buttonClass({
+                variant: "secondary",
+                size: "sm",
+                className: "w-full sm:w-auto",
+              })}
             >
               <ExternalLink className="size-3.5" aria-hidden />
               View page

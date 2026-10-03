@@ -106,7 +106,7 @@ export function NewEventProvider({
             close();
           }
         }}
-        className="m-auto max-h-[90vh] w-[min(46rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border bg-card p-0 text-foreground backdrop:bg-black/70 backdrop:backdrop-blur-sm"
+        className="m-auto max-h-[90vh] w-[min(46rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card p-0 text-foreground shadow-lift backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       >
         {/* Mounted only while open, so the form resets between creations
             instead of keeping the last event's half-typed values. */}
@@ -115,14 +115,14 @@ export function NewEventProvider({
             <div className="flex items-center justify-between gap-4 border-b border-border px-6 py-4">
               <h2
                 id="new-event-title"
-                className="font-display text-sm font-extrabold uppercase tracking-tight"
+                className="font-display text-lg font-semibold tracking-tight"
               >
                 {editing ? "Edit event" : "New event"}
               </h2>
               <button
                 type="button"
                 onClick={close}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
               >
                 <X className="size-4" aria-hidden />
                 <span className="sr-only">Close</span>
@@ -141,7 +141,7 @@ export function NewEventProvider({
                 editing ? (
                   <a
                     href={routes.dashboard.editEvent(editing.id)}
-                    className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
                   >
                     Full editor
                   </a>

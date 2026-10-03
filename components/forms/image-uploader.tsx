@@ -27,7 +27,7 @@ export interface ImageUploaderProps {
 
 /** A dark chip over the image, so the icon reads on light and dark photos. */
 const imageActionClass =
-  "flex size-9 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80";
+  "flex size-9 items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/15 backdrop-blur-sm transition-colors hover:bg-black/80";
 
 /**
  * Cover/avatar upload target.
@@ -81,9 +81,7 @@ export function ImageUploader({
   const progress = busy ? (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40">
       <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden />
-      <span className="font-mono text-xs uppercase tracking-widest text-primary">
-        {busyLabel}
-      </span>
+      <span className="text-xs font-medium text-primary">{busyLabel}</span>
       <span
         role="progressbar"
         aria-label={busyLabel}
@@ -96,7 +94,7 @@ export function ImageUploader({
 
   return (
     <div>
-      <span className="mb-2 block font-mono text-xs uppercase tracking-widest text-muted-foreground">
+      <span className="mb-2 block text-sm font-medium text-foreground/90">
         {label}
       </span>
 
@@ -104,7 +102,7 @@ export function ImageUploader({
         <div
           aria-busy={busy || undefined}
           className={cn(
-            "relative overflow-hidden rounded-md border border-border bg-secondary",
+            "relative overflow-hidden rounded-xl border border-border bg-secondary",
             className,
           )}
         >
@@ -156,18 +154,18 @@ export function ImageUploader({
           htmlFor={id}
           aria-busy={busy || undefined}
           className={cn(
-            "relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-md border border-dashed border-border px-6 py-12 text-center transition-colors hover:border-primary/50 hover:bg-white/[0.02] focus-within:border-primary",
+            "relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border border-dashed border-white/15 bg-white/[0.015] px-6 py-12 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03] focus-within:border-primary",
             busy && "cursor-wait",
             className,
           )}
         >
-          <Upload className="size-5 text-muted-foreground" aria-hidden />
-          <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <span className="grid size-10 place-items-center rounded-xl bg-white/[0.05] ring-1 ring-border">
+            <Upload className="size-4 text-primary" aria-hidden />
+          </span>
+          <span className="text-sm font-medium text-foreground/90">
             Click to upload
           </span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {hint}
-          </span>
+          <span className="text-xs text-muted-foreground">{hint}</span>
           {progress}
           {fileInput}
         </label>

@@ -143,7 +143,7 @@ export function PasswordForm({ email }: PasswordFormProps) {
       {formError ? <FormAlert message={formError} /> : null}
 
       <div className={formFooterClass}>
-        <p className="font-mono text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           You will be signed out everywhere and asked to log in again.
         </p>
 

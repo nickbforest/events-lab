@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { buttonClass } from "@/components/ui/button";
 import { resendConfirmationAction } from "@/features/auth/actions";
 
 export interface ResendButtonProps {
@@ -35,12 +36,12 @@ export function ResendButton({ email }: ResendButtonProps) {
         type="button"
         disabled={state === "sending" || state === "sent"}
         onClick={() => void resend()}
-        className="w-full rounded-md border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+        className={buttonClass({ variant: "secondary", className: "w-full" })}
       >
         {state === "sending" ? "Sending…" : "Resend the link"}
       </button>
 
-      <p aria-live="polite" className="font-mono text-xs text-muted-foreground">
+      <p aria-live="polite" className="text-xs text-muted-foreground">
         {state === "sent" ? "Sent. Check your inbox again." : ""}
       </p>
 

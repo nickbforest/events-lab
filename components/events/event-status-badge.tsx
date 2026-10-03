@@ -16,11 +16,12 @@ export function EventStatusBadge({ status, className }: EventStatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-widest",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
         meta.className,
         className,
       )}
     >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
       {meta.label}
     </span>
   );

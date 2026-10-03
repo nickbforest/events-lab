@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -17,24 +18,26 @@ export interface PanelProps {
  */
 export function Panel({ title, subtitle, action, children }: PanelProps) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card/30">
+    <section className="surface rounded-2xl overflow-hidden">
       <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
         <div>
-          <h2 className="font-display text-sm font-extrabold uppercase tracking-tight">
+          <h2 className="font-display text-base font-semibold tracking-tight">
             {title}
           </h2>
           {subtitle ? (
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {subtitle}
-            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
           ) : null}
         </div>
         {action ? (
           <Link
             href={action.href}
-            className="shrink-0 font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
+            className="group -mr-2 inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
           >
             {action.label}
+            <ArrowUpRight
+              aria-hidden
+              className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
           </Link>
         ) : null}
       </div>

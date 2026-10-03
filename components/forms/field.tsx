@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
+import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/format";
 
 /**
@@ -8,7 +9,7 @@ import { cn } from "@/lib/format";
  * smaller than that, and the zoom stays after the keyboard closes.
  */
 export const fieldControlClass =
-  "w-full rounded-md border border-border bg-card px-4 py-2.5 text-base placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:text-sm";
+  "w-full rounded-lg border border-input bg-white/[0.03] px-4 py-2.5 text-base shadow-[inset_0_1px_2px_hsl(0_0%_0%/0.25)] transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-muted-foreground/70 hover:border-white/20 focus:border-primary/60 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-primary)_14%,transparent)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 read-only:hover:border-input aria-invalid:border-destructive/60 sm:text-sm";
 
 export type SelectControlProps = ComponentProps<"select">;
 
@@ -32,7 +33,7 @@ export function SelectControl({
         {...props}
         className={cn(
           fieldControlClass,
-          "h-[2.875rem] cursor-pointer appearance-none pr-10 sm:h-[2.625rem]",
+          "h-[2.875rem] cursor-pointer appearance-none pr-10 sm:h-[2.625rem] [&>option]:bg-popover",
           className,
         )}
       >
@@ -46,10 +47,6 @@ export function SelectControl({
   );
 }
 
-/** The one lime submit button a dashboard form carries. */
-export const formSubmitClass =
-  "rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
-
 /**
  * The submit button and its status line closing a full-page form (Profile,
  * Settings). Below `sm` the button spans the form, edge to edge, with the
@@ -62,7 +59,9 @@ export const formSubmitClass =
  */
 export const formFooterClass =
   "flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between";
-export const formSubmitWideClass = `${formSubmitClass} w-full sm:ml-auto sm:w-48`;
+export const formSubmitWideClass = buttonClass({
+  className: "w-full sm:ml-auto sm:w-48",
+});
 
 export interface FieldProps {
   id: string;
@@ -84,7 +83,7 @@ export function Field({ id, label, hint, error, children }: FieldProps) {
     <div>
       <label
         htmlFor={id}
-        className="mb-2 block font-mono text-xs uppercase tracking-widest text-muted-foreground"
+        className="mb-2 block text-sm font-medium text-foreground/90"
       >
         {label}
       </label>
@@ -94,7 +93,7 @@ export function Field({ id, label, hint, error, children }: FieldProps) {
       {error ? (
         <p
           id={`${id}-error`}
-          className="mt-1.5 font-mono text-xs leading-relaxed text-destructive"
+          className="mt-1.5 text-xs leading-relaxed text-destructive"
         >
           {error}
         </p>
@@ -102,7 +101,7 @@ export function Field({ id, label, hint, error, children }: FieldProps) {
         hint && (
           <p
             id={`${id}-hint`}
-            className="mt-1.5 font-mono text-xs leading-relaxed text-muted-foreground"
+            className="mt-1.5 text-xs leading-relaxed text-muted-foreground"
           >
             {hint}
           </p>

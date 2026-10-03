@@ -118,7 +118,7 @@ export function EmailForm({ currentEmail, pendingEmail }: EmailFormProps) {
         {/* Not "email changed": it has not changed until the link is used. */}
         <p
           aria-live="polite"
-          className="font-mono text-xs leading-relaxed text-primary empty:hidden"
+          className="text-xs leading-relaxed text-primary empty:hidden"
         >
           {awaiting
             ? `Confirmation pending for ${awaiting}. Open the link we sent there. If a link also arrives at your current address, confirm that one too.`

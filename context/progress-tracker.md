@@ -23,6 +23,17 @@ Discovery and the signup publisher-type select were dropped from the MVP.
 
 **Next:** commit and open the PR, run the §D checklist, then the C2 PR.
 
+**2026-10-03 — Visual redesign "Lime + Violet"** (branch
+`feat/visual-redesign`): new design system across the whole product. It keeps
+lime for actions, adds violet/indigo atmosphere, uses Bricolage Grotesque sentence-case headlines with Instrument Serif
+italic accents, pill buttons from `buttonClass`, `surface` cards with soft depth,
+and CSS-only motion. The landing page was rebuilt (hero preview, bento
+features, How it works, CTA panel, richer footer). The dashboard, auth and
+public pages use the same system, more restrained. No routing, data or logic
+changes. The chart's ticket-click series is now violet `#8B6CFF`
+(re-validated). `ui-rules.md` §1–4, §14, §15 and `ui-registry.md` were
+updated. The signed-in dashboard still needs the developer's visual check.
+
 **2026-10-03 — Map link** (branch `feat/event-map-link`): the event form's
 Location section takes a pasted map link (`events.map_url`, migration
 `add_event_map_url`). "View on map" on the card and event page opens it, and

@@ -1,5 +1,6 @@
 import { CalendarPlus, Eye, Plus } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getOwnedEvents, listEventCategories } from "@/features/events/queries";
 import { getCurrentProfile } from "@/features/profiles/queries";
@@ -28,7 +29,7 @@ export default async function DashboardEventsPage() {
                   href={routes.publisherPreview(profile.username)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
+                  className={buttonClass({ variant: "secondary", size: "sm" })}
                 >
                   <Eye className="size-4" aria-hidden />
                   Preview
@@ -39,7 +40,12 @@ export default async function DashboardEventsPage() {
                 </a>
                 {/* The primary action, so the wider of the two: the rest of
                     the row on mobile, a fixed minimum from `sm`. */}
-                <NewEventTrigger className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 sm:min-w-40 sm:flex-none">
+                <NewEventTrigger
+                  className={buttonClass({
+                    size: "sm",
+                    className: "flex-1 sm:min-w-36 sm:flex-none",
+                  })}
+                >
                   <Plus className="size-4" aria-hidden />
                   New
                   <span className="sr-only"> event</span>
@@ -49,12 +55,12 @@ export default async function DashboardEventsPage() {
           />
 
           {events.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="surface rounded-2xl overflow-hidden">
               {/* Column labels for the `lg` grid. Below it each row labels
                   its own facts, so this header would only repeat them. */}
               <div
                 aria-hidden
-                className={`hidden border-b border-border bg-card/50 px-5 py-3 font-mono text-xs uppercase tracking-widest text-muted-foreground ${EVENT_LIST_COLUMNS}`}
+                className={`hidden border-b border-border bg-white/[0.02] px-5 py-3 text-xs font-medium text-muted-foreground ${EVENT_LIST_COLUMNS}`}
               >
                 <span>Event</span>
                 <span>When</span>
@@ -73,7 +79,7 @@ export default async function DashboardEventsPage() {
               title="No events yet"
               description="You have not created any events. Your first one takes about a minute and gets a shareable public link."
               actionSlot={
-                <NewEventTrigger className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110">
+                <NewEventTrigger className={buttonClass()}>
                   <Plus className="size-4" aria-hidden />
                   Create your first event
                 </NewEventTrigger>
