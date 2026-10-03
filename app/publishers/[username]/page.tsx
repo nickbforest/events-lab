@@ -38,7 +38,7 @@ export async function generateMetadata({
     title: profile.display_name,
     description:
       profile.bio ??
-      `Upcoming events from ${profile.display_name} on events-lab.`,
+      `Upcoming events from ${profile.display_name} on Eventail.`,
     openGraph: {
       title: profile.display_name,
       description: profile.bio ?? undefined,

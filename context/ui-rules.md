@@ -26,7 +26,7 @@ SaaS" direction.
   `bg-card` or translucent `bg-card/30`–`/40`; hairline `border-border`.
 * **Accent:** lime `--primary` (`hsl(75 95% 65%)`) with dark
   `--primary-foreground`. One primary (lime) action per view or card.
-  Kickers, focus rings, active states and the wordmark hyphen use it; body
+  Kickers, focus rings, active states and the wordmark dot use it; body
   text never does.
 * **Semantic colours:** `--destructive`, `--warning` (postponed),
   `--success`. Always paired with text (§16).

@@ -74,7 +74,7 @@ Last updated: 2026-09-26
 | Spacing          | `h-16 px-6`, `gap-1 sm:gap-3`, links `px-3 py-2`  |
 | Hover state      | ghost `hover:bg-white/5 hover:text-foreground`; solid `hover:opacity-90` |
 | Shadow           | none                                              |
-| Accent usage     | `text-primary` on the wordmark hyphen only        |
+| Accent usage     | `text-primary` on the wordmark dot only        |
 
 **Pattern notes:**
 The public header carries exactly two actions — a ghost `Log in` and a solid
@@ -105,7 +105,7 @@ Last updated: 2026-09-26
 | Spacing          | `max-w-7xl px-6 py-10`                            |
 | Hover state      | none                                              |
 | Shadow           | none                                              |
-| Accent usage     | `text-primary` on the wordmark hyphen only        |
+| Accent usage     | `text-primary` on the wordmark dot only        |
 
 **Pattern notes:**
 The footer is the wordmark and nothing else. The Discover and Start
@@ -128,7 +128,7 @@ Last updated: 2026-09-26
 | Spacing          | shell `p-6`, items `px-3 py-2`, nav `gap-1`, footer `border-t pt-6` |
 | Hover state      | `hover:bg-white/5 hover:text-foreground`            |
 | Shadow           | none                                                |
-| Accent usage     | wordmark hyphen; preview link `hover:text-primary`  |
+| Accent usage     | wordmark dot; preview link `hover:text-primary`  |
 
 **Pattern notes:**
 The sidebar wordmark leads to Overview, never to the public landing page —
@@ -348,7 +348,7 @@ Last updated: 2026-09-14
 | Spacing          | card `p-8`, wordmark `mb-10`, heading `mb-1`, subheading `mb-8`, fields `space-y-5`, footer `mt-6` |
 | Hover state      | submit `hover:brightness-110`; links `hover:underline` |
 | Shadow           | none                                                |
-| Accent usage     | wordmark hyphen, footer link, and the submit fill   |
+| Accent usage     | wordmark dot, footer link, and the submit fill   |
 
 **Pattern notes:**
 The shell for every signed-out screen — signup, login, forgot password, update
@@ -824,7 +824,7 @@ Delete is two-step in place: the button becomes "Delete permanently" beside
 ### WordmarkLink
 
 File: components/layout/wordmark-link.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -836,7 +836,7 @@ Last updated: 2026-09-26
 | Spacing          | set by the caller (`mb-10 block` in the sidebar)    |
 | Hover state      | none                                                |
 | Shadow           | none                                                |
-| Accent usage     | the hyphen, `text-primary`                          |
+| Accent usage     | the trailing dot, `text-primary`                          |
 
 **Pattern notes:**
 The only way to render the logo as a link. The caller passes the destination:
@@ -844,6 +844,11 @@ The only way to render the logo as a link. The caller passes the destination:
 On the page it already points at it renders a plain `<a>` so a click reloads.
 `AuthCard` uses it at `text-2xl`, centred. `SiteFooter` renders the same
 wordmark as plain text, not a link.
+
+The brand mark is a lime five-blade fan ("éventail") on the dark background:
+`app/icon.svg` is the source; `app/favicon.ico` (16/32/48) and
+`app/apple-icon.png` (180, full-bleed) are rasterised from it. Regenerate both
+when the SVG changes.
 
 ### EmptyState
 

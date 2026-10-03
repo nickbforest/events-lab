@@ -11,7 +11,7 @@ export interface WordmarkLinkProps {
 }
 
 /**
- * The events-lab logo as a link.
+ * The Eventail logo as a link.
  *
  * From anywhere else it is an ordinary client-side navigation. On the page it
  * already points at, it is a plain anchor, so clicking it reloads the page —
@@ -26,7 +26,7 @@ export function WordmarkLink({ href, className }: WordmarkLinkProps) {
   );
   const wordmark = (
     <>
-      events<span className="text-primary">-</span>lab
+      eventail<span className="text-primary">.</span>
     </>
   );
 

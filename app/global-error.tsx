@@ -33,12 +33,12 @@ export default function GlobalError({ error, retry }: GlobalErrorProps) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
-        <title>Something went wrong — events-lab</title>
+        <title>Something went wrong — Eventail</title>
         <main className="flex flex-1 flex-col">
           <StatusMessage
-            kicker="events-lab"
+            kicker="Eventail"
             title="Something went wrong"
-            description="events-lab could not load. It is usually temporary — try again in a moment."
+            description="Eventail could not load. It is usually temporary — try again in a moment."
             actions={
               <button
                 type="button"

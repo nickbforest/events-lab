@@ -8,12 +8,12 @@ const FEATURES = [
   {
     Icon: Globe,
     title: "Your own public page",
-    body: "Every publisher gets a page of their own at events-lab/publishers/yourname — a shareable home for your upcoming schedule.",
+    body: "Every publisher gets a page of their own at eventail/publishers/yourname — a shareable home for your upcoming schedule.",
   },
   {
     Icon: Zap,
     title: "External ticket links",
-    body: "Keep the ticketing provider you already use. events-lab is the front door; the click goes to your URL.",
+    body: "Keep the ticketing provider you already use. Eventail is the front door; the click goes to your URL.",
   },
   {
     Icon: Share2,
