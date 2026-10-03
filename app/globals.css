@@ -1,35 +1,40 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   events-lab design tokens
-   Dark editorial system adopted from the happenings-heap reference.
-   See context/ui-rules.md for the rules these tokens encode.
+   events-lab design tokens — "Lime + Violet"
+   Near-black ground, soft raised surfaces, lime for the one primary action,
+   violet/indigo for atmosphere only (glows, gradients, grid tint).
+   See context/ui-rules.md §2 for the rules these tokens encode.
 --------------------------------------------------------------------------- */
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(240 10% 5.5%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(240 10% 5.5%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(75 95% 65%);
-  --primary-foreground: hsl(240 10% 8%);
-  --secondary: hsl(240 5% 12%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 5% 12%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 5% 14%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 72% 51%);
+  --background: hsl(240 16% 4%);
+  --foreground: hsl(240 10% 97%);
+  --card: hsl(240 13% 7.5%);
+  --card-foreground: hsl(240 10% 97%);
+  --popover: hsl(240 12% 9%);
+  --popover-foreground: hsl(240 10% 97%);
+  --primary: hsl(76 92% 63%);
+  --primary-foreground: hsl(240 16% 6%);
+  --secondary: hsl(240 8% 12.5%);
+  --secondary-foreground: hsl(240 10% 97%);
+  --muted: hsl(240 8% 12.5%);
+  --muted-foreground: hsl(240 6% 64%);
+  --accent: hsl(240 8% 14%);
+  --accent-foreground: hsl(240 10% 97%);
+  --destructive: hsl(0 78% 60%);
   --destructive-foreground: hsl(0 0% 98%);
-  --success: hsl(142 71% 45%);
+  --success: hsl(150 62% 50%);
   --warning: hsl(38 92% 60%);
-  --border: hsl(240 5% 15%);
-  --input: hsl(240 5% 15%);
-  --ring: hsl(75 95% 65%);
+  --border: hsl(0 0% 100% / 0.08);
+  --input: hsl(0 0% 100% / 0.1);
+  --ring: hsl(76 92% 63%);
+
+  /* Atmosphere only — never text, never an action. */
+  --glow: hsl(256 100% 68%);
+  --glow-2: hsl(228 92% 62%);
 }
 
 @theme inline {
@@ -37,6 +42,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,10 +66,24 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-glow: var(--glow);
+  --color-glow-2: var(--glow-2);
 
-  --font-display: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Depth: a hairline top highlight plus a soft drop, never a hard shadow. */
+  --shadow-card:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.04), 0 1px 2px hsl(0 0% 0% / 0.4),
+    0 12px 32px -16px hsl(0 0% 0% / 0.7);
+  --shadow-lift:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.06), 0 2px 4px hsl(0 0% 0% / 0.4),
+    0 24px 48px -20px hsl(0 0% 0% / 0.8);
+  --shadow-glow:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.45),
+    0 8px 28px -8px color-mix(in oklab, var(--primary) 55%, transparent);
 
   --ease-studio: cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -78,6 +99,11 @@
     color: var(--color-foreground);
   }
 
+  /* Header links glide to their section (off under reduced motion, below). */
+  html {
+    scroll-behavior: smooth;
+  }
+
   /* A country field is free text with a <datalist> of suggestions. Chrome and
      Safari draw a dropdown arrow on such inputs, which makes it read as a
      select; the suggestions still appear as you type. */
@@ -90,6 +116,12 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 
   ::selection {
@@ -130,13 +162,65 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Motion. ui-rules.md §14 — animation communicates, never decorates.
+   Surfaces. ui-rules.md §2 — one card recipe everywhere.
+--------------------------------------------------------------------------- */
+
+/* The raised card: dark fill, hairline border, soft depth. */
+/* Pair with a radius utility (`rounded-2xl` for cards, `rounded-3xl` for
+   large landing panels). */
+@utility surface {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Translucent glass for chrome that floats over the background. */
+@utility glass {
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in oklab, var(--color-card) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* The faint 56px grid behind heroes and CTA panels, faded at the edges. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, hsl(0 0% 100% / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(0 0% 100% / 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* The key word of a headline, in Instrument Serif italic. The right padding
+   keeps the italic overhang from being clipped by `text-gradient`. */
+@utility font-accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  padding-right: 0.08em;
+}
+
+/* Headline highlight: lime that warms into a pale tint. */
+@utility text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-primary) 10%,
+    hsl(90 90% 82%) 55%,
+    color-mix(in oklab, var(--color-glow) 55%, white) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion. ui-rules.md §14 — subtle, premium, and off under reduced motion.
 --------------------------------------------------------------------------- */
 
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -144,8 +228,57 @@
   }
 }
 
+/* Stagger with `[--reveal-delay:120ms]` on the element. */
 .animate-reveal {
-  animation: reveal 600ms var(--ease-studio) both;
+  animation: reveal 700ms var(--ease-studio) var(--reveal-delay, 0ms) both;
+}
+
+/*
+ * Sections fade up as they scroll into view. Pure CSS: browsers without
+ * scroll-driven animations simply show the content, nothing is hidden.
+ */
+@supports (animation-timeline: view()) {
+  .reveal-on-scroll {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+}
+
+/* Slow ambient drift for background glows. */
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6%, -8%, 0) scale(1.12);
+  }
+}
+
+.animate-drift {
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.animate-drift-slow {
+  animation: drift 26s ease-in-out infinite alternate-reverse;
+}
+
+/* A gentle bob for floating preview cards. */
+@keyframes float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+.animate-float-delayed {
+  animation: float 7s ease-in-out 1.5s infinite alternate;
 }
 
 @keyframes marquee {
@@ -183,7 +316,7 @@
   animation: upload-progress 1.2s var(--ease-studio) infinite;
 }
 
-/* The reference has no reduced-motion handling. ui-rules.md §13 requires it. */
+/* ui-rules.md §13 — respect reduced motion everywhere. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -195,7 +328,12 @@
   }
 
   .animate-marquee,
-  .animate-marquee-reverse {
+  .animate-marquee-reverse,
+  .animate-drift,
+  .animate-drift-slow,
+  .animate-float,
+  .animate-float-delayed,
+  .reveal-on-scroll {
     animation: none !important;
     transform: none !important;
   }
@@ -206,4 +344,33 @@
     transform: none !important;
     width: 100% !important;
   }
+}
+
+/* Native <dialog>: scale in, backdrop fades. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+dialog[open] {
+  animation: dialog-in 280ms var(--ease-studio);
+}
+
+dialog[open]::backdrop {
+  animation: backdrop-in 280ms ease-out;
 }

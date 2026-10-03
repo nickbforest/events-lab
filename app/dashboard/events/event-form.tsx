@@ -12,11 +12,11 @@ import {
   Field,
   fieldControlClass,
   fieldDescribedBy,
-  formSubmitClass,
   SelectControl,
 } from "@/components/forms/field";
 import { FormSection } from "@/components/forms/form-section";
 import { ImageUploader } from "@/components/forms/image-uploader";
+import { buttonClass } from "@/components/ui/button";
 import {
   createEventAction,
   type EventField,
@@ -552,13 +552,14 @@ export function EventForm({
       <form.Field name="isFree">
         {(field) => (
           <fieldset>
-            <legend className="mb-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            <legend className="mb-2 text-sm font-medium text-foreground/90">
               Price
             </legend>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
+                  className="size-4 accent-primary"
                   name="isFree"
                   value="true"
                   checked={field.state.value}
@@ -569,6 +570,7 @@ export function EventForm({
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
+                  className="size-4 accent-primary"
                   name="isFree"
                   value="false"
                   checked={!field.state.value}
@@ -712,11 +714,11 @@ export function EventForm({
                 <ul className="flex flex-wrap gap-2">
                   {current.map((tag) => (
                     <li key={tag}>
-                      <span className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 font-mono text-xs uppercase text-muted-foreground">
+                      <span className="flex items-center gap-1.5 rounded-full border border-border bg-white/[0.04] py-1 pr-2 pl-3 text-xs font-medium text-foreground/90">
                         {tag}
                         <button
                           type="button"
-                          className="text-muted-foreground transition-colors hover:text-destructive"
+                          className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
                           onClick={() =>
                             field.handleChange(
                               current.filter((item) => item !== tag),
@@ -781,7 +783,7 @@ export function EventForm({
                   {isEdit ? null : (
                     <button
                       type="submit"
-                      className="rounded-md border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={buttonClass({ variant: "secondary" })}
                       disabled={isSubmitting}
                       onClick={() => {
                         publishIntent.current = false;
@@ -792,7 +794,7 @@ export function EventForm({
                   )}
                   <button
                     type="submit"
-                    className={formSubmitClass}
+                    className={buttonClass()}
                     disabled={isSubmitting}
                     onClick={() => {
                       publishIntent.current = !isEdit;
@@ -866,7 +868,7 @@ export function EventForm({
                 {isEdit ? null : (
                   <button
                     type="submit"
-                    className={formSubmitClass}
+                    className={buttonClass()}
                     disabled={isSubmitting}
                     onClick={() => {
                       publishIntent.current = true;
@@ -878,11 +880,9 @@ export function EventForm({
 
                 <button
                   type="submit"
-                  className={
-                    isEdit
-                      ? formSubmitClass
-                      : "rounded-md border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5"
-                  }
+                  className={buttonClass({
+                    variant: isEdit ? "primary" : "secondary",
+                  })}
                   disabled={isSubmitting}
                   onClick={() => {
                     publishIntent.current = false;
@@ -897,7 +897,7 @@ export function EventForm({
 
                 <Link
                   href={routes.dashboard.events()}
-                  className="rounded-md px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className={buttonClass({ variant: "ghost" })}
                 >
                   Cancel
                 </Link>

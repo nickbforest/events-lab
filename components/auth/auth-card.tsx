@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 import { WordmarkLink } from "@/components/layout/wordmark-link";
+import { buttonClass } from "@/components/ui/button";
 import { routes } from "@/lib/routes";
 
-export const authSubmitClass =
-  "w-full rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+export const authSubmitClass = buttonClass({ className: "w-full" });
 
 export interface AuthCardProps {
   heading: string;
@@ -13,7 +13,7 @@ export interface AuthCardProps {
   footer?: ReactNode;
 }
 
-/** The shell every auth screen sits in: wordmark, bordered card, title block. */
+/** The shell every auth screen sits in: wordmark, raised card, title block. */
 export function AuthCard({
   heading,
   subheading,
@@ -21,14 +21,18 @@ export function AuthCard({
   footer,
 }: AuthCardProps) {
   return (
-    <div className="w-full max-w-sm">
+    <div className="w-full max-w-sm animate-reveal">
       <WordmarkLink
         href={routes.home()}
-        className="mb-10 block text-center text-2xl"
+        className="mb-8 flex justify-center text-3xl"
       />
 
-      <div className="rounded-lg border border-border bg-card/40 p-8">
-        <h1 className="mb-1 font-display text-2xl font-extrabold uppercase tracking-tight">
+      <div className="surface rounded-2xl relative overflow-hidden p-7 sm:p-8">
+        <div
+          aria-hidden
+          className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+        />
+        <h1 className="mb-1.5 font-display text-2xl font-semibold tracking-tight">
           {heading}
         </h1>
         <p className="mb-8 text-sm text-muted-foreground">{subheading}</p>
@@ -52,7 +56,10 @@ export interface FormAlertProps {
 /** Form-level failure — the kind that belongs to the submission, not a field. */
 export function FormAlert({ message }: FormAlertProps) {
   return (
-    <p role="alert" className="text-sm text-destructive">
+    <p
+      role="alert"
+      className="rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive"
+    >
       {message}
     </p>
   );

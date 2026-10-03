@@ -59,13 +59,16 @@ export function Switch({
       <span
         aria-hidden
         className={cn(
-          "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-          checked ? "bg-primary" : "bg-secondary",
+          "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full ring-1 transition-all duration-200",
+          checked
+            ? "bg-primary shadow-glow ring-primary/50"
+            : "bg-white/[0.06] ring-border group-hover:bg-white/[0.1]",
         )}
       >
         <span
           className={cn(
-            "inline-block size-5 rounded-full bg-background transition-transform",
+            "inline-block size-5 rounded-full shadow-sm transition-transform duration-200 ease-[var(--ease-studio)]",
+            checked ? "bg-primary-foreground" : "bg-foreground/80",
             checked ? "translate-x-[1.375rem]" : "translate-x-0.5",
           )}
         />
@@ -74,7 +77,7 @@ export function Switch({
       {stateLabel ? (
         <span
           aria-hidden
-          className="font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-foreground"
+          className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground"
         >
           {stateLabel}
         </span>

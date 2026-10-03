@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
+import { buttonClass } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/format";
 
 /** The one lime action on a status screen. */
-export const statusPrimaryActionClass =
-  "rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-110";
+export const statusPrimaryActionClass = buttonClass();
 
 /** A second, quieter way out. */
-export const statusSecondaryActionClass =
-  "rounded-md border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5";
+export const statusSecondaryActionClass = buttonClass({ variant: "secondary" });
 
 export interface StatusMessageProps {
   /** Short mono label above the title, e.g. "404" or "Error". */
@@ -40,17 +40,15 @@ export function StatusMessage({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col items-center justify-center px-6 text-center",
+        "flex flex-1 animate-reveal flex-col items-center justify-center px-6 text-center",
         size === "page" ? "py-24 md:py-32" : "py-20",
         className,
       )}
     >
-      <p className="mb-4 font-mono text-xs uppercase tracking-widest text-primary">
-        {kicker}
-      </p>
+      <Eyebrow className="mb-5">{kicker}</Eyebrow>
       <h1
         className={cn(
-          "mb-4 font-display font-extrabold uppercase tracking-tighter",
+          "mb-4 font-display font-semibold tracking-tight",
           size === "page" ? "text-4xl md:text-6xl" : "text-3xl md:text-4xl",
         )}
       >

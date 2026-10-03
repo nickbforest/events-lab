@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { buttonClass } from "@/components/ui/button";
+
 export interface EmptyStateProps {
   icon?: ReactNode;
   title: string;
@@ -23,9 +25,17 @@ export function EmptyState({
   actionSlot,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-20 text-center">
-      {icon ? <div className="mb-5 text-muted-foreground">{icon}</div> : null}
-      <h3 className="mb-2 font-display text-xl font-extrabold uppercase tracking-tight">
+    <div className="relative isolate flex flex-col items-center overflow-hidden rounded-2xl border border-dashed border-white/15 bg-white/[0.015] px-6 py-20 text-center">
+      <div
+        aria-hidden
+        className="absolute top-0 left-1/2 -z-10 h-40 w-80 -translate-x-1/2 rounded-full bg-glow/10 blur-3xl"
+      />
+      {icon ? (
+        <div className="mb-5 grid size-14 place-items-center rounded-2xl bg-white/[0.04] text-primary ring-1 ring-border">
+          {icon}
+        </div>
+      ) : null}
+      <h3 className="mb-2 font-display text-xl font-semibold tracking-tight">
         {title}
       </h3>
       <p className="mb-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
@@ -33,10 +43,7 @@ export function EmptyState({
       </p>
       {actionSlot}
       {action ? (
-        <Link
-          href={action.href}
-          className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:brightness-110"
-        >
+        <Link href={action.href} className={buttonClass()}>
           {action.label}
         </Link>
       ) : null}
