@@ -212,8 +212,11 @@ no JavaScript animation library). What exists:
 
 * **Entrances:** `animate-reveal` on the landing hero (staggered with
   `--reveal-delay`), auth card, event article and status screens;
-  `reveal-on-scroll` on landing sections (scroll-driven; browsers without
-  support just show the content).
+  `reveal-on-scroll` on landing sections (scroll-driven, desktop pointers
+  only — touch screens and browsers without support just show the content).
+* **Glows are radial gradients** (`bg-radial from-glow/25 to-transparent
+  to-70%`), never `blur-*` filters: large blurs made phones paint blank
+  tiles while scrolling.
 * **Atmosphere:** the landing hero's slowly drifting glows and the floating
   preview chips; the audience wall's columns streaming slowly downward
   (paused on hover).

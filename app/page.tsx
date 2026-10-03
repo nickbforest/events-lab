@@ -58,7 +58,7 @@ function HeroPreview() {
   return (
     <div aria-hidden className="relative mx-auto mt-16 max-w-3xl md:mt-20">
       {/* Halo behind the window. */}
-      <div className="absolute inset-x-10 -top-6 h-40 rounded-full bg-glow/30 blur-3xl" />
+      <div className="absolute -inset-x-6 -top-20 h-72 bg-radial from-glow/30 to-transparent to-70%" />
 
       <div className="surface relative overflow-hidden rounded-3xl p-2 shadow-lift">
         <div className="absolute inset-x-16 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
@@ -369,7 +369,7 @@ export default function LandingPage() {
                   >
                     <div
                       aria-hidden
-                      className="absolute -top-24 -right-24 -z-10 size-56 rounded-full bg-glow/20 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                      className="absolute -top-40 -right-40 -z-10 size-80 bg-radial from-glow/20 to-transparent to-70% opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                     />
                     <div className="mb-6 grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-all duration-300 ease-[var(--ease-studio)] group-hover:scale-110 group-hover:bg-primary/15 group-hover:shadow-glow">
                       <Icon className={cn("size-5", iconMotion)} aria-hidden />
@@ -473,7 +473,7 @@ export default function LandingPage() {
             <div aria-hidden className="bg-grid absolute inset-0 -z-10" />
             <div
               aria-hidden
-              className="absolute -bottom-32 left-1/2 -z-10 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-glow/30 blur-[100px]"
+              className="absolute -bottom-56 left-1/2 -z-10 h-[30rem] w-[52rem] -translate-x-1/2 bg-radial from-glow/30 to-transparent to-70%"
             />
             <div
               aria-hidden

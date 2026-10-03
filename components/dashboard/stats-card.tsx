@@ -26,7 +26,7 @@ export function StatsCard({
       {accent ? (
         <div
           aria-hidden
-          className="absolute -top-16 -right-16 -z-10 size-40 rounded-full bg-primary/15 blur-3xl"
+          className="absolute -top-32 -right-32 -z-10 size-72 bg-radial from-primary/15 to-transparent to-70%"
         />
       ) : null}
       <div className="mb-5 flex items-center justify-between gap-4">
