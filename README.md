@@ -1,8 +1,8 @@
 # events-lab
 
 A free event publishing tool. A publisher — an artist, venue, club, school or
-anyone who runs events — gets a public page at `/publishers/:username` and
-publishes events at `/publishers/:username/:slug`, with ticket links to their
+anyone who runs events — gets a public page at `/publisher/:username` and
+publishes events at `/publisher/:username/:slug`, with ticket links to their
 own provider.
 
 Built with Next.js 16, React 19, TypeScript, Tailwind CSS 4 and Supabase

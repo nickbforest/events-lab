@@ -5,7 +5,7 @@ import { isUsernameAvailable } from "@/features/profiles/queries";
 
 /**
  * Public on purpose: usernames are public URLs, so availability reveals
- * nothing that visiting /publishers/:username would not. The unique constraint, not
+ * nothing that visiting /publisher/:username would not. The unique constraint, not
  * this endpoint, is what actually prevents collisions.
  */
 export async function GET(request: NextRequest) {

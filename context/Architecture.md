@@ -19,8 +19,8 @@ conference organizers, local businesses.
 
 > Create an event → publish it → share its public link.
 
-A **publisher** signs up, gets a public page at `/publishers/:username`, and
-publishes events at `/publishers/:username/:slug`. Tickets are sold elsewhere;
+A **publisher** signs up, gets a public page at `/publisher/:username`, and
+publishes events at `/publisher/:username/:slug`. Tickets are sold elsewhere;
 events-lab links out to the publisher's provider.
 
 ---
@@ -534,8 +534,8 @@ Supabase → PostgreSQL / Auth / Storage
 | Route | Type | Purpose |
 | --- | --- | --- |
 | `/` | static | Landing page |
-| `/publishers/[username]` | dynamic | Publisher page; `?preview=1` hides the site header |
-| `/publishers/[username]/[slug]` | dynamic | Public event page |
+| `/publisher/[username]` | dynamic | Publisher page; `?preview=1` hides the site header |
+| `/publisher/[username]/[slug]` | dynamic | Public event page |
 | `/auth?mode=login\|signup` | static | Combined sign-in / sign-up |
 | `/auth/check-email` | dynamic | After signup without a session; resend |
 | `/auth/forgot-password` | static | Request a reset link |
@@ -556,7 +556,7 @@ their own `error`, `not-found` and `loading` inside the shell. Public pages
 deliberately have no `loading.tsx`: streaming would send a 200 before
 `notFound()` could set the 404.
 
-Usernames live under `/publishers`, so they cannot shadow a top-level route.
+Usernames live under `/publisher`, so they cannot shadow a top-level route.
 `RESERVED_ROUTE_SEGMENTS` is still kept so a username never reads like an
 application path. Public pages render dynamically per request (no
 `generateStaticParams`), so a new publisher is live immediately.

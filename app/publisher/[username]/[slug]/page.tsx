@@ -36,7 +36,7 @@ import type { EventWithRelations } from "@/lib/types";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/publishers/[username]/[slug]">): Promise<Metadata> {
+}: PageProps<"/publisher/[username]/[slug]">): Promise<Metadata> {
   const { username, slug } = await params;
   const event = await getPublishedEventBySlug(username, slug);
 
@@ -140,7 +140,7 @@ function InfoRow({ icon, label, children }: InfoRowProps) {
 
 export default async function EventPage({
   params,
-}: PageProps<"/publishers/[username]/[slug]">) {
+}: PageProps<"/publisher/[username]/[slug]">) {
   const { username, slug } = await params;
   const event = await getPublishedEventBySlug(username, slug);
 

@@ -26,7 +26,7 @@ import { PREVIEW_PARAM } from "@/lib/routes";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/publishers/[username]">): Promise<Metadata> {
+}: PageProps<"/publisher/[username]">): Promise<Metadata> {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
 
@@ -51,7 +51,7 @@ export async function generateMetadata({
 export default async function PublisherPage({
   params,
   searchParams,
-}: PageProps<"/publishers/[username]">) {
+}: PageProps<"/publisher/[username]">) {
   const [{ username }, query] = await Promise.all([params, searchParams]);
 
   const isPreview = previewFlagSchema.parse(query[PREVIEW_PARAM]);

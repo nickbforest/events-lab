@@ -179,8 +179,8 @@ add a prop here instead. Actions are passed as nodes so a screen can carry a
 ghost + solid pair (Events) or a segmented control (Overview). The actions
 row is `w-full` below `sm`, so a page's buttons can stretch across the
 screen there (`w-full` / `flex-1` + `justify-center`) and sit at their own
-width from `sm`. On Events, New is the wider of the pair on mobile
-(`flex-1`); from `sm` both buttons size to their labels.
+width from `sm`. On Events, New is the wider of the pair: `flex-1` on
+mobile, `sm:min-w-40` from `sm`.
 
 ### Panel
 
@@ -337,10 +337,12 @@ disabled:cursor-not-allowed disabled:opacity-60`. It matches `authSubmitClass`
 except for `w-full`. The button swaps its label to a present participle while
 submitting ("Saving…").
 
-`formSubmitWideClass` is `formSubmitClass` plus `w-full sm:w-auto`, for a
-full-page form (Profile, Settings): below `sm` the submit spans the form edge
-to edge under its status line (`formFooterClass`, `flex flex-col gap-4`);
-from `sm` the footer is a row, status left, button right at its own width.
+`formSubmitWideClass` is `formSubmitClass` plus `w-full sm:ml-auto sm:w-48`,
+for a full-page form (Profile, Settings): below `sm` the submit spans the form
+edge to edge under its status line (`formFooterClass`, `flex flex-col gap-4`);
+from `sm` the footer is a row, status left, button right at one fixed width
+so every form's submit matches. `ml-auto` keeps it right even when the status
+line is empty — `justify-between` alone put a lone button on the left.
 Full-width buttons are a mobile treatment only — desktop buttons size to
 their labels.
 
@@ -494,7 +496,7 @@ beside it; if a use ever shows it alone, give it an accessible name first.
 
 ### Publisher page header
 
-File: app/publishers/[username]/page.tsx
+File: app/publisher/[username]/page.tsx
 Last updated: 2026-09-26
 
 | Property         | Class                                              |
@@ -745,6 +747,39 @@ justify-center`) and sizes to its label above (`sm:inline-flex sm:w-auto`). It u
 tickets", and is hidden entirely for a cancelled event — sending someone to
 buy a ticket for an event that is off is worse than showing nothing.
 
+### EventListRow (dashboard events list)
+
+File: app/dashboard/events/event-list-row.tsx
+Last updated: 2026-10-03
+
+| Property         | Class                                              |
+| ---------------- | -------------------------------------------------- |
+| Background       | list in `rounded-lg border border-border`; header `bg-card/50`; row `hover:bg-white/[0.02]`; poster `bg-secondary` |
+| Border           | rows `border-t border-border first:border-t-0`      |
+| Border radius    | container `rounded-lg`; poster `rounded`            |
+| Text — primary   | title `font-display font-extrabold uppercase tracking-tight`; facts `font-mono text-xs leading-relaxed` |
+| Text — secondary | category `font-mono text-xs uppercase tracking-widest text-primary`; "Starts"/"Ends", address and city `text-muted-foreground` |
+| Spacing          | row `px-5 py-5`, stacked `gap-4`, grid `lg:gap-6`; poster `size-16` beside the title at `gap-4` |
+| Hover state      | row `hover:bg-white/[0.02]`                         |
+| Shadow           | none                                                |
+| Accent usage     | the category label                                  |
+
+**Pattern notes:**
+Replaced the three-column table on 2026-10-03. Each row is an `<li>`
+showing, in order: poster (the event's image, first; an `ImageIcon`
+placeholder when there is none), title and category, then When ("Starts"
+date · time, "Ends" time, or full date when it ends on another day, all in
+the event's own timezone), then Location (venue, address, "city, country
+name", and "Online"/"Hybrid" where it applies), then `EventRowActions`.
+
+`EVENT_LIST_COLUMNS` is the one `lg` grid definition
+(`minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.3fr) auto`), used by both the rows
+and the `aria-hidden` column header, so they cannot drift apart. Below `lg`
+the header is hidden and each row stacks as a card, with a small mono label
+("When", "Location") over each fact instead, and the actions sit under a
+`border-t border-border pt-4` divider. Nothing is hidden on mobile. The events page is `max-w-6xl`
+to give the four columns room.
+
 ### Switch
 
 File: components/ui/switch.tsx
@@ -935,7 +970,7 @@ show the badge only for non-published statuses.
 
 ### Public event page
 
-File: app/publishers/[username]/[slug]/page.tsx
+File: app/publisher/[username]/[slug]/page.tsx
 Last updated: 2026-10-03
 
 | Property         | Class                                              |
