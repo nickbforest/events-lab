@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
 <title>Eventail</title>
 <rect width="64" height="64" rx="15" fill="#0a0a0f"/>
-<g transform="translate(16.5 13.8) scale(0.46)" fill="#c9f74a">
-<circle cx="-12" cy="71" r="7.5"/>
-<path d="M4 6.5 A6.5 6.5 0 0 1 17 6.5 V50 C17 62 27 67.5 43 67 C60 66.5 76 56 87 35 C80 63 63 80 41 79 C17 79 4 70 4 50 Z"/>
-</g>
+<path d="M4 6.5 A6.5 6.5 0 0 1 17 6.5 V50 C17 62 27 67.5 43 67 C60 66.5 76 56 87 35 C80 63 63 80 41 79 C17 79 4 70 4 50 Z" transform="translate(8.3 11.4) scale(0.52)" fill="#c9f74a"/>
 </svg>

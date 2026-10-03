@@ -26,16 +26,9 @@ export function WordmarkLink({ href, className }: WordmarkLinkProps) {
     "group inline-flex items-center font-display text-2xl font-semibold leading-none tracking-[-0.03em]",
     className,
   );
-  // ".eventai" + the tail, which is the final "l". Screen readers get the
-  // plain word instead of "eventai" and an unnamed picture. The tail is sized
-  // to Bricolage's "l" (0.70em ascender, 0.125em stem).
   const wordmark = (
     <>
-      <span aria-hidden className="whitespace-nowrap">
-        <span className="text-primary">.</span>
-        eventai
-        <LogoMark className="ml-[0.03em] inline-block h-[0.78em] w-auto origin-[10%_90%] align-[-0.078em] text-primary transition-transform duration-500 ease-[var(--ease-studio)] group-hover:-rotate-[8deg]" />
-      </span>
+      <Wordmark />
       <span className="sr-only">eventail</span>
     </>
   );
@@ -52,5 +45,43 @@ export function WordmarkLink({ href, className }: WordmarkLinkProps) {
     <Link href={href} className={classes}>
       {wordmark}
     </Link>
+  );
+}
+
+export interface WordmarkProps {
+  /** Classes for the tail, e.g. a softer colour on the giant footer mark. */
+  tailClassName?: string;
+  dotClassName?: string;
+}
+
+/**
+ * ".eventai" + the tail, which is the final "l". Decorative (`aria-hidden`):
+ * callers name it ("eventail") themselves. Size it with the parent's font
+ * size; the tail is fitted to Bricolage's "l" (0.70em ascender, 0.125em
+ * stem).
+ *
+ * At rest it is never quite still: every 7s the dot hops and the tail wags
+ * (`animate-dot-hop`, `animate-tail-wag`, off under reduced motion). A
+ * hovered parent `group` tilts the tail as well.
+ */
+export function Wordmark({ tailClassName, dotClassName }: WordmarkProps) {
+  return (
+    <span aria-hidden className="whitespace-nowrap">
+      <span
+        className={cn(
+          "inline-block animate-dot-hop text-primary",
+          dotClassName,
+        )}
+      >
+        .
+      </span>
+      eventai
+      <LogoMark
+        className={cn(
+          "ml-[0.03em] inline-block h-[0.78em] w-auto origin-[12%_88%] animate-tail-wag align-[-0.078em] text-primary transition-[rotate] duration-500 ease-[var(--ease-studio)] group-hover:-rotate-[10deg]",
+          tailClassName,
+        )}
+      />
+    </span>
   );
 }
