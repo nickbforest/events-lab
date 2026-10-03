@@ -4,7 +4,7 @@ The components and patterns that exist in the code, and the classes they use.
 Before building UI, find the closest entry here and match it. After building
 UI, run `/imprint` so this file never drifts from the code.
 
-Last reconciled with the code: 2026-09-30.
+Last reconciled with the code: 2026-10-03.
 
 There is no generated shadcn/ui primitive in the codebase yet (`components.json`
 is configured for one). Base controls are hand-written below, styled from the
@@ -617,8 +617,8 @@ disabled button never leaves a stale URL in the row. The stored label is what
 the public event page renders, falling back to "Get tickets".
 
 Inapplicable fields are absent, not disabled: `form.Subscribe` on `eventType`
-hides the venue block for an online event and the join link for an in-person
-one, and on `isFree` hides price details. Those two conditionals are load
+hides the venue block (venue, address, city / country, map link) for an
+online event and the join link for an in-person one, and on `isFree` hides price details. Those two conditionals are load
 bearing — publish-readiness requires a join link for an online event and a
 price or ticket link for a paid one, so hiding the field would make the event
 unpublishable with no way to fix it.
@@ -678,7 +678,7 @@ silently dropping what is typed. Each chip's remove button carries an
 ### EventCard
 
 File: components/events/event-card.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -701,6 +701,9 @@ would be nested anchors — invalid markup that browsers resolve by breaking
 one of them. The title's `<Link>` stretches over the card with
 `after:absolute after:inset-0`, and the inner links sit above it on
 `relative z-10`. Any future card with a control inside it does the same.
+
+"View on map" goes to the publisher's pasted map link when there is one,
+else an OpenStreetMap search of the address (`mapSearchUrl`, `lib/maps.ts`).
 
 The date rail is a horizontal strip on mobile and a column from `md`, so the
 poster sits beside the date on a phone rather than pushing the title down.
@@ -898,7 +901,7 @@ show the badge only for non-published statuses.
 ### Public event page
 
 File: app/publishers/[username]/[slug]/page.tsx
-Last updated: 2026-09-26
+Last updated: 2026-10-03
 
 | Property         | Class                                              |
 | ---------------- | -------------------------------------------------- |
@@ -910,7 +913,7 @@ Last updated: 2026-09-26
 | Spacing          | hero `h-[280px] md:h-[420px]`; article `max-w-4xl gap-12 px-6 py-12`, `md:grid-cols-3`; info card `p-6 space-y-4` |
 | Hover state      | organizer link `group-hover:text-primary`; action `hover:brightness-110` |
 | Shadow           | none                                                |
-| Accent usage     | category kicker, info-row icons, the full-width primary action |
+| Accent usage     | category kicker, info-row icons, "View on map" link, the full-width primary action |
 
 **Pattern notes:**
 Content in two columns, facts in a right-hand card: date, time with the IANA
@@ -921,8 +924,11 @@ and no action. JSON-LD is rendered inline with `<` escaped.
 
 The location row shows whatever exists of venue, address and "city, country
 name" for any non-online event, plus "Also online" for hybrid; only an
-online event shows the event type instead. JSON-LD location follows the same
-rule (`Place`, `VirtualLocation`, or both). The page renders `TrackView`, and
+online event shows the event type instead. Under it, "View on map"
+(`font-mono text-xs uppercase text-primary`, `ArrowUpRight size-3`,
+`hover:opacity-80`, new tab) — the same treatment and the same
+`mapSearchUrl` as the card's. JSON-LD location follows the same rule
+(`Place` with `hasMap`, `VirtualLocation`, or both). The page renders `TrackView`, and
 the ticket button is a `TicketLink`.
 
 

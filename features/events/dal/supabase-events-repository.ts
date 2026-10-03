@@ -101,6 +101,7 @@ function toEventRecord(row: Tables<"events">, tags: string[]): EventRecord {
     country_code: row.country_code,
     latitude: row.latitude,
     longitude: row.longitude,
+    map_url: row.map_url,
     online_url: row.online_url,
     is_free: row.is_free,
     price_info: row.price_info,

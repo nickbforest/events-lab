@@ -65,7 +65,7 @@ Status legend: `[x]` done · `[~]` partial · `[ ]` open.
 ## Public experience
 
 * [x] Event page: cover hero, category, title, summary, description, tags, organizer, date, time with zone, location, price, ticket / join button, cancelled banner, related events
-* [x] Event card: date rail, poster, summary, location, OpenStreetMap link, description, ticket button
+* [x] Event card: date rail, poster, summary, location, map link (pasted Google/Apple/OSM link, else OpenStreetMap search), description, ticket button
 * [x] Metadata and Open Graph on publisher and event pages; schema.org `Event` JSON-LD
 * [x] Landing page
 * [x] View and ticket-click tracking (`TrackView`, `TicketLink`)
@@ -185,7 +185,7 @@ PR; run an end-to-end check.
 | Area | What exists | What is missing | Items |
 | --- | --- | --- | --- |
 | SEO | Metadata, Open Graph, JSON-LD | Sitemap, robots, canonical URLs | §E |
-| Location | Text fields, ISO country, OpenStreetMap link | Coordinates, map, geocoding | M10, §E |
+| Location | Text fields, ISO country, pasted map link with OpenStreetMap fallback | Coordinates, map, geocoding | M10, §E |
 | Testing | Vitest (152), pgTAP files, Playwright smoke script (not in repo) | pgTAP execution, Playwright in CI | I10 |
 | Publisher-neutral copy | URLs corrected | Profile/settings wording | M5 |
 

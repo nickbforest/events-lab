@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowUpRight,
   Calendar,
   Clock,
   MapPin,
@@ -30,6 +31,7 @@ import {
   isoDateTime,
   priceLabel,
 } from "@/lib/format";
+import { mapSearchUrl } from "@/lib/maps";
 import { routes } from "@/lib/routes";
 import type { EventWithRelations } from "@/lib/types";
 
@@ -64,6 +66,7 @@ function jsonLdLocation(event: EventWithRelations) {
   const place = {
     "@type": "Place",
     name: event.venue_name ?? event.city ?? undefined,
+    hasMap: event.map_url ?? undefined,
     address: {
       "@type": "PostalAddress",
       streetAddress: event.address ?? undefined,
@@ -149,9 +152,17 @@ export default async function EventPage({
   const related = await getRelatedEvents(event);
   const date = formatEventDate(event.start_at, event.timezone);
   const isCancelled = event.status === "cancelled";
-  const cityLine = [event.city, countryName(event.country_code)]
-    .filter(Boolean)
-    .join(", ");
+  const country = countryName(event.country_code);
+  const cityLine = [event.city, country].filter(Boolean).join(", ");
+  const mapUrl = mapSearchUrl({
+    mapUrl: event.map_url,
+    venueName: event.venue_name,
+    address: event.address,
+    city: event.city,
+    country,
+    latitude: event.latitude,
+    longitude: event.longitude,
+  });
   // Publishing an in-person event needs only a city, so a venue name is not
   // what decides whether there is a place to show.
   const hasPlace =
@@ -320,6 +331,18 @@ export default async function EventPage({
                     <span className="block text-xs font-normal text-muted-foreground">
                       Also online
                     </span>
+                  ) : null}
+                  {mapUrl ? (
+                    <a
+                      href={mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center gap-1 font-mono text-xs uppercase text-primary transition-opacity hover:opacity-80"
+                    >
+                      View on map
+                      <ArrowUpRight className="size-3" aria-hidden />
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
                   ) : null}
                 </InfoRow>
               ) : (

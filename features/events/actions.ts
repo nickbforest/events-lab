@@ -35,6 +35,7 @@ export type EventField =
   | "countryCode"
   | "latitude"
   | "longitude"
+  | "mapUrl"
   | "onlineUrl"
   | "isFree"
   | "priceInfo"

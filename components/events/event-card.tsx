@@ -37,6 +37,7 @@ export function EventCard({ event }: EventCardProps) {
   const showStatus = event.status !== "published";
 
   const mapUrl = mapSearchUrl({
+    mapUrl: event.map_url,
     venueName: event.venue_name,
     address: event.address,
     city: event.city,

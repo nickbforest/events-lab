@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { usernameSchema } from "@/features/profiles/contracts";
 import { countryCodeFromInput } from "@/lib/countries";
+import { optionalMapUrlSchema } from "@/lib/maps";
 import { Constants } from "@/lib/supabase/database.types";
 import { optionalHttpUrlSchema } from "@/lib/urls";
 
@@ -185,6 +186,8 @@ export const eventDraftSchema = z
       180,
       "Longitude must be between -180 and 180.",
     ),
+    /** A pasted Google Maps, Apple Maps or OpenStreetMap link to the venue. */
+    mapUrl: optionalMapUrlSchema,
     onlineUrl: optionalUrl,
 
     isFree: z.boolean(),

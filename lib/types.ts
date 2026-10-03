@@ -65,6 +65,8 @@ export interface EventRecord {
   country_code: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Publisher-supplied map link. Null falls back to an address search. */
+  map_url: string | null;
   online_url: string | null;
 
   is_free: boolean;

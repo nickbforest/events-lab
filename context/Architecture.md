@@ -365,9 +365,15 @@ country name (datalist) and stores the ISO alpha-2 code via
 Coordinates exist but are never populated; the form currently submits them as
 empty on every save.
 
-Until the map phase, the event card links to OpenStreetMap as a plain
-hyperlink (`lib/maps.ts`) — no key, no SDK. Mapbox remains the selected map
-provider; do not introduce another one.
+Until the map phase, "View on map" (event card and event page) is a plain
+hyperlink built by `mapSearchUrl` (`lib/maps.ts`) — no key, no SDK. It uses,
+in order: the publisher's pasted `map_url`, coordinates, then an
+OpenStreetMap search of the typed address. `map_url` accepts only Google Maps,
+Apple Maps and OpenStreetMap links (`isMapLink`, checked by the contract and
+again at render); the column itself only enforces https and length, so the
+host list changes without a migration. Linking out to a hosted map is not a
+map provider integration: Mapbox remains the selected map provider; do not
+introduce another one.
 
 ---
 
